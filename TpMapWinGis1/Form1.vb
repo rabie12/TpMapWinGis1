@@ -14,7 +14,9 @@ Public Class Form1
         If odf.ShowDialog() = Windows.Forms.DialogResult.OK Then
             Dim ouvert As Boolean = sh.Open(odf.FileName)
             If ouvert Then
-                AxMap1.AddLayer(sh, True)
+                Dim handle_layer As Integer = AxMap1.AddLayer(sh, True)
+                AxMap1.set_ShapeLayerLineColor(handle_layer, Convert.ToUInt32(RGB(255, 0, 0)))
+                AxMap1.set_ShapeLayerFillColor(handle_layer, Convert.ToUInt32(RGB(0, 0, 255)))
                 AxMap1.ZoomToMaxExtents()
             Else
                 MessageBox.Show("le fichier est endommagé")
