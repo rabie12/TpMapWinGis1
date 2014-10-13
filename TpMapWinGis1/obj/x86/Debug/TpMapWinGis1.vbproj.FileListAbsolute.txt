@@ -1,0 +1,14 @@
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\bin\Debug\TpMapWinGis1.exe
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\bin\Debug\TpMapWinGis1.pdb
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\bin\Debug\TpMapWinGis1.xml
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\bin\Debug\Interop.MapWinGIS.dll
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\bin\Debug\AxInterop.MapWinGIS.dll
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\Interop.MapWinGIS.dll
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\AxInterop.MapWinGIS.dll
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.vbproj.ResolveComReference.cache
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.Form1.resources
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.Resources.resources
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.vbproj.GenerateResource.Cache
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.exe
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.xml
+c:\users\toshiba\documents\visual studio 2010\Projects\TpMapWinGis1\TpMapWinGis1\obj\x86\Debug\TpMapWinGis1.pdb
