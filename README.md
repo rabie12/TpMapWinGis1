@@ -1,0 +1,1 @@
+il y a en gros y'a une queue qui est en busy loop j'essaye de reproduire çen local êux tu verifier de ton côté peut tu me donner et expliquer comment analysé les details du jstack pour le thread qui consoùme le plus le cpu
