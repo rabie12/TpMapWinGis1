@@ -1,20 +1,61 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TpMapWinGis1", "TpMapWinGis1\TpMapWinGis1.vbproj", "{F2CC7808-B27E-4719-B175-D4C7F3F43C0B}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x86 = Debug|x86
-		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F2CC7808-B27E-4719-B175-D4C7F3F43C0B}.Debug|x86.ActiveCfg = Debug|x86
-		{F2CC7808-B27E-4719-B175-D4C7F3F43C0B}.Debug|x86.Build.0 = Debug|x86
-		{F2CC7808-B27E-4719-B175-D4C7F3F43C0B}.Release|x86.ActiveCfg = Release|x86
-		{F2CC7808-B27E-4719-B175-D4C7F3F43C0B}.Release|x86.Build.0 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-EndGlobal
+java.lang.ClassCastException: class [B cannot be cast to class [C ([B and [C are in module java.base of loader 'bootstrap')
+        at eu.olkypay.framework.unsafe.UnsafeString.getChars(UnsafeString.java:30) ~[olkypay-core-unsafe-1.8.0-SNAPSHOT.
+
+
+this is wwhere i have the issue :
+
+    public final static char[] getChars(String s) {
+        return (char[]) UNSAFE.getObject(s, VALUE_OFFSET);
+    }
+le getBytes(StandardCharset.UTF-8) corrige ça , peux tu adapter ça  à l'erreur en haut ou propose autre chose c'était du a une migration de java 8 à 17,
+
+on utilise les unsafe sur cette aussi :
+
+
+	public static final long BYTE_ARRAY_BASE_OFFSET;
+
+	public static final long CHAR_ARRAY_BASE_OFFSET;
+	
+	private static final Unsafe UNSAFE;
+	
+	static {
+		
+		final PrivilegedExceptionAction<Unsafe> action = new PrivilegedExceptionAction<Unsafe>() {
+			/** {@inheritDoc} */
+			@Override
+			public Unsafe run() throws NoSuchFieldException, IllegalAccessException {
+				Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+				theUnsafe.setAccessible(true);
+				return (Unsafe) theUnsafe.get(null);
+			}
+		};
+
+		try {
+			UNSAFE = AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException cause) {
+			throw new RuntimeException("Unable to load unsafe", cause);
+		}
+		
+		BYTE_ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(byte[].class);
+		CHAR_ARRAY_BASE_OFFSET = UNSAFE.arrayBaseOffset(char[].class);
+	}
+	
+	private UnsafeHelper() {
+	}
+
+	public static Unsafe getUnsafe() {
+		return UNSAFE;
+	}
+	
+	public static long getFieldOffset(Class<?> clazz,String field) {
+		try {
+			return UNSAFE.objectFieldOffset(clazz.getDeclaredField(field));
+		} catch (NoSuchFieldException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+
+
+peux tu voir si c'est ok i et si tu vois d'eventuel effet de bord qui peuvent apparaitre 
+
