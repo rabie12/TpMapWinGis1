@@ -1,5 +1,1 @@
-    public final static char[] getChars(String s) {
-        return s.getBytes(StandardCharsets.UTF_8);
-    }
-
-je veu faire plus simple pour convertir .getChars
+public static char[] getChars(String s) { return new String(s.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1).toCharArray(); }
