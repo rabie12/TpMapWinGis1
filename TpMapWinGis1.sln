@@ -1,11 +1,8 @@
 _sobaSqlSvc.persistSoba(
-    Paths.get(_fwSoba.getPath().toUri()).toAbsolutePath().normalize().getPath(),
+    Paths.get(_fwSoba.getPath().toUri()).toAbsolutePath().normalize().toString().replace("\\", "/"),
     _fwSoba.getNbLines(),
-    Paths.get(_fwEcrSoba.getPath().toUri()).toAbsolutePath().normalize().getPath(),
+    Paths.get(_fwEcrSoba.getPath().toUri()).toAbsolutePath().normalize().toString().replace("\\", "/"),
     _fwEcrSoba.getNbLines(),
-    Paths.get(_fwAccountingEntry.getPath().toUri()).toAbsolutePath().normalize().getPath(),
+    Paths.get(_fwAccountingEntry.getPath().toUri()).toAbsolutePath().normalize().toString().replace("\\", "/"),
     _fwAccountingEntry.getNbLines()
 );
-
-
-le getPath() dans la fin ne fonctionne pas
