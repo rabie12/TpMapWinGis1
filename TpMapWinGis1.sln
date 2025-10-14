@@ -11,3 +11,5 @@
     }
 
             _sobaSqlSvc.persistSoba(_fwSoba.getPath().toString(), _fwSoba.getNbLines(), _fwEcrSoba.getPath().toUri().toString() quand je met ça ça fonctionne sous widows mais je ne sais pas s'il y a aura des effets de bord sur le serveur de dev
+et j'ai l'erreur, "JdbcException": {
+    "message": "(conn=10) LOAD DATA LOCAL INFILE asked for file 'C:UsersRHABACHIDownloadsapache-tomcat-9.0.105apache-tomcat-9.0.105\tempsoba20251014-1054500000003.csv' that doesn't correspond to initial query LOAD DATA LOCAL INFILE 'C:\\Users\\RHABACHI\\Downloads\\apache-tomcat-9.0.105\\apache-tomcat-9.0.105\\temp\\soba\\20251014-1054500000003.csv' INTO TABLE bbdb.statement_of_bank_account FIELDS TERMINATED BY ';' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\r\n' (id,supplier_id,sobam_id,balance_operation_initial,balance_operation_final,balance_value,sequence,statement_number,number_of_ecritures,fileId,date_soba,created_at);. Possible malicious proxy changing server answer ! Command interrupted"
