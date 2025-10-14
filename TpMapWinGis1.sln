@@ -1,1 +1,13 @@
-public static char[] getChars(String s) { return new String(s.getBytes(StandardCharsets.UTF_8), StandardCharsets.ISO_8859_1).toCharArray(); }
+    public void persistSobaFile() {
+        boolean sobaClosed = waitFlushAndCloseFileWriter(_fwSoba);
+        boolean ecrSobaClosed = waitFlushAndCloseFileWriter(_fwEcrSoba);
+        boolean accountingEntryClosed = waitFlushAndCloseFileWriter(_fwAccountingEntry);
+        if (sobaClosed && ecrSobaClosed && accountingEntryClosed) {
+            _sobaSqlSvc.persistSoba(_fwSoba.getPath()..toUri().toString(), _fwSoba.getNbLines(), _fwEcrSoba.getPath().toUri().toString(),
+                    _fwEcrSoba.getNbLines(), _fwAccountingEntry.getPath().toUri().toString(), _fwAccountingEntry.getNbLines());
+        } else {
+            LOGGER.error("Soba not persisted, file closure failed");
+        }
+    }
+
+            _sobaSqlSvc.persistSoba(_fwSoba.getPath().toString(), _fwSoba.getNbLines(), _fwEcrSoba.getPath().toUri().toString() quand je met ça ça fonctionne sous widows mais je ne sais pas s'il y a aura des effets de bord sur le serveur de dev
