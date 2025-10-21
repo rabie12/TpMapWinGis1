@@ -1,14 +1,3 @@
-       if (existingRecord.isPresent()) {
-            log.info("BIC found in database.");
-            Optional<BankInfoDTO> bankInfoDTO = existingRecord.map(bankInfoMapper::toDto);
-            bankInfoDTO.get().setStatus("VALID");
-            List<CountryCode> codes = CountryCode.findByName("(?i)^" + bankInfoDTO.get().getLocation() + "$");
-            CountryCode code = codes.get(0);
-            bankInfoDTO.get().setCountryCode(String.valueOf(code.getNumeric()));
-            bankInfoDTO.get().setName(bankInfoDTO.get().getInstitution());
-            bankInfoDTO.get().setCountryName(code.getName());
-            return bankInfoDTO;
-        }
-
-            CountryCode code = codes.get(0);
-check ici si c'est vide et si tu peux ajouter une recuperation via la ville en utilisant la import com.neovisionaries.i18n sinon enlève la recherche
+INSERT INTO external_bank_data.bank_info (id, address1, bic, can_dob2b_sdd, can_do_core_sdd, can_do_sct, country_iso2, created_at, institution, location, name, response_details, updated_at, can_do_b2b_sdd, search_result) VALUES(38328, '', 'LOYDGB21F18', NULL, 1, 1, NULL, '2017-03-05 08:14:43.000', 'LLOYDS BANK PLC', 'CHESTER-LE-STREET', 'LLOYDS BANK PLC', NULL, '2025-07-02 16:59:40.000', 1, NULL);
+INSERT INTO external_bank_data.bank_agency (id, bank_and_branch_code, bank_code, branch_code, branch_name, country_iso_2, bank_info_id) VALUES(407296, NULL, 'CHNI', NULL, NULL, 'VG', 12578);
+je veux mettre à jour ma db en mettant à jour le country_iso_2 de la table bank_info à partir la bank_agency est-ce que c'est possible
