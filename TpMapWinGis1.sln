@@ -1,8 +1,21 @@
-_sobaSqlSvc.persistSoba(
-    Paths.get(_fwSoba.getPath().toUri()).toAbsolutePath().normalize().toString().replace("\\", "/"),
-    _fwSoba.getNbLines(),
-    Paths.get(_fwEcrSoba.getPath().toUri()).toAbsolutePath().normalize().toString().replace("\\", "/"),
-    _fwEcrSoba.getNbLines(),
-    Paths.get(_fwAccountingEntry.getPath().toUri()).toAbsolutePath().normalize().toString().replace("\\", "/"),
-    _fwAccountingEntry.getNbLines()
-);
+import com.neovisionaries.i18n.CountryCode;
+import java.util.List;
+
+public class CountryNameToNumeric {
+    public static void main(String[] args) {
+        String countryName = "Luxembourg";
+
+        // Use a case-insensitive regular expression to find matching country codes
+        List<CountryCode> codes = CountryCode.findByName("(?i)^" + countryName + "$");
+
+        if (!codes.isEmpty()) {
+            CountryCode code = codes.get(0); // Assuming the first match is the desired one
+            System.out.println("Country: " + countryName);
+            System.out.println("Alpha-2: " + code.getAlpha2());
+            System.out.println("Alpha-3: " + code.getAlpha3());
+            System.out.println("Numeric: " + code.getNumeric());
+        } else {
+            System.out.println("Country not found: " + countryName);
+        }
+    }
+}
