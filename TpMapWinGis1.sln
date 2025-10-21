@@ -1,3 +1,9 @@
-SQL Error [1064] [42000]: (conn=26) You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'FROM external_bank_data.bank_agency AS ba
-WHERE bi.id = ba.bank_info_id
-  A...' at line 3
+UPDATE `external_bank_data`.`bank_info` AS bi
+SET bi.country_iso2 = (
+    SELECT ba.country_iso_2
+    FROM `external_bank_data`.`bank_agency` AS ba
+    WHERE ba.bank_info_id = bi.id
+      AND ba.country_iso_2 IS NOT NULL
+    LIMIT 1
+)
+WHERE bi.country_iso2 IS NULL;
