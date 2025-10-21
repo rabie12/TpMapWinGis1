@@ -1,21 +1,14 @@
-import com.neovisionaries.i18n.CountryCode;
-import java.util.List;
-
-public class CountryNameToNumeric {
-    public static void main(String[] args) {
-        String countryName = "Luxembourg";
-
-        // Use a case-insensitive regular expression to find matching country codes
-        List<CountryCode> codes = CountryCode.findByName("(?i)^" + countryName + "$");
-
-        if (!codes.isEmpty()) {
-            CountryCode code = codes.get(0); // Assuming the first match is the desired one
-            System.out.println("Country: " + countryName);
-            System.out.println("Alpha-2: " + code.getAlpha2());
-            System.out.println("Alpha-3: " + code.getAlpha3());
-            System.out.println("Numeric: " + code.getNumeric());
-        } else {
-            System.out.println("Country not found: " + countryName);
+       if (existingRecord.isPresent()) {
+            log.info("BIC found in database.");
+            Optional<BankInfoDTO> bankInfoDTO = existingRecord.map(bankInfoMapper::toDto);
+            bankInfoDTO.get().setStatus("VALID");
+            List<CountryCode> codes = CountryCode.findByName("(?i)^" + bankInfoDTO.get().getLocation() + "$");
+            CountryCode code = codes.get(0);
+            bankInfoDTO.get().setCountryCode(String.valueOf(code.getNumeric()));
+            bankInfoDTO.get().setName(bankInfoDTO.get().getInstitution());
+            bankInfoDTO.get().setCountryName(code.getName());
+            return bankInfoDTO;
         }
-    }
-}
+
+            CountryCode code = codes.get(0);
+check ici si c'est vide et si tu peux ajouter une recuperation via la ville en utilisant la import com.neovisionaries.i18n sinon enlève la recherche
