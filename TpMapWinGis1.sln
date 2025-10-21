@@ -1,9 +1,27 @@
-UPDATE `external_bank_data`.`bank_info` AS bi
-SET bi.country_iso2 = (
-    SELECT ba.country_iso_2
-    FROM `external_bank_data`.`bank_agency` AS ba
-    WHERE ba.bank_info_id = bi.id
-      AND ba.country_iso_2 IS NOT NULL
-    LIMIT 1
-)
-WHERE bi.country_iso2 IS NULL;
+import com.neovisionaries.i18n.CountryCode;
+import java.util.Optional;
+
+if (existingRecord.isPresent()) {
+    log.info("BIC found in database.");
+    Optional<BankInfoDTO> bankInfoDTO = existingRecord.map(bankInfoMapper::toDto);
+    bankInfoDTO.get().setStatus("VALID");
+    bankInfoDTO.get().setName(bankInfoDTO.get().getInstitution());
+
+    // --- Get the country ISO code from your record (example: "LU", "FR", etc.)
+    String isoCode = bankInfoDTO.get().getCountryCode();
+
+    if (isoCode != null && !isoCode.isBlank()) {
+        CountryCode code = CountryCode.getByCode(isoCode.trim().toUpperCase());
+        if (code != null) {
+            // Found a matching country in the nv-i18n library
+            bankInfoDTO.get().setCountryName(code.getName());
+            log.info("Country resolved from ISO code {}: {}", isoCode, code.getName());
+        } else {
+            log.warn("No matching country found for ISO code: {}", isoCode);
+        }
+    } else {
+        log.info("No ISO code present for this record.");
+    }
+
+    return bankInfoDTO;
+}
