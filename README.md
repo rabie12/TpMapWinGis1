@@ -25,8 +25,4 @@ Caused by: org.springframework.context.annotation.ConflictingBeanDefinitionExcep
 	at org.springframework.context.annotation.ConfigurationClassParser.parse(ConfigurationClassParser.java:172) ~[spring-context-6.2.8.jar:6.2.8]
 	... 13 common frames omitted
 
-Disconnected from the target VM, address: '127.0.0.1:53247', transport: 'socket'
-
-Process finished with exit code 1
-
-i have this now
+I have this now
