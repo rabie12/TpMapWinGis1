@@ -1,32 +1,90 @@
-Got it ✅ — you want to compare two BIC (SWIFT) codes, but ignore the trailing “XXX” (or any other suffix after the 8th character) when doing the match.
+    public CompanyDTO getCompany(Connector connector, String siren) throws JsonProcessingException {
+        log.info(" Search company {} with {}", siren, connector.getServiceName());
+        WebClient webClient = createWebClient(connector);
 
-So for example:
-	•	SPKHDE2HXXX and SPKHDE2H → ✅ should match
-	•	SPKHDE2 and SPKHDE2H → ❌ should not match
+        String json = webClient.get()
+                .uri("/company/{siren}", siren)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.empty())
+                .bodyToMono(String.class)
+                .block();
 
-Here’s a clean way to express that in Java:
+        String jsonOfficers = webClient.get()
+                .uri("/company/{siren}/officers", siren)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.empty())
+                .bodyToMono(String.class)
+                .block();
 
-// Normalize both BICs by trimming "XXX" and comparing the 8 or 11-char variants
-String normalizedBicOfBa = bicOfBa.length() > 8 && bicOfBa.endsWith("XXX") 
-    ? bicOfBa.substring(0, 8) 
-    : bicOfBa;
-String normalizedBic = bic.length() > 8 && bic.endsWith("XXX") 
-    ? bic.substring(0, 8) 
-    : bic;
+        String jsonBO = webClient.get()
+                .uri("/company/{siren}/persons-with-significant-control", siren)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, clientResponse -> Mono.empty())
+                .bodyToMono(String.class)
+                .block();
+        if (!json.contains("\"message\":\"4")) {
+            return findInformationCompany(json, jsonOfficers, jsonBO);
+        }
+        log.warn("Error with the API call of Companies House {}", json);
+        return new CompanyDTO();
 
-if (!normalizedBicOfBa.startsWith(normalizedBic)) {
-    // condition fails
+    }
+
+	when json is null i have this exception :
+	{
+  "timeStamp": "2025-10-27T09:38:30.5457431",
+  "message": "Cannot invoke \"String.contains(java.lang.CharSequence)\" because \"json\" is null",
+  "httpStatus": 400
 }
 
-✅ Explanation:
-	•	A valid BIC is 8 or 11 characters.
-	•	The last three chars "XXX" are a branch code and often optional.
-	•	The comparison trims the "XXX" when present and then checks if the remaining core (8 chars) matches.
+i want to return clear exception compony not found or something similar, i ahve alkready implement this globalException handler annotated : public class GlobalExceptionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-If you want to be stricter (i.e., compare exactly 8 chars, not just startsWith), then do:
+    @ExceptionHandler(BusinessRegistryApiException.class)
+    public ResponseEntity<ErrorEntity> handleTradingApiException(BusinessRegistryApiException exception) {
+        logger.error("Entity Not found");
+//        ErrorEntity error = ErrorEntity.builder()
+//                .timeStamp(LocalDateTime.now())
+//                .message(exception.getMessage())
+//                .errorAuthor(exception.getError())
+//                .httpStatus(exception.getStatus().value())
+//                .build();
+        ErrorEntity error = new ErrorEntity(
+                LocalDateTime.now(),
+                exception.getMessage(),
+                exception.getError(),
+                exception.getStatus().value()
+        );
+        return new ResponseEntity<>(error, exception.getStatus());
+    }
 
-if (!normalizedBicOfBa.equals(normalizedBic)) {
-    // condition fails
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ErrorEntity> badRequestHandler(BadRequestException exception) {
+
+        ErrorEntity error = ErrorEntity.builder()
+                .timeStamp(LocalDateTime.now())
+                .message(exception.getMessage())
+                .httpStatus(HttpStatus.BAD_REQUEST.value())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND.value()).body(error);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorEntity> runtimeExceptionHandler(RuntimeException exception) {
+
+        ErrorEntity error = ErrorEntity.builder()
+                .timeStamp(LocalDateTime.now())
+                .message(exception.getMessage())
+                .httpStatus(HttpStatus.FORBIDDEN.value())
+                .build();
+
+        log.info("{}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN.value()).body(error);
+    }
+
 }
 
-Would you like it to handle any suffix (not just “XXX”)? For example, accept both SPKHDE2HXXX and SPKHDE2HABC as equivalent?
+
+give me some proposition proposition to handle correclty exception and disply meaninfull message
+	
