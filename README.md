@@ -1,208 +1,165 @@
-package eu.olkypay.business_registry.mapper;
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.3</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
-import eu.olkypay.business_registry.dto.company.CompanyDTO;
-import eu.olkypay.business_registry.model.company.LegalEntity;
-import javax.annotation.processing.Generated;
-import org.springframework.stereotype.Component;
+    <groupId>eu.olkypay</groupId>
+    <artifactId>business-registry</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>business-registry</name>
+    <description>Business Registry</description>
+    <packaging>jar</packaging>
 
-@Generated(
-    value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-10-27T15:48:38+0100",
-    comments = "version: 1.6.3, compiler: javac, environment: Java 21.0.8 (Microsoft)"
-)
-@Component
-public class CompanyMapperImpl implements CompanyMapper {
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>olky-local-releases</name>
+            <url>${env.JFROG_PLATFORM_REPO}/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>olky-local-snapshots</name>
+            <url>${env.JFROG_PLATFORM_REPO}/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
 
-    @Override
-    public CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity) {
-        if ( legalEntity == null ) {
-            return null;
-        }
+    <properties>
+        <java.version>21</java.version>
+        <org.mapstruct.version>1.6.3</org.mapstruct.version>
+    </properties>
 
-        CompanyDTO companyDTO = companyDTO();
+    <dependencies>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>2.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>7.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.8</version>
+        </dependency>
+    </dependencies>
 
-        return companyDTO;
-    }
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
-
-    sur le CompanyDTO companyDTO = companyDTO()  companyDTO() est en rouge
-
-    C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\mapper\CompanyMapper.java:19:16
-java: Ambiguous constructors found for creating eu.olkypay.business_registry.dto.company.CompanyDTO: CompanyDTO(java.lang.String, java.lang.String, java.lang.String), CompanyDTO(java.lang.String). Either declare parameterless constructor or annotate the default constructor with an annotation named @Default. 
-
-quick fix please :
-
-voici la classe : 
-package eu.olkypay.business_registry.mapper;
-
-import eu.olkypay.business_registry.dto.AlertDTO;
-import eu.olkypay.business_registry.dto.company.*;
-import eu.olkypay.business_registry.model.Alert;
-import eu.olkypay.business_registry.model.company.*;
-import org.mapstruct.Mapper;
-import org.mapstruct.NullValueCheckStrategy;
-import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.mapstruct.ObjectFactory;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-@Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
-public interface CompanyMapper {
-
-    CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity);
-
-    LegalEntity companyDTOToLegalEntity(CompanyDTO companyDTO);
-
-    default LegalEntity companyDtoToCompany(LegalEntity company, CompanyDTO companyDTO) {
-
-        if (company.getIdentifier() == null && companyDTO.getIdentifier() != null) {
-            company.setIdentifier(companyDTO.getIdentifier());
-        }
-        if (company.getRcs() == null && companyDTO.getRcs() != null) {
-            company.setRcs(companyDTO.getRcs());
-        }
-        if (company.getStatus() == null && companyDTO.getStatus() != null) {
-            company.setStatus(companyDTO.getStatus());
-        }
-        if (company.getLegalName() == null && companyDTO.getLegalName() != null) {
-            company.setLegalName(companyDTO.getLegalName());
-        }
-        if (company.getLegalForm() == null && companyDTO.getLegalForm() != null) {
-            company.setLegalForm(companyDTO.getLegalForm());
-        }
-        if (company.getCapital() == null && companyDTO.getCapital() != null) {
-            company.setCapital(companyDTO.getCapital());
-        }
-        if (company.getActivityCode() == null && companyDTO.getActivityCode() != null) {
-            company.setActivityCode(companyDTO.getActivityCode());
-        }
-        if (company.getRegistrationDate() == null && companyDTO.getRegistrationDate() != null) {
-            company.setRegistrationDate(companyDTO.getRegistrationDate());
-        }
-        if (company.getRegistrationCountry() == null && companyDTO.getRegistrationCountry() != null) {
-            company.setRegistrationCountry(companyDTO.getRegistrationCountry());
-        }
-        if (company.getLegalEntityIdentifier() == null && companyDTO.getLegalEntityIdentifier() != null) {
-            company.setLegalEntityIdentifier(companyDTO.getLegalEntityIdentifier());
-        }
-        if (company.getIntracommunityVATNumber() == null && companyDTO.getIntracommunityVATNumber() != null) {
-            company.setIntracommunityVATNumber(companyDTO.getIntracommunityVATNumber());
-        }
-        if (company.getAddress() == null && companyDTO.getAddress() != null) {
-            company.setAddress(addressDtoToAdress(companyDTO.getAddress()));
-        }
-        if ((company.getRepresentatives() == null || company.getRepresentatives().isEmpty()) && companyDTO.getRepresentatives() != null) {
-            for (RepresentativeDTO representativeDTO : companyDTO.getRepresentatives()) {
-                company.addRepresentative(representativeDtoToRepresentative(representativeDTO));
-            }
-        }
-        if ((company.getBeneficialOwners() == null || company.getBeneficialOwners().isEmpty()) && companyDTO.getBeneficialOwners() != null) {
-            for (BeneficialOwnerDTO beneficialOwnerDTO : companyDTO.getBeneficialOwners()) {
-                company.addBeneficialOwner(beneficialOwnerDtoToBeneficialOwner(beneficialOwnerDTO));
-            }
-        }
-        if ((company.getSecondaryOffices() == null || company.getSecondaryOffices().isEmpty()) && companyDTO.getSecondaryOffices() != null) {
-            for (CompanyDTO companyDto : companyDTO.getSecondaryOffices()) {
-                company.addSecondaryOffice(companyDTOToLegalEntity(companyDto));
-            }
-        }
-        if (companyDTO.getDocuments() != null) {
-            for (DocumentDTO documentDTO : companyDTO.getDocuments()) {
-                company.addDocument(documentDtoToDocument(documentDTO));
-            }
-        }
-        if (companyDTO.getAlerts() != null) {
-            for (AlertDTO alertDTO : companyDTO.getAlerts()) {
-                company.addAlert(alertDTOToAlert(alertDTO));
-            }
-        }
-        return company;
-    }
-
-    default Address addressDtoToAdress(AddressDTO addressDTO) {
-        Address address = new Address();
-        if (Objects.equals(addressDTO.getAddressLine1(), "")) {
-            address.setAddressLine1(null);
-        }
-        else {
-            address.setAddressLine1(addressDTO.getAddressLine1());
-        }
-        address.setAddressLine2(addressDTO.getAddressLine2());
-        address.setAddressLine3(addressDTO.getAddressLine3());
-        address.setCountry(addressDTO.getCountry());
-        address.setCity(addressDTO.getCity());
-        address.setZipCode(addressDTO.getZipCode());
-        return address;
-    }
-
-    default Representative representativeDtoToRepresentative(RepresentativeDTO representativeDTO) {
-        Representative representative = new Representative();
-        if (representativeDTO.getRole() != null) {
-            representative.setRole(representativeDTO.getRole());
-            if (representativeDTO.getNaturalPerson() != null) {
-                representative.setNaturalPerson(naturalPersonDtoToNaturalPerson(representativeDTO.getNaturalPerson()));
-            }
-            else if (representativeDTO.getLegalEntity() != null) {
-                representative.setLegalEntity(companyDTOToLegalEntity(representativeDTO.getLegalEntity()));
-            }
-        }
-        return representative;
-    }
-
-    default Document documentDtoToDocument(DocumentDTO documentDTO) {
-        Document document = new Document();
-        document.setIdentifier(documentDTO.getIdentifier());
-        document.setType(documentDTO.getType());
-        document.setName(documentDTO.getName());
-        document.setCreationDate(documentDTO.getCreationDate());
-        document.setUpdatedDate(documentDTO.getUpdatedDate());
-        document.setDetails(documentDTO.getDetails());
-        return document;
-    }
-
-    default Alert alertDTOToAlert(AlertDTO alertDTO) {
-        Alert alert = new Alert();
-        alert.setId(alertDTO.getId());
-        alert.setOrigin(alertDTO.getOrigin());
-        alert.setType(alertDTO.getType());
-        alert.setContent(alertDTO.getContent());
-        alert.setCreatedAt(alertDTO.getCreatedAt());
-        return alert;
-    }
-
-    default BeneficialOwner beneficialOwnerDtoToBeneficialOwner(BeneficialOwnerDTO beneficialOwnerDTO) {
-        BeneficialOwner beneficialOwner = new BeneficialOwner();
-        beneficialOwner.setPercentageOfOwnership(beneficialOwnerDTO.getPercentageOfOwnership());
-        beneficialOwner.setNatureOfOwnership(beneficialOwnerDTO.getNatureOfOwnership());
-        if (beneficialOwnerDTO.getNaturalPerson() != null) {
-            beneficialOwner.setNaturalPerson(naturalPersonDtoToNaturalPerson(beneficialOwnerDTO.getNaturalPerson()));
-        }
-        if (beneficialOwnerDTO.getLegalEntity() != null) {
-            beneficialOwner.setLegalEntity(companyDTOToLegalEntity(beneficialOwnerDTO.getLegalEntity()));
-        }
-        beneficialOwner.setStartDate(beneficialOwnerDTO.getStartDate());
-        beneficialOwner.setEndDate(beneficialOwnerDTO.getEndDate());
-        return beneficialOwner;
-    }
-
-    default NaturalPerson naturalPersonDtoToNaturalPerson(NaturalPersonDTO naturalPersonDTO) {
-        NaturalPerson naturalPerson = new NaturalPerson();
-        naturalPerson.setFirstName(naturalPersonDTO.getFirstName());
-        naturalPerson.setLastName(naturalPersonDTO.getLastName());
-        naturalPerson.setMaidenName(naturalPersonDTO.getMaidenName());
-        naturalPerson.setBirthDate(naturalPersonDTO.getBirthDate());
-        naturalPerson.setBirthCity(naturalPersonDTO.getBirthCity());
-        naturalPerson.setBirthCountry(naturalPersonDTO.getBirthCountry());
-        naturalPerson.setNationality(naturalPersonDTO.getNationality());
-        if (naturalPersonDTO.getAddress() != null) {
-            naturalPerson.setAddress(addressDtoToAdress(naturalPersonDTO.getAddress()));
-        }
-        return naturalPerson;
-    }
-
-}
-
-
- 
+</project>
+j'ai l'impression qu'il faut ajouter un truc dans le pom pour faire fonctionner le mapstruct et lombook
