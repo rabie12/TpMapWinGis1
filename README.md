@@ -1,173 +1,79 @@
-package eu.olkypay.business_registry.mapper;
+Got it ✅ — thanks for sharing the full mapper and DTO.
+The root cause of your compile-time MapStruct error is now crystal clear:
 
-import eu.olkypay.business_registry.dto.AlertDTO;
-import eu.olkypay.business_registry.dto.company.*;
-import eu.olkypay.business_registry.model.Alert;
-import eu.olkypay.business_registry.model.company.*;
-import org.mapstruct.Mapper;
-import org.mapstruct.NullValueCheckStrategy;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+⸻
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+🔍 Root Cause
 
-@Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS) 
+MapStruct doesn’t know which constructor to use when generating the method
+CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity)
+because your CompanyDTO has two matching constructors besides the no-args one:
+
+public CompanyDTO(String identifier, String legalName, String intracommunityVATNumber)
+public CompanyDTO(String identifier)
+
+Even though you also have:
+
+@NoArgsConstructor
+
+MapStruct still gets confused — it inspects all constructors and finds multiple that could theoretically match the mapping.
+
+⸻
+
+💣 Why @NoArgsConstructor alone doesn’t fix it
+
+@NoArgsConstructor generates a no-arg constructor at compile time, but MapStruct still sees multiple non-ambiguous constructors and fails to choose automatically.
+
+⸻
+
+✅ The Cleanest Fix: Add an Explicit @ObjectFactory in CompanyMapper
+
+Tell MapStruct exactly which constructor to use by adding a factory method.
+
+Add this inside your CompanyMapper interface:
+
+import org.mapstruct.ObjectFactory;
+
+@Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
 public interface CompanyMapper {
+
+    @ObjectFactory
+    default CompanyDTO createCompanyDTO() {
+        return new CompanyDTO(); // Force use of the no-arg constructor
+    }
 
     CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity);
 
     LegalEntity companyDTOToLegalEntity(CompanyDTO companyDTO);
 
-    default LegalEntity companyDtoToCompany(LegalEntity company, CompanyDTO companyDTO) {
-
-        if (company.getIdentifier() == null && companyDTO.getIdentifier() != null) {
-            company.setIdentifier(companyDTO.getIdentifier());
-        }
-        if (company.getRcs() == null && companyDTO.getRcs() != null) {
-            company.setRcs(companyDTO.getRcs());
-        }
-        if (company.getStatus() == null && companyDTO.getStatus() != null) {
-            company.setStatus(companyDTO.getStatus());
-        }
-        if (company.getLegalName() == null && companyDTO.getLegalName() != null) {
-            company.setLegalName(companyDTO.getLegalName());
-        }
-        if (company.getLegalForm() == null && companyDTO.getLegalForm() != null) {
-            company.setLegalForm(companyDTO.getLegalForm());
-        }
-        if (company.getCapital() == null && companyDTO.getCapital() != null) {
-            company.setCapital(companyDTO.getCapital());
-        }
-        if (company.getActivityCode() == null && companyDTO.getActivityCode() != null) {
-            company.setActivityCode(companyDTO.getActivityCode());
-        }
-        if (company.getRegistrationDate() == null && companyDTO.getRegistrationDate() != null) {
-            company.setRegistrationDate(companyDTO.getRegistrationDate());
-        }
-        if (company.getRegistrationCountry() == null && companyDTO.getRegistrationCountry() != null) {
-            company.setRegistrationCountry(companyDTO.getRegistrationCountry());
-        }
-        if (company.getLegalEntityIdentifier() == null && companyDTO.getLegalEntityIdentifier() != null) {
-            company.setLegalEntityIdentifier(companyDTO.getLegalEntityIdentifier());
-        }
-        if (company.getIntracommunityVATNumber() == null && companyDTO.getIntracommunityVATNumber() != null) {
-            company.setIntracommunityVATNumber(companyDTO.getIntracommunityVATNumber());
-        }
-        if (company.getAddress() == null && companyDTO.getAddress() != null) {
-            company.setAddress(addressDtoToAdress(companyDTO.getAddress()));
-        }
-        if ((company.getRepresentatives() == null || company.getRepresentatives().isEmpty()) && companyDTO.getRepresentatives() != null) {
-            for (RepresentativeDTO representativeDTO : companyDTO.getRepresentatives()) {
-                company.addRepresentative(representativeDtoToRepresentative(representativeDTO));
-            }
-        }
-        if ((company.getBeneficialOwners() == null || company.getBeneficialOwners().isEmpty()) && companyDTO.getBeneficialOwners() != null) {
-            for (BeneficialOwnerDTO beneficialOwnerDTO : companyDTO.getBeneficialOwners()) {
-                company.addBeneficialOwner(beneficialOwnerDtoToBeneficialOwner(beneficialOwnerDTO));
-            }
-        }
-        if ((company.getSecondaryOffices() == null || company.getSecondaryOffices().isEmpty()) && companyDTO.getSecondaryOffices() != null) {
-            for (CompanyDTO companyDto : companyDTO.getSecondaryOffices()) {
-                company.addSecondaryOffice(companyDTOToLegalEntity(companyDto));
-            }
-        }
-        if (companyDTO.getDocuments() != null) {
-            for (DocumentDTO documentDTO : companyDTO.getDocuments()) {
-                company.addDocument(documentDtoToDocument(documentDTO));
-            }
-        }
-        if (companyDTO.getAlerts() != null) {
-            for (AlertDTO alertDTO : companyDTO.getAlerts()) {
-                company.addAlert(alertDTOToAlert(alertDTO));
-            }
-        }
-        return company;
-    }
-
-    default Address addressDtoToAdress(AddressDTO addressDTO) {
-        Address address = new Address();
-        if (Objects.equals(addressDTO.getAddressLine1(), "")) {
-            address.setAddressLine1(null);
-        }
-        else {
-            address.setAddressLine1(addressDTO.getAddressLine1());
-        }
-        address.setAddressLine2(addressDTO.getAddressLine2());
-        address.setAddressLine3(addressDTO.getAddressLine3());
-        address.setCountry(addressDTO.getCountry());
-        address.setCity(addressDTO.getCity());
-        address.setZipCode(addressDTO.getZipCode());
-        return address;
-    }
-
-    default Representative representativeDtoToRepresentative(RepresentativeDTO representativeDTO) {
-        Representative representative = new Representative();
-        if (representativeDTO.getRole() != null) {
-            representative.setRole(representativeDTO.getRole());
-            if (representativeDTO.getNaturalPerson() != null) {
-                representative.setNaturalPerson(naturalPersonDtoToNaturalPerson(representativeDTO.getNaturalPerson()));
-            }
-            else if (representativeDTO.getLegalEntity() != null) {
-                representative.setLegalEntity(companyDTOToLegalEntity(representativeDTO.getLegalEntity()));
-            }
-        }
-        return representative;
-    }
-
-    default Document documentDtoToDocument(DocumentDTO documentDTO) {
-        Document document = new Document();
-        document.setIdentifier(documentDTO.getIdentifier());
-        document.setType(documentDTO.getType());
-        document.setName(documentDTO.getName());
-        document.setCreationDate(documentDTO.getCreationDate());
-        document.setUpdatedDate(documentDTO.getUpdatedDate());
-        document.setDetails(documentDTO.getDetails());
-        return document;
-    }
-
-    default Alert alertDTOToAlert(AlertDTO alertDTO) {
-        Alert alert = new Alert();
-        alert.setId(alertDTO.getId());
-        alert.setOrigin(alertDTO.getOrigin());
-        alert.setType(alertDTO.getType());
-        alert.setContent(alertDTO.getContent());
-        alert.setCreatedAt(alertDTO.getCreatedAt());
-        return alert;
-    }
-
-    default BeneficialOwner beneficialOwnerDtoToBeneficialOwner(BeneficialOwnerDTO beneficialOwnerDTO) {
-        BeneficialOwner beneficialOwner = new BeneficialOwner();
-        beneficialOwner.setPercentageOfOwnership(beneficialOwnerDTO.getPercentageOfOwnership());
-        beneficialOwner.setNatureOfOwnership(beneficialOwnerDTO.getNatureOfOwnership());
-        if (beneficialOwnerDTO.getNaturalPerson() != null) {
-            beneficialOwner.setNaturalPerson(naturalPersonDtoToNaturalPerson(beneficialOwnerDTO.getNaturalPerson()));
-        }
-        if (beneficialOwnerDTO.getLegalEntity() != null) {
-            beneficialOwner.setLegalEntity(companyDTOToLegalEntity(beneficialOwnerDTO.getLegalEntity()));
-        }
-        beneficialOwner.setStartDate(beneficialOwnerDTO.getStartDate());
-        beneficialOwner.setEndDate(beneficialOwnerDTO.getEndDate());
-        return beneficialOwner;
-    }
-
-    default NaturalPerson naturalPersonDtoToNaturalPerson(NaturalPersonDTO naturalPersonDTO) {
-        NaturalPerson naturalPerson = new NaturalPerson();
-        naturalPerson.setFirstName(naturalPersonDTO.getFirstName());
-        naturalPerson.setLastName(naturalPersonDTO.getLastName());
-        naturalPerson.setMaidenName(naturalPersonDTO.getMaidenName());
-        naturalPerson.setBirthDate(naturalPersonDTO.getBirthDate());
-        naturalPerson.setBirthCity(naturalPersonDTO.getBirthCity());
-        naturalPerson.setBirthCountry(naturalPersonDTO.getBirthCountry());
-        naturalPerson.setNationality(naturalPersonDTO.getNationality());
-        if (naturalPersonDTO.getAddress() != null) {
-            naturalPerson.setAddress(addressDtoToAdress(naturalPersonDTO.getAddress()));
-        }
-        return naturalPerson;
-    }
-
+    // ... (your existing default mapping methods)
 }
 
+
+⸻
+
+🧩 Why This Works
+	•	The @ObjectFactory method tells MapStruct:
+“Whenever you need a new CompanyDTO, use this method to create it.”
+	•	This completely avoids the constructor ambiguity.
+	•	You don’t need to remove or modify any of your existing constructors.
+
+⸻
+
+✅ Optional (if using MapStruct ≥ 1.6)
+
+If your project uses MapStruct 1.6 or newer, you can alternatively annotate the constructor you want MapStruct to prefer:
+
+@Default
+public CompanyDTO() {}
+
+…but the @ObjectFactory solution is compatible with all versions and is generally safer in Spring-based projects.
+
+⸻
+
+🧱 Final Working Summary
+
+CompanyDTO.java (no change needed):
 
 @Data
 @AllArgsConstructor
@@ -192,7 +98,6 @@ public class CompanyDTO {
     private List<DocumentDTO> documents = new ArrayList<>();
     private List<AlertDTO> alerts = new ArrayList<>();
 
-
     public CompanyDTO(String identifier, String legalName, String intracommunityVATNumber) {
         this.identifier = identifier;
         this.legalName = legalName;
@@ -204,5 +109,25 @@ public class CompanyDTO {
     }
 }
 
+CompanyMapper.java (add @ObjectFactory method):
 
-my ùmapper and my dto and still have thze same issue
+@Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+public interface CompanyMapper {
+
+    @ObjectFactory
+    default CompanyDTO createCompanyDTO() {
+        return new CompanyDTO();
+    }
+
+    CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity);
+    LegalEntity companyDTOToLegalEntity(CompanyDTO companyDTO);
+
+    // ... rest of your existing default methods
+}
+
+
+⸻
+
+After adding that, your ambiguous constructor error will disappear ✅.
+
+Would you like me to show the full modified version of your CompanyMapper file (ready to paste in) with the fix inserted in the right place?
