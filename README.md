@@ -1,5 +1,40 @@
 package eu.olkypay.business_registry.mapper;
 
+import eu.olkypay.business_registry.dto.company.CompanyDTO;
+import eu.olkypay.business_registry.model.company.LegalEntity;
+import javax.annotation.processing.Generated;
+import org.springframework.stereotype.Component;
+
+@Generated(
+    value = "org.mapstruct.ap.MappingProcessor",
+    date = "2025-10-27T15:48:38+0100",
+    comments = "version: 1.6.3, compiler: javac, environment: Java 21.0.8 (Microsoft)"
+)
+@Component
+public class CompanyMapperImpl implements CompanyMapper {
+
+    @Override
+    public CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity) {
+        if ( legalEntity == null ) {
+            return null;
+        }
+
+        CompanyDTO companyDTO = companyDTO();
+
+        return companyDTO;
+    }
+
+
+    sur le CompanyDTO companyDTO = companyDTO()  companyDTO() est en rouge
+
+    C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\mapper\CompanyMapper.java:19:16
+java: Ambiguous constructors found for creating eu.olkypay.business_registry.dto.company.CompanyDTO: CompanyDTO(java.lang.String, java.lang.String, java.lang.String), CompanyDTO(java.lang.String). Either declare parameterless constructor or annotate the default constructor with an annotation named @Default. 
+
+quick fix please :
+
+voici la classe : 
+package eu.olkypay.business_registry.mapper;
+
 import eu.olkypay.business_registry.dto.AlertDTO;
 import eu.olkypay.business_registry.dto.company.*;
 import eu.olkypay.business_registry.model.Alert;
@@ -168,143 +203,6 @@ public interface CompanyMapper {
     }
 
 }
-revois ça en faisant le mapping via l'annotation @Mapping 
-package eu.olkypay.business_registry.model.company;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import eu.olkypay.business_registry.model.Alert;
-import eu.olkypay.business_registry.model.AppClient;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-@Table(name = "legal_entity")
-public class LegalEntity implements Serializable {
-    @Id
-    @NotNull (message = "Identifier can't be null ")
-    private String identifier;
-    @NotNull  (message = "RCS can't be null ")
-    private String rcs;
-    private String status;
-    private String country;
-    private String legalName;
-    private String legalForm;
-    private Long capital;
-    private String activityCode; // a mettre en enum ??
-    private LocalDate registrationDate;
-    private String registrationCountry;
-    @OneToOne(cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "address", referencedColumnName = "id")
-    private Address address;
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "legalEntityParent", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Representative> representatives = new ArrayList<>();
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "legalEntityParent", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<BeneficialOwner> beneficialOwners = new ArrayList<>();
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentCompany", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<LegalEntity> secondaryOffices = new ArrayList<>();
-    @ManyToOne
-    @ToString.Exclude
-    @JsonIgnore
-    @JoinColumn(name = "legal_entity_parent_id")
-    private LegalEntity parentCompany;
-    private String legalEntityIdentifier;
-    private String intracommunityVATNumber;
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "legalEntityParent", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Document> documents = new ArrayList<>();
-    @OneToMany(mappedBy = "legalEntity", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    @JsonIgnore
-    @ToString.Exclude
-    private List<Alert> alerts;
-    @ManyToMany (mappedBy ="legalEntities")
-    @JsonIgnore
-    @ToString.Exclude
-    private List<AppClient> appClients;
-    public LegalEntity(String identifier, String legalName, String intracommunityVATNumber) {
-        this.identifier = identifier;
-        this.legalName = legalName;
-        this.intracommunityVATNumber = intracommunityVATNumber;
-    }
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
-    public void addDocument(Document document){
-        this.getDocuments().add(document);
-        document.setLegalEntityParent(this);
-    }
-
-    public void addAlert(Alert alert){
-        this.getAlerts().add(alert);
-        alert.setLegalEntity(this);
-    }
-    public void addRepresentative(Representative representative){
-        this.getRepresentatives().add(representative);
-        representative.setLegalEntityParent(this);
-    }
-    public void addSecondaryOffice(LegalEntity legalEntity){
-        this.getSecondaryOffices().add(legalEntity);
-        legalEntity.setParentCompany(this);
-    }
-    public void addBeneficialOwner(BeneficialOwner beneficialOwner){
-        this.getBeneficialOwners().add(beneficialOwner);
-        beneficialOwner.setLegalEntityParent(this);
-    }
-}
-
-package eu.olkypay.business_registry.dto.company;
-
-import eu.olkypay.business_registry.dto.AlertDTO;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class CompanyDTO {
-    private String identifier;
-    private String rcs;
-    private String legalName;
-    private String legalForm;
-    private String status;
-    private Long capital;
-    private String activityCode;
-    private LocalDate registrationDate;
-    private String registrationCountry;
-    private AddressDTO address;
-    private List<RepresentativeDTO> representatives = new ArrayList<>();
-    private List<BeneficialOwnerDTO> beneficialOwners = new ArrayList<>();
-    private List<CompanyDTO> secondaryOffices = new ArrayList<>();
-    private CompanyDTO principalOffice;
-    private String legalEntityIdentifier;
-    private String intracommunityVATNumber;
-    private List<DocumentDTO> documents = new ArrayList<>();
-    private List<AlertDTO> alerts = new ArrayList<>();
 
 
-    public CompanyDTO(String identifier, String legalName, String intracommunityVATNumber) {
-        this.identifier = identifier;
-        this.legalName = legalName;
-        this.intracommunityVATNumber = intracommunityVATNumber;
-    }
-
-    public CompanyDTO(String identifier) {
-        this.identifier = identifier;
-    }
-}
+ 
