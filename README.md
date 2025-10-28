@@ -1,55 +1,57 @@
-{
-  "timeStamp": "2025-10-28T09:20:24.8186945",
-  "message": "Identifier of entity 'eu.olkypay.business_registry.model.company.LegalEntity' must be manually assigned before calling 'persist()'",
-  "httpStatus": 400
-}
+    public CompanyDTO getDataForCountry(String country, String siren) throws EntityNotFoundException, BadRequestException {
+        if (siren == null) {
+            log.warn("Siren is null");
+            throw new BadRequestException("No company selected");
+        }
+        if (country == null || !(country.equals("FR") || country.equals("LU") || country.equals("GB")|| country.equals("CH"))) {
+            log.warn("Country is null or invalid");
+            throw new BadRequestException("Country is null or invalid");
+        }
+        if (!RegexCompanyNumber.companyNumberRegexMatch(country, siren)) {
+            throw new BadRequestException("The company number format is incorrect");
+        }
+        Optional<LegalEntity> legalEntity = companyRepository.findById(siren);
+        if (legalEntity.isPresent() && legalEntity.get().getCountry() != null && legalEntity.get().getCountry().equals(country)) {
+            log.info("The company {} is already present in the DB", siren);
+            if (legalEntity.get().getCreatedAt() == null) {
+                legalEntity.get().setCreatedAt(LocalDateTime.now().minusHours(1));
+            }
 
-@Table(name = "legal_entity")
-public class LegalEntity implements Serializable {
-    @Id
-    @NotNull (message = "Identifier can't be null ")
-    private String identifier;
-    @NotNull  (message = "RCS can't be null ")
-    private String rcs;
-    private String status;
-    private String country;
-    private String legalName;
-    private String legalForm;
-    private Long capital;
-    private String activityCode; // a mettre en enum ??
-    private LocalDate registrationDate;
-    private String registrationCountry;
-    @OneToOne(cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "address", referencedColumnName = "id")
-    private Address address;
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "legalEntityParent", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Representative> representatives = new ArrayList<>();
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "legalEntityParent", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<BeneficialOwner> beneficialOwners = new ArrayList<>();
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "parentCompany", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<LegalEntity> secondaryOffices = new ArrayList<>();
-    @ManyToOne
-    @ToString.Exclude
-    @JsonIgnore
-    @JoinColumn(name = "legal_entity_parent_id")
-    private LegalEntity parentCompany;
-    private String legalEntityIdentifier;
-    private String intracommunityVATNumber;
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "legalEntityParent", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    private List<Document> documents = new ArrayList<>();
-    @OneToMany(mappedBy = "legalEntity", cascade =  {CascadeType.PERSIST, CascadeType.MERGE})
-    @JsonIgnore
-    @ToString.Exclude
-    private List<Alert> alerts;
-    @ManyToMany (mappedBy ="legalEntities")
-    @JsonIgnore
-    @ToString.Exclude
-    private List<AppClient> appClients;
-    public LegalEntity(String identifier, String legalName, String intracommunityVATNumber) {
-        this.identifier = identifier;
-        this.legalName = legalName;
-        this.intracommunityVATNumber = intracommunityVATNumber;
+            if (ChronoUnit.MINUTES.between(legalEntity.get().getCreatedAt(), LocalDateTime.now()) <= DIFF_DATE_MAX) {
+                log.info("Company {}'s stored in db has been returned", siren);
+                return companyMapper.legalEntityToCompanyDTO(legalEntity.get());
+            }
+            else {
+                log.info("Company {}'s information will be refreshed", siren);
+            }
+        }
+        List<Connector> connectors = connectorRepository.findActiveConnectorByCountry(country, "REFERENTIAL");
+        if (connectors.isEmpty()) {
+            log.warn("No referential connector for {}", country);
+            throw new EntityNotFoundException("No referential connector for " + country);
+        }
+        try {
+            LegalEntity company = new LegalEntity();
+            for (Connector connector : connectors) {
+                log.info("Connector {}", connector.getServiceName());
+                String beanName = connector.getServiceName();
+                if (connector.getApiToken() == null || connector.getApiToken().getExpiratedAt() == null || connector.getApiToken().getExpiratedAt().compareTo(LocalDateTime.now()) < 0 || connector.getApiToken().getToken().isEmpty()) {
+                    log.info("Token generation ...");
+                    tokenService.generateToken(connector);
+                }
+                ConnectorInterface serviceConnector = (ConnectorInterface) context.getBean(beanName, ConnectorInterface.class);
+                CompanyDTO companyDTO = serviceConnector.getData(connector, siren);
+
+                company = companyMapper.companyDtoToCompany(company, companyDTO);
+            }
+            if (company.getIdentifier() == null) {
+                throw new EntityNotFoundException("Company " + siren + " not found");
+            }
+            company.setCountry(country);
+            company.setCreatedAt(LocalDateTime.now());
+            companyRepository.save(company);
+            return companyMapper.legalEntityToCompanyDTO(company);
+        } catch (Exception exception) {
+            throw new BadRequestException(exception.getMessage());
+        }
     }
-
-
-IT4S THE ERROR THAT Identifier of entity 'eu.olkypay.business_registry.model.company.LegalEntity' must be manually assigned before calling 'persist()
