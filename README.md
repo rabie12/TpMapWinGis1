@@ -56,6 +56,5 @@
         }
     }
 
-            companyRepository.save(company); the identifier have already value on this instruction but it generate the issue 
 
-    
+    optimize this and give me the change and for country if not nuyll to uppercase
