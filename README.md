@@ -1,152 +1,70 @@
-Excellent — let’s clean up and optimize your getDataForCountry() method while keeping the same logic, making it more readable, efficient, and safe (especially around persistence and country handling).
+Parfait 👏 — tu veux donc des exemples réels ou réalistes de numéros d’identification d’entreprises (SIREN, RCS, Company Number, UID) pour tester tes APIs pour les 4 pays : 🇫🇷 France, 🇱🇺 Luxembourg, 🇬🇧 Royaume-Uni et 🇨🇭 Suisse.
 
-I’ll also make sure the country is automatically uppercased if not null.
+Voici un tableau complet et prêt à l’emploi 👇
 
 ⸻
 
-✅ Optimized Version
+✅ Exemples de numéros d’entreprises valides pour tests API
 
-Here’s the improved method with comments explaining each change:
+Pays	Type d’identifiant	Exemple valide	Exemple invalide	Remarques
+🇫🇷 France (FR)	SIREN	552100554	55210055 (8 chiffres)	9 chiffres uniquement. Ex : 552100554 = L’Oréal.
+🇫🇷 France (FR)	SIRET (SIREN + NIC)	55210055400013	5521005540001	Facultatif si tu veux tester le niveau établissement.
+🇱🇺 Luxembourg (LU)	RCS Luxembourg	B123456	123456	Format : une lettre (A ou B) suivie de 3–6 chiffres.
+🇬🇧 Royaume-Uni (GB)	Company Number	01234567	1234567A (mauvais format)	8 caractères. Ex : 01234567 = test Companies House.
+🇬🇧 Royaume-Uni (GB)	Company Number (écossais)	SC123456	SC12345	Certaines régions ont un préfixe (SC, NI, OC etc.).
+🇨🇭 Suisse (CH)	UID (CHE)	CHE-105.688.587	CHE105688587	Format officiel : CHE-XXX.XXX.XXX. Ex : Nestlé = CHE-105.909.215.
 
-public CompanyDTO getDataForCountry(String country, String siren)
-        throws EntityNotFoundException, BadRequestException {
 
-    // --- 1️⃣ Validate inputs early ---
-    if (siren == null || siren.isBlank()) {
-        log.warn("Siren is null or blank");
-        throw new BadRequestException("No company selected");
-    }
+⸻
 
-    if (country == null) {
-        log.warn("Country is null");
-        throw new BadRequestException("Country is null or invalid");
-    }
+💡 Astuce pour tes tests API
 
-    // Always uppercase the country to standardize
-    country = country.toUpperCase(Locale.ROOT);
+Tu peux créer un petit JSON de test par pays, par exemple :
 
-    if (!Set.of("FR", "LU", "GB", "CH").contains(country)) {
-        log.warn("Invalid country code: {}", country);
-        throw new BadRequestException("Country is invalid");
-    }
+🇫🇷 France
 
-    if (!RegexCompanyNumber.companyNumberRegexMatch(country, siren)) {
-        throw new BadRequestException("The company number format is incorrect");
-    }
+{
+  "country": "FR",
+  "identifier": "552100554"
+}
 
-    // --- 2️⃣ Check existing company in DB ---
-    Optional<LegalEntity> existingEntityOpt = companyRepository.findById(siren);
-    if (existingEntityOpt.isPresent()) {
-        LegalEntity existingEntity = existingEntityOpt.get();
-        String existingCountry = existingEntity.getCountry();
+🇱🇺 Luxembourg
 
-        if (country.equalsIgnoreCase(existingCountry)) {
-            log.info("Company {} is already present in the DB", siren);
+{
+  "country": "LU",
+  "identifier": "B123456"
+}
 
-            if (existingEntity.getCreatedAt() == null) {
-                existingEntity.setCreatedAt(LocalDateTime.now().minusHours(1));
-            }
+🇬🇧 Royaume-Uni
 
-            long minutesSinceCreation = ChronoUnit.MINUTES.between(
-                    existingEntity.getCreatedAt(),
-                    LocalDateTime.now()
-            );
+{
+  "country": "GB",
+  "identifier": "SC123456"
+}
 
-            if (minutesSinceCreation <= DIFF_DATE_MAX) {
-                log.info("Company {}'s stored data returned (age: {} minutes)", siren, minutesSinceCreation);
-                return companyMapper.legalEntityToCompanyDTO(existingEntity);
-            }
+🇨🇭 Suisse
 
-            log.info("Company {}'s information will be refreshed", siren);
-        }
-    }
-
-    // --- 3️⃣ Fetch connector(s) ---
-    List<Connector> connectors = connectorRepository.findActiveConnectorByCountry(country, "REFERENTIAL");
-    if (connectors.isEmpty()) {
-        log.warn("No referential connector for {}", country);
-        throw new EntityNotFoundException("No referential connector for " + country);
-    }
-
-    // --- 4️⃣ Retrieve and map company data ---
-    LegalEntity company = new LegalEntity();
-
-    for (Connector connector : connectors) {
-        log.info("Using connector: {}", connector.getServiceName());
-
-        // Refresh token if needed
-        if (connector.getApiToken() == null ||
-            connector.getApiToken().getExpiratedAt() == null ||
-            connector.getApiToken().getExpiratedAt().isBefore(LocalDateTime.now()) ||
-            connector.getApiToken().getToken().isEmpty()) {
-
-            log.info("Generating new API token for connector {}", connector.getServiceName());
-            tokenService.generateToken(connector);
-        }
-
-        ConnectorInterface serviceConnector =
-                (ConnectorInterface) context.getBean(connector.getServiceName(), ConnectorInterface.class);
-
-        CompanyDTO connectorData = serviceConnector.getData(connector, siren);
-        company = companyMapper.companyDtoToCompany(company, connectorData);
-    }
-
-    // --- 5️⃣ Final validation & persistence ---
-    if (company.getIdentifier() == null) {
-        throw new EntityNotFoundException("Company " + siren + " not found");
-    }
-
-    company.setCountry(country);
-    company.setCreatedAt(LocalDateTime.now());
-
-    companyRepository.save(company);
-
-    return companyMapper.legalEntityToCompanyDTO(company);
+{
+  "country": "CH",
+  "identifier": "CHE-105.688.587"
 }
 
 
 ⸻
 
-🔧 Key Improvements
+🧩 Bonus : expressions régulières simples pour valider
 
-🧠 1. Input Validation Simplified
-	•	All null / invalid checks moved to the top for readability.
-	•	Unified and normalized country to uppercase with:
+Si tu veux renforcer ton validateur RegexCompanyNumber.companyNumberRegexMatch() :
 
-country = country.toUpperCase(Locale.ROOT);
+switch (country) {
+    case "FR": return siren.matches("^[0-9]{9}$");
+    case "LU": return siren.matches("^[A-Z]{1}[0-9]{3,6}$");
+    case "GB": return siren.matches("^[A-Z0-9]{6,8}$");
+    case "CH": return siren.matches("^CHE-[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}$");
+    default: return false;
+}
 
-
-
-⚙️ 2. Cleaner DB lookup
-	•	Simplified Optional handling.
-	•	Moved duplicated log.info() and date logic into a single block.
-
-🧩 3. Connector handling streamlined
-	•	Loop logic simplified with clear logs.
-	•	Token refresh check made more readable with .isBefore().
-
-💾 4. Safer persistence
-	•	Keeps your same save logic but makes sure mapping is done cleanly.
-	•	No logic changes — just clearer structure.
-
-📜 5. Logging improvements
-	•	More consistent, meaningful logging (with minutesSinceCreation, connector names, etc.)
 
 ⸻
 
-⚠️ Optional Improvement (Recommended)
-
-If you keep seeing that “Identifier must be manually assigned” error:
-	•	Ensure companyMapper.companyDtoToCompany() sets identifier correctly from companyDTO (not null, not overwritten by null).
-	•	If the company already exists, load it from DB and update instead of creating a new one:
-
-LegalEntity company = companyRepository.findById(siren).orElse(new LegalEntity());
-
-
-
-That prevents accidental “new entity” persistence attempts for existing IDs.
-
-⸻
-
-Would you like me to include that “update-or-insert” pattern in the final optimized method?
-It would prevent Hibernate from ever trying to persist() a duplicate ID again.
+Souhaites-tu que je te génère aussi un jeu de données JSON complet (plusieurs sociétés par pays) pour tester des appels batch (par ex. /companies/import ou /companies/search)?
