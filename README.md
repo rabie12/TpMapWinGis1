@@ -55,3 +55,7 @@
             throw new BadRequestException(exception.getMessage());
         }
     }
+
+            companyRepository.save(company); the identifier have already value on this instruction but it generate the issue 
+
+    
