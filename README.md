@@ -597,6 +597,18 @@ databaseChangeLog:
               constraintName: fk_representative_legal_entity_parent
               referencedColumnNames: identifier
               referencedTableName: legal_entity
+
+      databaseChangeLog:
+  - changeSet:
+      id: 015-add-status-fiel-in-company.yaml
+      author: ILS
+      changes:
+        - addColumn :
+            tableName: legal_entity
+            columns:
+              - column:
+                  name : status
+                  type: VARCHAR(255)
       i will send the remaining 
 
 
