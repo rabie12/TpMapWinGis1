@@ -1,3 +1,3 @@
-Le baseline fonctionne correctement.
-J’ai nettoyé la base de données locale, puis recréé la structure à partir du baseline Liquibase.
-L’exécution des scripts de migration (changeSets) s’est déroulée sans erreur et l’ensemble du schéma a été correctement généré.
+e crois que Swagger JAVA ne considère pas un string comme un string nullable, alors qu'en TypeScript justement si, est ce que c vraix
+
+sachant que j'ai ce retour
