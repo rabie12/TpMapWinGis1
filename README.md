@@ -90,7 +90,6 @@ address1 = null	null	"address1": null	nullable: true ✅
 address1 = ""	chaîne vide	"address1": ""	nullable: false
 pas de champ dans l’objet	champ inexistant	(absent)	non documenté ❌
 
+toutes les données 
 
-⸻
-
-Souhaites-tu que je te montre un exemple complet d’une entité (comme Address) bien configurée pour Swagger + Jackson (afin d’uniformiser ce comportement sur toutes les applis) ?
+toutes les données qui sont stockées en base de données sont issue des retours des api externes qu'on récupère et on stocke je ne sais pas si les retours qui c null ou vides quand on l'info mais dans notre bd local c null et pas vide l'appliaction qui va appelé nos api fera du node via react je dois trouvé un moyen pour les informés si c String | null, peut tu mùe proposer une solution vu que adresse1 c juste un exmple qui fait parti d'un objet de retour de l'api
