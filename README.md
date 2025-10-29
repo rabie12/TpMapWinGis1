@@ -144,95 +144,209 @@ Ce serait une base de référence pour ton équipe.
 
 
 
-  "identifier": "string",
-  "rcs": "string",
-  "status": "string",
-  "country": "string",
-  "legalName": "string",
-  "legalForm": "string",
-  "capital": 0,
-  "activityCode": "string",
-  "registrationDate": "2025-10-29",
-  "registrationCountry": "string",
-  "address": {
-    "id": 0,
-    "addressLine1": "string",
-    "addressLine2": "string",
-    "addressLine3": "string",
-    "zipCode": "string",
-    "city": "string",
-    "country": "string"
-  },
-  "representatives": [
-    {
-      "id": 0,
-      "role": "string",
-      "naturalPerson": {
-        "id": 0,
-        "firstName": "string",
-        "lastName": "string",
-        "maidenName": "string",
-        "birthDate": "2025-10-29",
-        "birthCity": "string",
-        "birthCountry": "string",
-        "nationality": "string",
-        "address": {
-          "id": 0,
-          "addressLine1": "string",
-          "addressLine2": "string",
-          "addressLine3": "string",
-          "zipCode": "string",
-          "city": "string",
-          "country": "string"
+Excellent 👌 — you’ve provided a full example of the API response structure for your backend (the “OlkyRegister” service).
+
+Let’s now build a complete React app that:
+	1.	Lets the user select a country and enter a SIREN.
+	2.	Calls your backend endpoint (e.g. /api/company/getDataForCountry).
+	3.	Displays the full JSON response (like the one you pasted) in a clean, formatted way.
+
+⸻
+
+🧱 1. Create the app
+
+npx create-react-app olky-register-ui
+cd olky-register-ui
+npm install axios
+npm start
+
+
+⸻
+
+📁 2. src/App.js
+
+Here’s the complete working code for your app 👇
+
+import React, { useState } from "react";
+import axios from "axios";
+import "./App.css";
+
+function App() {
+  const [country, setCountry] = useState("FR");
+  const [siren, setSiren] = useState("");
+  const [company, setCompany] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const countries = [
+    { code: "FR", name: "France" },
+    { code: "LU", name: "Luxembourg" },
+    { code: "GB", name: "United Kingdom" },
+    { code: "CH", name: "Switzerland" },
+  ];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setCompany(null);
+
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/company/getDataForCountry`,
+        {
+          params: {
+            country: country,
+            siren: siren,
+          },
         }
-      },
-      "legalEntity": "string"
+      );
+      setCompany(response.data);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Error fetching company data");
+    } finally {
+      setLoading(false);
     }
-  ],
-  "beneficialOwners": [
-    {
-      "id": 0,
-      "percentageOfOwnership": 0,
-      "natureOfOwnership": "string",
-      "naturalPerson": {
-        "id": 0,
-        "firstName": "string",
-        "lastName": "string",
-        "maidenName": "string",
-        "birthDate": "2025-10-29",
-        "birthCity": "string",
-        "birthCountry": "string",
-        "nationality": "string",
-        "address": {
-          "id": 0,
-          "addressLine1": "string",
-          "addressLine2": "string",
-          "addressLine3": "string",
-          "zipCode": "string",
-          "city": "string",
-          "country": "string"
-        }
-      },
-      "legalEntity": {},
-      "startDate": "2025-10-29",
-      "endDate": "2025-10-29"
-    }
-  ],
-  "secondaryOffices": [
-    "string"
-  ],
-  "legalEntityIdentifier": "string",
-  "intracommunityVATNumber": "string",
-  "documents": [
-    {
-      "identifier": "string",
-      "type": "Acte",
-      "name": "string",
-      "creationDate": "2025-10-29T16:07:40.544Z",
-      "updatedDate": "2025-10-29T16:07:40.544Z",
-      "details": "string"
-    }
-  ],
-  "createdAt": "2025-10-29T16:07:40.544Z",
-  "updatedAt": "2025-10-29T16:07:40.544Z"
+  };
+
+  return (
+    <div className="App">
+      <h1>OlkyRegister Lookup</h1>
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Country:</label>
+          <select value={country} onChange={(e) => setCountry(e.target.value)}>
+            {countries.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>SIREN:</label>
+          <input
+            type="text"
+            value={siren}
+            onChange={(e) => setSiren(e.target.value)}
+            placeholder="Enter company number"
+          />
+        </div>
+
+        <button type="submit" disabled={loading || !siren}>
+          {loading ? "Loading..." : "Search"}
+        </button>
+      </form>
+
+      {error && <p className="error">❌ {error}</p>}
+
+      {company && (
+        <div className="result">
+          <h2>Company Information</h2>
+          <pre>{JSON.stringify(company, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
 }
+
+export default App;
+
+
+⸻
+
+🎨 3. src/App.css
+
+You can add this for a simple layout:
+
+.App {
+  max-width: 800px;
+  margin: 40px auto;
+  font-family: Arial, sans-serif;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+input, select {
+  padding: 8px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 10px;
+  background-color: #2b6cb0;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #ccc;
+}
+
+.error {
+  color: red;
+  margin-top: 10px;
+}
+
+.result {
+  margin-top: 20px;
+  text-align: left;
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+pre {
+  background: #fff;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+
+⸻
+
+⚙️ 4. Expected API Endpoint
+
+Your backend should expose something like:
+
+GET /api/company/getDataForCountry?country=FR&siren=123456789
+
+and return JSON (like your example).
+If you use Spring Boot, it should have CORS enabled for localhost development:
+
+@CrossOrigin(origins = "http://localhost:3000")
+@RestController
+@RequestMapping("/api/company")
+public class CompanyController {
+    @GetMapping("/getDataForCountry")
+    public CompanyDTO getDataForCountry(@RequestParam String country, @RequestParam String siren) {
+        return companyService.getDataForCountry(country, siren);
+    }
+}
+
+
+⸻
+
+✅ Result
+
+When you run your app:
+	•	Select France / Luxembourg / GB / CH
+	•	Enter a SIREN
+	•	Click Search
+	•	You’ll see the full structured JSON response (like your example).
+
+⸻
+
+Would you like me to extend the app to show key fields (e.g., legalName, country, address.city) in a clean card view instead of full JSON? That would make it friendlier for users or demos.
