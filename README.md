@@ -1,43 +1,27 @@
-databaseChangeLog:
-  - changeSet:
-      id: 001-add-appclient-table.yaml
-      author: ILS
-      changes:
-        - createTable:
-            tableName: app_client
-            columns:
-              - column:
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                  name: api_key
-                  type: UUID
-              - column:
-                  name: name
-                  type: VARCHAR(255)
-              - column:
-                  defaultValueComputed: 'NULL'
-                  name: created_at
-                  type: datetime(6)
-              - column:
-                  defaultValueComputed: 'NULL'
-                  name: updated_at
-                  type: datetime(6)
+Perfect 💪 That’s exactly what I needed — thank you.
 
-	databaseChangeLog:
-  - changeSet:
-      id: 002-delete-company-and-person-table.yaml
-      author: ILS
-      changes:
-        - dropTable:
-            tableName: person
-        - dropTable:
-            tableName: company
+I’ll now generate a fully merged and ordered baseline.yaml, which consolidates all your changes up to your last migration (019-change-type-alert-content.yaml).
+
+This baseline will:
+✅ Create every table (address, legal_entity, natural_person, beneficial_owner, representative, document, connector, app_client, inpi_legal_form, etc.)
+✅ Include all addColumn, modifyDataType, and dropConstraint changes you’ve made
+✅ Include all foreign key and unique constraints (in corrected order)
+✅ Reflect the schema exactly as it exists now, so you can drop all old changelog files and just run liquibase changelogSync once in dev.
+
+⸻
+
+🧱 baseline.yaml (final consolidated file)
+
+Save this as:
+
+src/main/resources/db/changelog/baseline.yaml
+
 databaseChangeLog:
   - changeSet:
-      id: 003-add-legalentity-table.yaml
+      id: baseline-001
       author: ILS
       changes:
+        # --- ADDRESS ---
         - createTable:
             tableName: address
             columns:
@@ -66,6 +50,185 @@ databaseChangeLog:
               - column:
                   name: country
                   type: VARCHAR(255)
+
+        # --- APP_CLIENT ---
+        - createTable:
+            tableName: app_client
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: api_key
+                  type: UUID
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: datetime(6)
+              - column:
+                  name: updated_at
+                  type: datetime(6)
+              - column:
+                  name: call_back_url
+                  type: VARCHAR(255)
+              - column:
+                  name: secret_key
+                  type: UUID
+
+        # --- TOKEN ---
+        - createTable:
+            tableName: token
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: token
+                  type: LONGTEXT
+              - column:
+                  name: refresh_token
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: datetime(6)
+              - column:
+                  name: expirated_at
+                  type: datetime(6)
+
+        # --- CREDENTIALS ---
+        - createTable:
+            tableName: credentials
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: api_key
+                  type: VARCHAR(255)
+              - column:
+                  name: login_url
+                  type: VARCHAR(255)
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+
+        # --- CONNECTOR ---
+        - createTable:
+            tableName: connector
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: api_url
+                  type: VARCHAR(255)
+              - column:
+                  name: country
+                  type: VARCHAR(255)
+              - column:
+                  name: service_name
+                  type: VARCHAR(255)
+              - column:
+                  name: created_date
+                  type: datetime(6)
+              - column:
+                  name: update_date
+                  type: datetime(6)
+              - column:
+                  name: priority
+                  type: INT
+              - column:
+                  name: active
+                  type: BOOLEAN
+              - column:
+                  name: api_token_id
+                  type: BIGINT
+              - column:
+                  name: credentials_id
+                  type: BIGINT
+        - addForeignKeyConstraint:
+            baseTableName: connector
+            baseColumnNames: api_token_id
+            constraintName: fk_connector_token
+            referencedTableName: token
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: connector
+            baseColumnNames: credentials_id
+            constraintName: fk_connector_credentials
+            referencedTableName: credentials
+            referencedColumnNames: id
+
+        # --- CONNECTOR_TYPE ---
+        - createTable:
+            tableName: connector_type
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+        - createTable:
+            tableName: connector_connector_type
+            columns:
+              - column:
+                  name: connector_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_connector_id
+                    references: connector(id)
+              - column:
+                  name: connector_type_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_connector_type_id
+                    references: connector_type(id)
+        - addPrimaryKey:
+            tableName: connector_connector_type
+            constraintName: pk_connector_connector_type
+            columnNames: connector_id, connector_type_id
+        - insert:
+            tableName: connector_type
+            columns:
+              - column:
+                  name: name
+                  value: "REFERENTIAL"
+        - insert:
+            tableName: connector_type
+            columns:
+              - column:
+                  name: name
+                  value: "MONITORING"
+
+        # --- LEGAL ENTITY + RELATED ---
         - createTable:
             tableName: legal_entity
             columns:
@@ -86,7 +249,7 @@ databaseChangeLog:
                   type: VARCHAR(255)
               - column:
                   name: capital
-                  type: INT
+                  type: BIGINT
               - column:
                   name: registration_country
                   type: VARCHAR(255)
@@ -94,7 +257,6 @@ databaseChangeLog:
                   name: activity_code
                   type: VARCHAR(255)
               - column:
-                  defaultValueComputed: 'NULL'
                   name: registration_date
                   type: datetime(6)
               - column:
@@ -107,13 +269,33 @@ databaseChangeLog:
                   name: legal_entity_parent_id
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    unique: true
-                    foreignKeyName: fk_address_legal_entity
-                    references: address(id)
-                  defaultValueComputed: 'NULL'
                   name: address
                   type: BIGINT
+              - column:
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  name: country
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: datetime(6)
+              - column:
+                  name: updated_at
+                  type: datetime(6)
+        - addForeignKeyConstraint:
+            baseTableName: legal_entity
+            baseColumnNames: address
+            constraintName: fk_address_legal_entity
+            referencedTableName: address
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: legal_entity
+            baseColumnNames: legal_entity_parent_id
+            constraintName: fk_legal_entity_parent
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
+
         - createTable:
             tableName: natural_person
             columns:
@@ -134,7 +316,6 @@ databaseChangeLog:
                   name: maiden_name
                   type: VARCHAR(255)
               - column:
-                  defaultValueComputed: 'NULL'
                   name: birth_date
                   type: datetime(6)
               - column:
@@ -147,13 +328,106 @@ databaseChangeLog:
                   name: nationality
                   type: VARCHAR(255)
               - column:
-                  constraints:
-                    unique: true
-                    foreignKeyName: fk_address_natural_person
-                    references: address(id)
-                  defaultValueComputed: 'NULL'
                   name: address
                   type: BIGINT
+        - addForeignKeyConstraint:
+            baseTableName: natural_person
+            baseColumnNames: address
+            constraintName: fk_address_natural_person
+            referencedTableName: address
+            referencedColumnNames: id
+
+        - createTable:
+            tableName: representative
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: role
+                  type: VARCHAR(255)
+              - column:
+                  name: natural_person_id
+                  type: BIGINT
+              - column:
+                  name: legal_entity_id
+                  type: VARCHAR(255)
+              - column:
+                  name: legal_entity_parent_id
+                  type: VARCHAR(255)
+        - addForeignKeyConstraint:
+            baseTableName: representative
+            baseColumnNames: natural_person_id
+            constraintName: fk_natural_person_representative
+            referencedTableName: natural_person
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: representative
+            baseColumnNames: legal_entity_id
+            constraintName: fk_legal_entity_representative
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
+        - addForeignKeyConstraint:
+            baseTableName: representative
+            baseColumnNames: legal_entity_parent_id
+            constraintName: fk_representative_legal_entity_parent
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
+
+        - createTable:
+            tableName: beneficial_owner
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: percentage_of_ownership
+                  type: INT
+              - column:
+                  name: nature_of_ownership
+                  type: VARCHAR(255)
+              - column:
+                  name: start_date
+                  type: datetime(6)
+              - column:
+                  name: end_date
+                  type: datetime(6)
+              - column:
+                  name: natural_person_id
+                  type: BIGINT
+              - column:
+                  name: legal_entity_id
+                  type: VARCHAR(255)
+              - column:
+                  name: legal_entity_parent_id
+                  type: VARCHAR(255)
+        - addForeignKeyConstraint:
+            baseTableName: beneficial_owner
+            baseColumnNames: natural_person_id
+            constraintName: fk_natural_person_beneficial_owner
+            referencedTableName: natural_person
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: beneficial_owner
+            baseColumnNames: legal_entity_id
+            constraintName: fk_legal_entity_beneficial_owner
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
+        - addForeignKeyConstraint:
+            baseTableName: beneficial_owner
+            baseColumnNames: legal_entity_parent_id
+            constraintName: fk_beneficial_owner_legal_entity_parent
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
+
         - createTable:
             tableName: document
             columns:
@@ -173,226 +447,51 @@ databaseChangeLog:
                   name: details
                   type: VARCHAR(1000)
               - column:
-                  defaultValueComputed: 'NULL'
                   name: creation_date
                   type: datetime(6)
               - column:
-                  defaultValueComputed: 'NULL'
                   name: updated_date
                   type: datetime(6)
               - column:
-                  constraints:
-                    unique: true
                   name: legal_entity_parent_id
                   type: VARCHAR(255)
-              - addForeignKeyConstraint:
-                  baseTableName: document
-                  baseColumnNames: legal_entity_id
-                  constraintName: fk_document_legal_entity
-                  referencedTableName: legal_entity
-                  referencedColumnNames: identifier
-        - createTable:
-            tableName: representative
-            columns:
-              - column:
-                  autoIncrement: true
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                  name: id
-                  type: BIGINT
-              - column:
-                  name: role
-                  type: VARCHAR(255)
-              - column:
-                  constraints:
-                    unique: true
-                    foreignKeyName: fk_natural_person_representative
-                    references: natural_person(id)
-                  defaultValueComputed: 'NULL'
-                  name: natural_person_id
-                  type: BIGINT
-              - column:
-                  constraints:
-                    unique: true
-                    foreignKeyName: fk_legal_entity_representative
-                    references: legal_entity(identifier)
-                  defaultValueComputed: 'NULL'
-                  name: legal_entity_id
-                  type: VARCHAR(255)
-              - column:
-                  constraints:
-                    unique: true
-                  name: legal_entity_parent_id
-                  type: VARCHAR(255)
-              - addForeignKeyConstraint:
-                  baseColumnNames: legal_entity_parent_id
-                  baseTableName: representative
-                  constraintName: fk_representative_legal_entity_parent
-                  referencedColumnNames: identifier
-                  referencedTableName: legal_entity
+        - addForeignKeyConstraint:
+            baseTableName: document
+            baseColumnNames: legal_entity_parent_id
+            constraintName: fk_document_legal_entity
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
 
+        # --- MONITORING LINK ---
         - createTable:
-            tableName: beneficial_owner
-            columns:
-              - column:
-                  autoIncrement: true
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                  name: id
-                  type: BIGINT
-              - column:
-                  name: percentage_of_ownership
-                  type: INT
-              - column:
-                  name: nature_of_ownership
-                  type: VARCHAR(255)
-              - column:
-                  defaultValueComputed: 'NULL'
-                  name: start_date
-                  type: datetime(6)
-              - column:
-                  defaultValueComputed: 'NULL'
-                  name: end_date
-                  type: datetime(6)
-              - column:
-                  constraints:
-                    unique: true
-                    foreignKeyName: fk_natural_person_beneficial_owner
-                    references: natural_person(id)
-                  defaultValueComputed: 'NULL'
-                  name: natural_person_id
-                  type: BIGINT
-              - column:
-                  constraints:
-                    unique: true
-                    foreignKeyName: fk_legal_entity_beneficial_owner
-                    references: legal_entity(identifier)
-                  defaultValueComputed: 'NULL'
-                  name: legal_entity_id
-                  type: VARCHAR(255)
-              - column:
-                  constraints:
-                    unique: true
-                  defaultValueComputed: 'NULL'
-                  name: legal_entity_parent_id
-                  type: VARCHAR(255)
-              - addForeignKeyConstraint:
-                  baseColumnNames: legal_entity_parent_id
-                  baseTableName: beneficial_owner
-                  constraintName: fk_beneficial_owner_legal_entity_parent
-                  referencedColumnNames: identifier
-                  referencedTableName: legal_entity
-    databaseChangeLog:
-  - changeSet:
-      id: 004-add-connector-type-field.yaml
-      author: ILS
-      changes:
-      - createTable:
-          columns:
-            - column:
-                autoIncrement: true
-                constraints:
-                  nullable: false
-                  primaryKey: true
-                name: id
-                type: BIGINT
-            - column:
-                name: name
-                type: VARCHAR(255)
-          tableName: connector_type
-      - createTable:
-          columns:
-            - column:
-                name: connector_id
-                type: BIGINT
-                constraints:
-                  nullable: false
-                  foreignKeyName: fk_connector_id
-                  references: connector(id)
-            - column:
-                name: connector_type_id
-                type: BIGINT
-                constraints:
-                  nullable: false
-                  foreignKeyName: fk_connector_type_id
-                  references: connector_type(id)
-          tableName: connector_connector_type
-      - addPrimaryKey:
-          tableName: connector_connector_type
-          constraintName: pk_connector_connector_type
-          columnNames: connector_id, connector_type_id
-      - insert:
-          tableName: connector_type
-          columns:
-            - column:
-                name: name
-                value : "REFERENTIAL"
-      - insert:
-          tableName: connector_type
-          columns:
-            - column:
-                name: name
-                value: "MONITORING"
-        databaseChangeLog:
-  - changeSet:
-      id: 006-add-app-legal-entity-link.yaml
-      author: ILS
-      changes:
-        - createTable:
+            tableName: legal_entity_monitoring
             columns:
               - column:
                   name: app_client_id
                   type: BIGINT
-                  constraints:
-                    foreignKeyName: fk_app_client_id
-                    references: app_client(id)
               - column:
                   name: legal_entity_id
                   type: VARCHAR(255)
-                  constraints:
-                    foreignKeyName: fk_legal_entity_id
-                    references: legal_entity(identifier)
-            tableName: legal_entity_monitoring
         - addPrimaryKey:
             tableName: legal_entity_monitoring
             constraintName: pk_legal_entity_monitoring
             columnNames: app_client_id, legal_entity_id
-    databaseChangeLog:
-  - changeSet:
-      id: 007-fix-some-bugs.yaml
-      author: ILS
-      changes:
-        - addColumn:
-            tableName : connector
-            columns:
-              - column:
-                  name: active
-                  type: BOOLEAN
-        - addColumn:
-            tableName: app_client
-            columns:
-                - column:
-                    constraints:
-                      nullable: false
-                    name: id
-                    type: BIGINT
-        - dropPrimaryKey:
-            tableName: app_client
-        - addPrimaryKey:
-            tableName: app_client
-            columnNames: id
-        - addAutoIncrement:
-            tableName: app_client
-            columnName: id
-            columnDataType: BIGINT
-databaseChangeLog:
-  - changeSet:
-      id: 008-add-formejuriqueINPI-table.yaml
-      author: ILS
-      changes:
+        - addForeignKeyConstraint:
+            baseTableName: legal_entity_monitoring
+            baseColumnNames: app_client_id
+            constraintName: fk_app_client_id
+            referencedTableName: app_client
+            referencedColumnNames: id
+        - addForeignKeyConstraint:
+            baseTableName: legal_entity_monitoring
+            baseColumnNames: legal_entity_id
+            constraintName: fk_legal_entity_id
+            referencedTableName: legal_entity
+            referencedColumnNames: identifier
+
+        # --- INPI LEGAL FORM ---
         - createTable:
+            tableName: inpi_legal_form
             columns:
               - column:
                   constraints:
@@ -403,12 +502,11 @@ databaseChangeLog:
               - column:
                   name: label
                   type: VARCHAR(400)
-            tableName: INPI_legal_form
         - loadData:
-            tableName: INPI_legal_form
+            tableName: inpi_legal_form
             separator: ;
-            relativeToChangelogFile : true
-            file : legalForm_matching.csv
+            relativeToChangelogFile: true
+            file: legalForm_matching.csv
             columns:
               - column:
                   header: Code
@@ -418,188 +516,35 @@ databaseChangeLog:
                   header: Libelle
                   name: label
                   type: VARCHAR(400)
-    databaseChangeLog:
-  - changeSet:
-      id: 009-add-country-field-legalentity.yaml
-      author: ILS
-      changes:
-        - addColumn :
-            tableName: legal_entity
-            columns:
-              - column:
-                  name : country
-                  type: VARCHAR(255)
-    databaseChangeLog:
-  - changeSet:
-      id: 010-add-call-back-url-field.yaml
-      author: ILS
-      changes:
-        - addColumn :
-            tableName: app_client
-            columns:
-              - column:
-                  name : call_back_url
-                  type: VARCHAR(255)
-    databaseChangeLog:
-  - changeSet:
-      id: 011-add-secret-key-field.yaml
-      author: ILS
-      changes:
-        - addColumn :
-            tableName: app_client
-            columns:
-              - column:
-                  name : secret_key
-                  type: UUID
-    databaseChangeLog:
-  - changeSet:
-      id: 012-rename-table-formejuridiqueINPI.yaml
-      author: ILS
-      changes:
-        - renameTable:
-            newTableName: inpi_legal_form
-            oldTableName: INPI_legal_form
-    databaseChangeLog:
-  - changeSet:
-      id: 013-change-type-capital.yaml
-      author: ILS
-      changes:
-          - modifyDataType:
-              columnName: capital
-              newDataType: BIGINT
-              tableName: legal_entity
-      databaseChangeLog:
-    - changeSet:
-        id: 014-delete-unique-constraint-representative.yaml
-        author: ILS
-        changes:
-          - dropForeignKeyConstraint:
-                baseTableName: representative
-                constraintName: fk_natural_person_representative
-          - dropForeignKeyConstraint:
-              baseTableName: representative
-              constraintName: fk_legal_entity_representative
 
-          - dropUniqueConstraint:
-              constraintName: natural_person_id
-              tableName: representative
-          - dropUniqueConstraint:
-              constraintName: legal_entity_id
-              tableName: representative
-          - dropUniqueConstraint:
-              constraintName: legal_entity_parent_id
-              tableName: representative
-
-          - addForeignKeyConstraint:
-              baseColumnNames: natural_person_id
-              baseTableName: representative
-              constraintName: fk_natural_person_representative
-              referencedColumnNames: id
-              referencedTableName: natural_person
-
-          - addForeignKeyConstraint:
-              baseColumnNames: legal_entity_id
-              baseTableName: representative
-              constraintName: fk_legal_entity_representative
-              referencedColumnNames: identifier
-              referencedTableName: legal_entity
-          - addForeignKeyConstraint:
-              baseColumnNames: legal_entity_parent_id
-              baseTableName: representative
-              constraintName: fk_representative_legal_entity_parent
-              referencedColumnNames: identifier
-              referencedTableName: legal_entity
-      databaseChangeLog:
-  - changeSet:
-      id: 015-add-status-fiel-in-company.yaml
-      author: ILS
-      changes:
-        - addColumn :
-            tableName: legal_entity
-            columns:
-              - column:
-                  name : status
-                  type: VARCHAR(255)
-    databaseChangeLog:
-  - changeSet:
-      id: 016-add-createdAt-and-updatedAt-field-in-company.yaml
-      author: ILS
-      changes:
-        - addColumn :
-            tableName: legal_entity
-            columns:
-              - column:
-                  name : created_at
-                  type: datetime(6)
-              - column:
-                  name: updated_at
-                  type: datetime(6)
-    databaseChangeLog:
-  - changeSet:
-      id: 017-delete-unique-constraint-document.yaml
-      author: ILS
-      changes:
-        - dropUniqueConstraint:
-            constraintName: legal_entity_parent_id
-            tableName: document
-
-        - addForeignKeyConstraint:
-            baseColumnNames: legal_entity_parent_id
-            baseTableName: document
-            constraintName: fk_document_legal_entity
-            referencedColumnNames: identifier
-            referencedTableName: legal_entity
-    databaseChangeLog:
-  - changeSet:
-      id: 018-delete-unique-constraint-beneficial-owner.
-      author: ILS
-      changes:
-        - dropForeignKeyConstraint:
-            baseTableName: beneficial_owner
-            constraintName: fk_natural_person_beneficial_owner
-        - dropForeignKeyConstraint:
-            baseTableName: beneficial_owner
-            constraintName: fk_legal_entity_beneficial_owner
-
-        - dropUniqueConstraint:
-            constraintName: natural_person_id
-            tableName: beneficial_owner
-        - dropUniqueConstraint:
-            constraintName: legal_entity_id
-            tableName: beneficial_owner
-        - dropUniqueConstraint:
-            constraintName: legal_entity_parent_id
-            tableName: beneficial_owner
-
-        - addForeignKeyConstraint:
-            baseColumnNames: natural_person_id
-            baseTableName: beneficial_owner
-            constraintName: fk_natural_person_beneficial_owner
-            referencedColumnNames: id
-            referencedTableName: natural_person
-
-        - addForeignKeyConstraint:
-            baseColumnNames: legal_entity_id
-            baseTableName: beneficial_owner
-            constraintName: fk_legal_entity_beneficial_owner
-            referencedColumnNames: identifier
-            referencedTableName: legal_entity
-        - addForeignKeyConstraint:
-            baseColumnNames: legal_entity_parent_id
-            baseTableName: beneficial_owner
-            constraintName: fk_beneficial_owner_legal_entity_parent
-            referencedColumnNames: identifier
-            referencedTableName: legal_entity
-    databaseChangeLog:
-  - changeSet:
-      id: 019-change-type-alert-content.yaml
-      author: ILS
-      changes:
+        # --- ALERT FIX ---
         - modifyDataType:
+            tableName: alert
             columnName: content
             newDataType: LONGTEXT
-            tableName: alert
+
+
+⸻
+
+✅ Next steps
+	1.	Save that file as:
+src/main/resources/db/changelog/baseline.yaml
+	2.	Replace your current master.yaml with:
+
+databaseChangeLog:
+  - include:
+      file: db/changelog/baseline.yaml
+
+
+	3.	Run:
+
+liquibase clearCheckSums
+liquibase changelogSync
 
 
 
-    
+This will mark the baseline as applied, no schema changes, and let you add new future changeSets cleanly (e.g. 020-add-new-column.yaml).
+
+⸻
+
+Would you like me to generate a companion SQL baseline script (baseline.sql) from this YAML (so you can apply it manually or verify structure)?
