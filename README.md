@@ -141,3 +141,98 @@ Front (React / Node)	générer le client TypeScript depuis ton Swagger (ainsi le
 
 Souhaites-tu que je te montre un exemple complet de configuration Swagger + DTO + JSON rendu + client TypeScript généré pour un vrai modèle (LegalEntity par exemple) ?
 Ce serait une base de référence pour ton équipe.
+
+
+
+  "identifier": "string",
+  "rcs": "string",
+  "status": "string",
+  "country": "string",
+  "legalName": "string",
+  "legalForm": "string",
+  "capital": 0,
+  "activityCode": "string",
+  "registrationDate": "2025-10-29",
+  "registrationCountry": "string",
+  "address": {
+    "id": 0,
+    "addressLine1": "string",
+    "addressLine2": "string",
+    "addressLine3": "string",
+    "zipCode": "string",
+    "city": "string",
+    "country": "string"
+  },
+  "representatives": [
+    {
+      "id": 0,
+      "role": "string",
+      "naturalPerson": {
+        "id": 0,
+        "firstName": "string",
+        "lastName": "string",
+        "maidenName": "string",
+        "birthDate": "2025-10-29",
+        "birthCity": "string",
+        "birthCountry": "string",
+        "nationality": "string",
+        "address": {
+          "id": 0,
+          "addressLine1": "string",
+          "addressLine2": "string",
+          "addressLine3": "string",
+          "zipCode": "string",
+          "city": "string",
+          "country": "string"
+        }
+      },
+      "legalEntity": "string"
+    }
+  ],
+  "beneficialOwners": [
+    {
+      "id": 0,
+      "percentageOfOwnership": 0,
+      "natureOfOwnership": "string",
+      "naturalPerson": {
+        "id": 0,
+        "firstName": "string",
+        "lastName": "string",
+        "maidenName": "string",
+        "birthDate": "2025-10-29",
+        "birthCity": "string",
+        "birthCountry": "string",
+        "nationality": "string",
+        "address": {
+          "id": 0,
+          "addressLine1": "string",
+          "addressLine2": "string",
+          "addressLine3": "string",
+          "zipCode": "string",
+          "city": "string",
+          "country": "string"
+        }
+      },
+      "legalEntity": {},
+      "startDate": "2025-10-29",
+      "endDate": "2025-10-29"
+    }
+  ],
+  "secondaryOffices": [
+    "string"
+  ],
+  "legalEntityIdentifier": "string",
+  "intracommunityVATNumber": "string",
+  "documents": [
+    {
+      "identifier": "string",
+      "type": "Acte",
+      "name": "string",
+      "creationDate": "2025-10-29T16:07:40.544Z",
+      "updatedDate": "2025-10-29T16:07:40.544Z",
+      "details": "string"
+    }
+  ],
+  "createdAt": "2025-10-29T16:07:40.544Z",
+  "updatedAt": "2025-10-29T16:07:40.544Z"
+}
