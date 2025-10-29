@@ -1,13 +1,4 @@
-[INFO] BUILD FAILURE
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  2.356 s
-[INFO] Finished at: 2025-10-29T11:35:04+01:00
-[INFO] ------------------------------------------------------------------------
-[ERROR] Plugin org.liquibase:liquibase-maven-plugin:changelog or one of its dependencies could not be resolved:
-[ERROR] 	Could not find artifact org.liquibase:liquibase-maven-plugin:jar:changelog in central (https://newartifactory.olkypay.local:443/artifactory/libs-release)
-[ERROR] 	Could not find artifact org.liquibase:liquibase-maven-plugin:jar:changelog in snapshots (https://newartifactory.olkypay.local:443/artifactory/libs-snapshot)
-[ERROR] -> [Help 1]
+[ERROR] Could not find goal 'changelog-consolidate' in plugin org.liquibase:liquibase-maven-plugin:4.31.1 among available goals changelogSync, changelogSyncSQL, changelogSyncToTag, changelogSyncToTagSQL, checks.run, checks.show, clearCheckSums, connect, dbDoc, dbclHistory, diff, dropAll, flow, flow.validate, futureRollbackSQL, generateChangeLog, help, history, listLocks, releaseLocks, rollback, rollbackOneChangeSet, rollbackOneChangeSetSQL, rollbackOneUpdate, rollbackOneUpdateSQL, rollbackSQL, snapshot, status, tag, tagExists, unexpectedChangeSets, update, updateSQL, updateTestingRollback, validate -> [Help 1]
 [ERROR] 
 [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
+[ERROR] Re-run Maven using t
