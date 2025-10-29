@@ -1,1 +1,3 @@
-je veux expliquer,que le baseline fonctionne correctement j'ai clean la base de données en local et j'ai recréer la db via le basline de lquibase et en lancant lmes scripts de migration qui figure sur les changeset tout se passe correctement, je voudrais etre court et plus claire sur cette synthèse
+Le baseline fonctionne correctement.
+J’ai nettoyé la base de données locale, puis recréé la structure à partir du baseline Liquibase.
+L’exécution des scripts de migration (changeSets) s’est déroulée sans erreur et l’ensemble du schéma a été correctement généré.
