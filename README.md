@@ -1,5 +1,1 @@
-mvn liquibase:changelogSync \
-  -Dliquibase.url=jdbc:mariadb://localhost:3306/business-registry \
-  -Dliquibase.username=root \
-  -Dliquibase.password=root \
-  -Dliquibase.changeLogFile=src/main/resources/db/changelog/db.changelog-master.yaml
+je veux expliquer,que le baseline fonctionne correctement j'ai clean la base de données en local et j'ai recréer la db via le basline de lquibase et en lancant lmes scripts de migration qui figure sur les changeset tout se passe correctement, je voudrais etre court et plus claire sur cette synthèse
