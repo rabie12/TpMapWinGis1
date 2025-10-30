@@ -99,3 +99,4 @@
             <version>2.8.8</version>
         </dependency>
     </dependencies>
+i dont have anything related to openAPI on my application.proerties
