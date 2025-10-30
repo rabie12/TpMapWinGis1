@@ -1,95 +1,48 @@
-import React, { useState } from "react";
-import axios from "axios";
-import "./App.css";
+{company && (
+  <div className="result">
+    <h2>Company Information</h2>
 
-function App() {
-  const [country, setCountry] = useState("FR");
-  const [siren, setSiren] = useState("");
-  const [company, setCompany] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+    <p><strong>Identifier:</strong> {company.identifier}</p>
+    <p><strong>Legal Name:</strong> {company.legalName}</p>
+    <p><strong>Status:</strong> {company.status}</p>
+    <p><strong>Country:</strong> {company.country}</p>
+    <p><strong>Legal Form:</strong> {company.legalForm}</p>
+    <p><strong>Capital:</strong> {company.capital}</p>
+    <p><strong>Activity Code:</strong> {company.activityCode}</p>
 
-  const countries = [
-    { code: "FR", name: "France" },
-    { code: "LU", name: "Luxembourg" },
-    { code: "GB", name: "United Kingdom" },
-    { code: "CH", name: "Switzerland" },
-  ];
+    {company.address && (
+      <>
+        <h3>Address</h3>
+        <p>{company.address.addressLine1}</p>
+        <p>{company.address.zipCode} {company.address.city}</p>
+        <p>{company.address.country}</p>
+      </>
+    )}
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setCompany(null);
-    const apiKey = 'd07c775f-326e-476c-affb-2bf712c87cee';
-    try {
-      const res = await axios.get(
-        `http://localhost:8080/api/country/${country}/company/${siren}`, 
-        {
-          headers: {
-            "Api-Key": 'd07c775f-326e-476c-affb-2bf712c87cee',
-          },
-        }
-      );
-      setCompany(res.data);
-    } catch (err) {
-      console.error(err);
-      setError(
-        err.response?.data?.message ||
-          `Request failed: ${err.response?.status || "Network error"}`
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    {company.representatives?.length > 0 && (
+      <>
+        <h3>Representatives</h3>
+        <ul>
+          {company.representatives.map((rep, index) => (
+            <li key={index}>
+              {rep.role} – {rep.naturalPerson?.firstName} {rep.naturalPerson?.lastName}
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
 
-  return (
-    <div className="App">
-      <h1>OlkyRegister </h1>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Country:</label>
-          <select value={country} onChange={(e) => setCountry(e.target.value)}>
-            {countries.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>SIREN:</label>
-          <input
-            type="text"
-            value={siren}
-            onChange={(e) => setSiren(e.target.value)}
-            placeholder="Enter company number"
-          />
-        </div>
-
-        <button type="submit" disabled={loading || !siren}>
-          {loading ? "Loading..." : "Search"}
-        </button>
-      </form>
-
-      {error && <p className="error"> {error}</p>}
-
-      {company && (
-        <div className="result">
-          <h2>Company Information</h2>
-          <pre>{JSON.stringify(company, null, 2)}</pre>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default App;
-
-
-
-          <pre>{JSON.stringify(company, null, 2)}</pre>
-
-
-          {JSON.stringify(company, null, 2)} mapit on reel DTO copagny and then have the ability to display onluy needed data from the object
+    {company.documents?.length > 0 && (
+      <>
+        <h3>Documents</h3>
+        <ul>
+          {company.documents.map((doc, index) => (
+            <li key={index}>
+              {doc.type} - {doc.name} ({new Date(doc.creationDate).toLocaleDateString()})
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+  </div>
+)}
