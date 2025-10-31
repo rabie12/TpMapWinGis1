@@ -1,148 +1,16 @@
-D’accord — on passe en mode solution directe et robuste. Tu as déjà essayé plusieurs options ; je te donne maintenant trois mesures immédiates et garanties (avec code prêt à coller) + les commandes de vérif à exécuter. Fais ces 3 choses dans l’ordre — l’une d’elles doit résoudre le problème.
-
-⸻
-
-1) Ajouter un PropertyCustomizer robuste (force oneOf pour string|null)
-
-Colle ce fichier dans ton projet (ex. eu.olkypay.business_registry.config.NullablePropertyCustomizer) :
-
-package eu.olkypay.business_registry.config;
-
-import io.swagger.v3.oas.models.media.Schema;
-import org.springdoc.core.customizers.PropertyCustomizer;
-import org.springframework.stereotype.Component;
-
-import java.lang.reflect.Type;
-import java.util.List;
-
-@Component
-public class NullablePropertyCustomizer implements PropertyCustomizer {
-
-    @Override
-    public Schema<?> customize(Schema<?> property, Type type) {
-        if (property == null) return null;
-
-        // si explicitement nullable = true et type string => remplacer par oneOf [string, null]
-        if (Boolean.TRUE.equals(property.getNullable()) && "string".equals(property.getType())) {
-            Schema<?> s1 = new Schema<>().type("string");
-            Schema<?> s2 = new Schema<>().type("null");
-            property.setOneOf(List.of(s1, s2));
-            property.setType(null);
-            property.setNullable(null);
-        }
-        return property;
-    }
-}
-
-	•	But : garantit que tout champ annoté @Schema(nullable = true) devient oneOf: [{type: "string"},{type: "null"}] dans le JSON OpenAPI.
-	•	Place le fichier dans un package scanné par Spring (même package que tes autres @Component).
-
-⸻
-
-2) Fallback global : post-traiter toutes les schemas (OpenApiCustomizer)
-
-Si le customizer ci-dessus ne s’applique pas (par exemple fields non marqués nullable), ajoute aussi ce OpenApiCustomizer — il parcourt toutes les components.schemas et convertit les string nullables détectés :
-
 package eu.olkypay.business_registry.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.media.Schema;
-import org.springdoc.core.customizers.OpenApiCustomizer;
-import org.springframework.stereotype.Component;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.List;
-
-@Component
-public class OpenApiNullablePostProcessor implements OpenApiCustomizer {
-
-    @Override
-    public void customise(OpenAPI openApi) {
-        if (openApi == null || openApi.getComponents() == null) return;
-        Map<String, Schema> schemas = openApi.getComponents().getSchemas();
-        if (schemas == null) return;
-
-        for (Map.Entry<String, Schema> entry : new LinkedHashMap<>(schemas).entrySet()) {
-            Schema<?> schema = entry.getValue();
-            if (schema.getProperties() == null) continue;
-            schema.getProperties().forEach((propName, propSchemaObj) -> {
-                if (!(propSchemaObj instanceof Schema)) return;
-                Schema<?> propSchema = (Schema<?>) propSchemaObj;
-
-                // si type string et nullable true => convert to oneOf [string, null]
-                if ("string".equals(propSchema.getType()) && Boolean.TRUE.equals(propSchema.getNullable())) {
-                    Schema<?> s1 = new Schema<>().type("string");
-                    Schema<?> s2 = new Schema<>().type("null");
-                    propSchema.setOneOf(List.of(s1, s2));
-                    propSchema.setType(null);
-                    propSchema.setNullable(null);
-                }
-            });
-        }
+@Configuration
+public class OpenApiConfig {
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .openapi("3.1.0")
+                .info(new Info().title("Business Registry API").version("1.0"));
     }
 }
-
-	•	But : transforme globalement les schémas juste avant que SpringDoc expose le JSON.
-
-⸻
-
-3) Vérifications & nettoyage (obligatoire)
-
-Exécute ces commandes dans ton projet (terminal) après avoir ajouté les classes et recompilé :
-	1.	Nettoie + build :
-
-mvn clean package -DskipTests
-
-	2.	Vérifie les versions présentes (important) :
-
-mvn dependency:tree | grep springdoc -n
-mvn dependency:tree | grep "spring-boot" -n
-
-	•	Assure-toi qu’il n’existe qu’une version de springdoc-openapi-starter-webmvc-ui compatible avec ta version de Spring Boot.
-	•	Si tu vois des doublons (ex. 3.0.0-M1 et 2.x), corrige le pom.xml.
-
-	3.	Lancer l’appli :
-
-mvn spring-boot:run
-
-ou via IntelliJ Run.
-	4.	Ouvre (et vide le cache) ton navigateur puis :
-
-	•	JSON spec : http://localhost:8080/v3/api-docs (ou /swagger si tu as personnalisé)
-	•	Swagger UI : http://localhost:8080/swagger-ui/index.html
-
-Cherche dans le JSON la propriété (exemple zipCode ou addressLine1) — tu devrais voir un oneOf :
-
-"zipCode": {
-  "oneOf": [
-    { "type": "string" },
-    { "type": "null" }
-  ],
-  "example": "75015"
-}
-
-
-⸻
-
-Checklist rapide si ça n’apparaît toujours pas
-	•	✅ Les nouvelles classes sont bien compilées (target/classes contient tes .class).
-	•	✅ Ton package des components est scanné (les classes sont sous eu.olkypay.business_registry.config).
-	•	✅ Pas d’anciens jars springdoc en cache (.m2) — si doute, lance mvn dependency:purge-local-repository ou supprime les dossiers concernés dans ~/.m2/repository/org/springdoc.
-	•	✅ Vider cache navigateur (CTRL+F5) ou utiliser fenêtre privée.
-	•	✅ Ouvrir http://localhost:8080/v3/api-docs et copier le fragment JSON exact (20–50 lignes autour du champ) si toujours incorrect — colle-le ici.
-
-⸻
-
-Si après tout ça ça reste Bloqué
-
-Colle ici les trois éléments suivants (je les analyserai et je corrige immédiatement) :
-	1.	Le fragment JSON issu de http://localhost:8080/v3/api-docs autour du champ (zipCode / addressLine1).
-	2.	Le résultat de mvn dependency:tree | grep springdoc -n (ou tout springdoc visible).
-	3.	Le pom.xml (les <dependency> et <parent>).
-
-Je te fournirai alors le patch exact (ou le pom.xml corrigé) pour ton cas précis.
-
-⸻
-
-Je t’ai donné une solution de contournement forte (customizer + post-processor). Colle ces deux classes, rebuild, restart — ça doit fonctionner. Si ça ne marche toujours pas, colle ici les 3 éléments demandés et j’interviendrai directement sur le JSON/les dépendances.
