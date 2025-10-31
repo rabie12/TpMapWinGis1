@@ -1,78 +1,22 @@
-Exactement ✅ tu as très bien compris le fonctionnement global !
-Je vais te reformuler tout cela clairement pour que tu aies une vision complète et structurée du lien entre PACS, SIOÉcriture, SOBA, SOBAM et CAMT.053 :
+025-10-31T08:19:37.849+01:00  INFO 31088 --- [business-registry] [           main] e.o.b.BusinessRegistryApplication        : No active profile set, falling back to 1 default profile: "default"
+2025-10-31T08:19:39.038+01:00  WARN 31088 --- [business-registry] [           main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.support.BeanDefinitionOverrideException: Invalid bean definition with name 'conventionErrorViewResolver' defined in class path resource [org/springframework/boot/webmvc/autoconfigure/error/ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration.class]: Cannot register bean definition [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=org.springframework.boot.webmvc.autoconfigure.error.ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration; factoryMethodName=conventionErrorViewResolver; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [org/springframework/boot/webmvc/autoconfigure/error/ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration.class]] for bean 'conventionErrorViewResolver' since there is already [Root bean: class=null; scope=; abstract=false; lazyInit=null; autowireMode=3; dependencyCheck=0; autowireCandidate=true; primary=false; fallback=false; factoryBeanName=org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration; factoryMethodName=conventionErrorViewResolver; initMethodNames=null; destroyMethodNames=[(inferred)]; defined in class path resource [org/springframework/boot/autoconfigure/web/servlet/error/ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration.class]] bound.
+2025-10-31T08:19:39.055+01:00  INFO 31088 --- [business-registry] [           main] .s.b.a.l.ConditionEvaluationReportLogger : 
 
-⸻
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-10-31T08:19:39.082+01:00 ERROR 31088 --- [business-registry] [           main] o.s.b.d.LoggingFailureAnalysisReporter   : 
 
-🧩 1. Les PACS → flux interbancaires ISO20022
-	•	Les messages PACS (pacs.008, pacs.003, etc.) sont des flux interbancaires entre établissements bancaires.
-	•	Ils permettent d’émettre ou de recevoir des virements, des prélèvements, ou d’autres opérations de paiement SEPA.
-	•	Chaque PACS correspond à une ou plusieurs transactions financières réelles (un virement client, un rejet, un retour…).
-	•	Quand un PACS est traité, il génère des écritures comptables dans le système interne (ta table SIOÉcriture).
+***************************
+APPLICATION FAILED TO START
+***************************
 
-⸻
+Description:
 
-📘 2. Les SIOÉcritures → journal comptable interne
-	•	La table SIOÉcriture enregistre toutes les écritures issues :
-	•	des flux interbancaires (PACS),
-	•	des opérations internes (frais, commissions, etc.),
-	•	des opérations cartes, etc.
-	•	Ces écritures sont la base de données de vérité : elles reflètent l’état des mouvements financiers du compte.
-	•	À partir d’elles, on construit les reporting bancaires quotidiens.
+The bean 'conventionErrorViewResolver', defined in class path resource [org/springframework/boot/webmvc/autoconfigure/error/ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration.class], could not be registered. A bean with that name has already been defined in class path resource [org/springframework/boot/autoconfigure/web/servlet/error/ErrorMvcAutoConfiguration$DefaultErrorViewResolverConfiguration.class] and overriding is disabled.
 
-⸻
+Action:
 
-📄 3. Les SOBA et SOBAM → synthèse quotidienne
+Consider renaming one of the beans or enabling overriding by setting spring.main.allow-bean-definition-overriding=true
 
-SOBA (Statement of Balance)
-	•	Contient le solde initial, solde final, et parfois le solde disponible du compte sur une journée donnée.
-	•	C’est une vue agrégée, sans détail transactionnel.
+Disconnected from the target VM, address: '127.0.0.1:63451', transport: 'socket'
 
-SOBAM (Statement of Bank Account Movements)
-	•	Contient le détail des mouvements (crédits, débits, virements, etc.) sur cette même journée.
-	•	Chaque ligne du SOBAM correspond à une écriture comptable (SIOÉcriture).
-
-🧠 En résumé :
-	•	SIOÉcriture = les données brutes comptables.
-	•	SOBAM = une vue filtrée et structurée des SIOÉcritures du jour.
-	•	SOBA = le résumé des soldes avant/après ces mouvements.
-
-⸻
-
-📤 4. Le CAMT.053 → extrait de compte ISO20022 envoyé au client
-	•	Le CAMT.053 est un message ISO20022 standardisé qui représente l’extrait de compte du client sur une période (souvent quotidienne).
-	•	Il contient :
-	•	Les soldes initiaux et finaux → issus du SOBA.
-	•	Les mouvements détaillés → issus du SOBAM.
-	•	Il est généré à la fin de journée (batch de minuit) pour être envoyé au client ou mis à disposition sur son espace bancaire.
-
-⸻
-
-🔗 Schéma simplifié du flux logique
-
-PACS (flux interbancaire)
-       ↓
-  Génération d’écritures comptables
-       ↓
-   SIOÉcriture (journal interne)
-       ↓
-   ┌───────────────┐
-   │   SOBA        │ → Solde initial/final
-   │   SOBAM       │ → Mouvements du jour
-   └───────────────┘
-       ↓
-   CAMT.053 (extrait de compte client)
-
-
-⸻
-
-💡 En résumé clair :
-	•	Les PACS sont les flux d’origine (interbancaires).
-	•	Les SIOÉcritures en gardent la trace comptable.
-	•	Les SOBA/SOBAM permettent de reconstituer l’activité quotidienne.
-	•	Le CAMT.053 est le document officiel (format ISO20022) généré à partir de ces données pour le client final.
-
-⸻
-
-Souhaites-tu que je te montre comment mapper concrètement les champs entre :
-SIOÉcriture → SOBAM/SOBA → CAMT.053
-(par exemple, quelles colonnes alimentent chaque balise CAMT.053) ?
+Process finished with exit code 1
