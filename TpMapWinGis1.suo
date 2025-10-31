@@ -1,3 +1,93 @@
-@Schema(nullable = true, example = "null", defaultValue = "null")
+Ah… là on touche un point un peu subtil de SpringDoc + OpenAPI 3.1 + nullable fields. Je vais te faire un topo clair et précis sur pourquoi nullable=true avec example="null" ou defaultValue="null" ne fonctionne pas comme on pourrait s’y attendre.
 
-j'ai l'impression que ce truc ne fonctionne jamias malgès toute les tentatives avec upgrade de version à spirng-boot-4 avec la miodfi sur les properties, avec templacements des annotations lombook avec des getter et setter et annotion direct sur le getter mais ça marche jamais
+⸻
+
+1️⃣ Comportement attendu vs réalité
+	•	Tu mets :
+
+@Schema(nullable = true, example = "null", defaultValue = "null")
+private String zipCode;
+
+	•	Ce que tu veux : générer dans le JSON Schema OpenAPI 3.1 :
+
+"zipCode": {
+  "type": ["string","null"],
+  "example": null
+}
+
+	•	Ce que SpringDoc génère souvent (même avec Spring Boot 4 et springdoc.model-converters.nullable-properties=true) :
+
+"zipCode": {
+  "type": "string",
+  "example": "null"
+}
+
+⚠️ Le problème vient de plusieurs facteurs :
+	1.	example="null" est un string "null" et non un vrai null.
+	2.	OpenAPI 3.1 supporte type: ["string","null"], mais SpringDoc doit être configuré correctement et les versions stables ne gèrent pas toujours ça.
+	3.	Même nullable=true ne convertit pas l’exemple en null. Cela n’ajoute que "nullable": true ou "oneOf": [{"type":"string"},{"type":"null"}] selon version.
+
+⸻
+
+2️⃣ Pourquoi ça ne marche pas malgré tout ce que tu as essayé
+	•	Annotations sur champs vs getters : SpringDoc lit généralement les getters, mais avec Lombok et champs privés, ça devient fragile.
+	•	Propriétés SpringDoc :
+
+springdoc.api-docs.version=OPENAPI_3_1
+springdoc.model-converters.nullable-properties=true
+
+Ces propriétés activent la détection nullable, mais ne changent pas le comportement des example ou defaultValue.
+Donc example="null" restera "null" au lieu de null.
+
+	•	Spring Boot 4 / SpringDoc 3.0-M1 : c’est encore en milestone. Il y a des bugs connus autour de nullable + example.
+
+⸻
+
+3️⃣ Solutions possibles ✅
+
+Option A : Utiliser example = "" et interpréter "" comme null côté client
+	•	Pas idéal, mais fonctionnel si l’API accepte une chaîne vide comme null.
+
+Option B : Supprimer example si tu veux un vrai null
+	•	OpenAPI 3.1 comprendra type: ["string","null"] grâce à nullable=true.
+	•	Tu n’auras pas d’exemple, mais c’est plus correct.
+
+Option C : Utiliser un custom OpenApiCustomiser pour remplacer les exemples "null" par null
+	•	Tu peux injecter un bean Spring :
+
+@Bean
+public OpenApiCustomiser nullExampleCustomizer() {
+    return openApi -> {
+        openApi.getComponents().getSchemas().values().forEach(schema -> {
+            if ("null".equals(schema.getExample())) {
+                schema.setExample(null);
+            }
+        });
+    };
+}
+
+Ça corrige automatiquement tous les example="null" en example=null dans le JSON généré.
+
+Option D : Attendre une version stable de SpringDoc 3.x compatible OpenAPI 3.1
+	•	Les versions milestones ont encore des comportements bizarres sur nullable + example.
+	•	La version stable est prévue pour 3.1.x mais actuellement 3.0-M1 est utilisée.
+
+⸻
+
+4️⃣ Conclusion
+	•	@Schema(nullable = true, example = "null") ne fonctionnera jamais correctement avec SpringDoc 3.0-M1 + Spring Boot 4.
+	•	Pour un vrai null dans OpenAPI :
+	1.	Met nullable=true
+	2.	Supprime example ou utilise un OpenApiCustomiser pour corriger les "null".
+	•	Annoter les getters ou les champs est secondaire ; le vrai problème est la gestion des example="null" par SpringDoc.
+
+⸻
+
+Si tu veux, je peux te préparer un snippet prêt-à-coller pour Spring Boot 4 + SpringDoc 3.0-M1 qui générera exactement :
+
+"type": ["string","null"],
+"example": null
+
+Sans passer par des hack de getter/champ et compatible avec Lombok.
+
+Veux que je fasse ça ?
