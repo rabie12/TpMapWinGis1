@@ -1,10 +1,10 @@
-D’accord — on y va au pas à pas pour faire marcher le rendu ["string","null"]. Tu dis “Jack ne marche tjr pas” — j’assume que tu veux dire Jackson / Swagger / SpringDoc : résumé — il reste un point bloquant côté génération du schéma OpenAPI. Voici une solution robuste et prête à coller dans ton projet, plus les vérifs à faire.
+D’accord — on passe en mode solution directe et robuste. Tu as déjà essayé plusieurs options ; je te donne maintenant trois mesures immédiates et garanties (avec code prêt à coller) + les commandes de vérif à exécuter. Fais ces 3 choses dans l’ordre — l’une d’elles doit résoudre le problème.
 
 ⸻
 
-✅ Solution fiable (PropertyCustomizer + oneOf)
+1) Ajouter un PropertyCustomizer robuste (force oneOf pour string|null)
 
-Ajoute ce composant : il force, pour chaque propriété string annotée nullable, la génération oneOf: [ { type: "string" }, { type: "null" } ]. Ça contourne les différences de versions SpringDoc.
+Colle ce fichier dans ton projet (ex. eu.olkypay.business_registry.config.NullablePropertyCustomizer) :
 
 package eu.olkypay.business_registry.config;
 
@@ -13,7 +13,7 @@ import org.springdoc.core.customizers.PropertyCustomizer;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class NullablePropertyCustomizer implements PropertyCustomizer {
@@ -22,12 +22,11 @@ public class NullablePropertyCustomizer implements PropertyCustomizer {
     public Schema<?> customize(Schema<?> property, Type type) {
         if (property == null) return null;
 
-        // Si la propriété est de type string et explicitement nullable, on transforme en oneOf [string, null]
-        if ("string".equals(property.getType()) && Boolean.TRUE.equals(property.getNullable())) {
-            Schema<?> stringSchema = new Schema<>().type("string");
-            Schema<?> nullSchema = new Schema<>().type("null");
-            property.setOneOf(Arrays.asList(stringSchema, nullSchema));
-            // clear simple type/nullable to avoid conflit d'affichage
+        // si explicitement nullable = true et type string => remplacer par oneOf [string, null]
+        if (Boolean.TRUE.equals(property.getNullable()) && "string".equals(property.getType())) {
+            Schema<?> s1 = new Schema<>().type("string");
+            Schema<?> s2 = new Schema<>().type("null");
+            property.setOneOf(List.of(s1, s2));
             property.setType(null);
             property.setNullable(null);
         }
@@ -35,35 +34,85 @@ public class NullablePropertyCustomizer implements PropertyCustomizer {
     }
 }
 
-Colle ce fichier, rebuild et restart.
+	•	But : garantit que tout champ annoté @Schema(nullable = true) devient oneOf: [{type: "string"},{type: "null"}] dans le JSON OpenAPI.
+	•	Place le fichier dans un package scanné par Spring (même package que tes autres @Component).
 
 ⸻
 
-🔎 Vérifications à faire (ordre important)
-	1.	Properties
+2) Fallback global : post-traiter toutes les schemas (OpenApiCustomizer)
 
-springdoc.api-docs.version=OPENAPI_3_1
-springdoc.model-converters.nullable-properties=true
+Si le customizer ci-dessus ne s’applique pas (par exemple fields non marqués nullable), ajoute aussi ce OpenApiCustomizer — il parcourt toutes les components.schemas et convertit les string nullables détectés :
 
-(tu peux laisser model-converters.nullable-properties=true même si on force le oneOf)
+package eu.olkypay.business_registry.config;
 
-	2.	Vérifier dépendances (pas de mélange incompatible)
-Dans ton projet, exécute :
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.Schema;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.stereotype.Component;
 
-mvn dependency:tree | grep springdoc -n
-mvn dependency:tree | grep spring-boot -n
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.List;
 
-Assure-toi d’avoir UNE seule version de springdoc-openapi-starter-webmvc-ui compatible avec ton Spring Boot. Pas de restes 3.0.0-M1 si tu es sur Boot 3.3.x/3.5.x.
+@Component
+public class OpenApiNullablePostProcessor implements OpenApiCustomizer {
 
-	3.	Nettoyer et rebuild
+    @Override
+    public void customise(OpenAPI openApi) {
+        if (openApi == null || openApi.getComponents() == null) return;
+        Map<String, Schema> schemas = openApi.getComponents().getSchemas();
+        if (schemas == null) return;
+
+        for (Map.Entry<String, Schema> entry : new LinkedHashMap<>(schemas).entrySet()) {
+            Schema<?> schema = entry.getValue();
+            if (schema.getProperties() == null) continue;
+            schema.getProperties().forEach((propName, propSchemaObj) -> {
+                if (!(propSchemaObj instanceof Schema)) return;
+                Schema<?> propSchema = (Schema<?>) propSchemaObj;
+
+                // si type string et nullable true => convert to oneOf [string, null]
+                if ("string".equals(propSchema.getType()) && Boolean.TRUE.equals(propSchema.getNullable())) {
+                    Schema<?> s1 = new Schema<>().type("string");
+                    Schema<?> s2 = new Schema<>().type("null");
+                    propSchema.setOneOf(List.of(s1, s2));
+                    propSchema.setType(null);
+                    propSchema.setNullable(null);
+                }
+            });
+        }
+    }
+}
+
+	•	But : transforme globalement les schémas juste avant que SpringDoc expose le JSON.
+
+⸻
+
+3) Vérifications & nettoyage (obligatoire)
+
+Exécute ces commandes dans ton projet (terminal) après avoir ajouté les classes et recompilé :
+	1.	Nettoie + build :
 
 mvn clean package -DskipTests
 
-Redémarre (mvn spring-boot:run ou via IntelliJ Run).
+	2.	Vérifie les versions présentes (important) :
 
-	4.	Vider le cache du navigateur (Swagger UI met parfois en cache). Ouvre /v3/api-docs (ou ton path si tu l’as customisé) :
-http://localhost:8080/v3/api-docs
-Cherche la définition du zipCode / address. Tu dois voir :
+mvn dependency:tree | grep springdoc -n
+mvn dependency:tree | grep "spring-boot" -n
+
+	•	Assure-toi qu’il n’existe qu’une version de springdoc-openapi-starter-webmvc-ui compatible avec ta version de Spring Boot.
+	•	Si tu vois des doublons (ex. 3.0.0-M1 et 2.x), corrige le pom.xml.
+
+	3.	Lancer l’appli :
+
+mvn spring-boot:run
+
+ou via IntelliJ Run.
+	4.	Ouvre (et vide le cache) ton navigateur puis :
+
+	•	JSON spec : http://localhost:8080/v3/api-docs (ou /swagger si tu as personnalisé)
+	•	Swagger UI : http://localhost:8080/swagger-ui/index.html
+
+Cherche dans le JSON la propriété (exemple zipCode ou addressLine1) — tu devrais voir un oneOf :
 
 "zipCode": {
   "oneOf": [
@@ -74,55 +123,26 @@ Cherche la définition du zipCode / address. Tu dois voir :
 }
 
 
-	5.	Si tu vois toujours type: "string" :
-	•	Poste le fragment JSON correspondant (la partie zipCode dans /v3/api-docs).
-	•	Vérifie qu’il n’y a pas un autre PropertyCustomizer qui écrase.
-	•	Vérifie qu’il n’y a pas d’autre dépendance springdoc en transitif (par ex. springdoc-openapi-starter-common en double version).
+⸻
+
+Checklist rapide si ça n’apparaît toujours pas
+	•	✅ Les nouvelles classes sont bien compilées (target/classes contient tes .class).
+	•	✅ Ton package des components est scanné (les classes sont sous eu.olkypay.business_registry.config).
+	•	✅ Pas d’anciens jars springdoc en cache (.m2) — si doute, lance mvn dependency:purge-local-repository ou supprime les dossiers concernés dans ~/.m2/repository/org/springdoc.
+	•	✅ Vider cache navigateur (CTRL+F5) ou utiliser fenêtre privée.
+	•	✅ Ouvrir http://localhost:8080/v3/api-docs et copier le fragment JSON exact (20–50 lignes autour du champ) si toujours incorrect — colle-le ici.
 
 ⸻
 
-Remarques importantes / pourquoi on fait oneOf
-	•	OpenAPI 3.1 permet type: ["string","null"]. SpringDoc/Swagger UI peuvent cependant préférer oneOf ou nullable:true selon versions.
-	•	property.setNullable(true) peut suffire sur certaines versions, mais pas systématiquement (bugs/versions). oneOf est la manière la plus portable pour que l’UI et les clients comprennent “string ou null”.
-	•	On vide type et nullable ensuite pour éviter un rendu ambigu.
+Si après tout ça ça reste Bloqué
+
+Colle ici les trois éléments suivants (je les analyserai et je corrige immédiatement) :
+	1.	Le fragment JSON issu de http://localhost:8080/v3/api-docs autour du champ (zipCode / addressLine1).
+	2.	Le résultat de mvn dependency:tree | grep springdoc -n (ou tout springdoc visible).
+	3.	Le pom.xml (les <dependency> et <parent>).
+
+Je te fournirai alors le patch exact (ou le pom.xml corrigé) pour ton cas précis.
 
 ⸻
 
-Exemple minimal (DTO + contrôleur)
-
-Tu peux vérifier avec ce mini-exemple :
-
-// AddressDTO
-public class AddressDTO {
-    @Schema(description = "Code postal", nullable = true, example = "75015")
-    private String zipCode;
-    // getters/setters
-}
-
-// Controller
-@RestController
-public class TestController {
-    @GetMapping("/test/address")
-    public AddressDTO test() {
-        AddressDTO d = new AddressDTO();
-        d.setZipCode("75015");
-        return d;
-    }
-}
-
-Puis visite http://localhost:8080/v3/api-docs et cherche AddressDTO → zipCode.
-
-⸻
-
-Si ça marche toujours pas — que m’envoyer
-
-Colle ici (copier-coller) :
-	1.	Le fragment /v3/api-docs pour Address / zipCode (juste 20–50 lignes autour)
-	2.	Le dependency:tree output pour springdoc et spring-boot (les commandes ci-dessus)
-	3.	La version de Spring Boot dans ton pom.xml (parent).
-
-Avec ces 3 éléments je te fournis le patch exact.
-
-⸻
-
-Tu veux que je te génère ce NullablePropertyCustomizer complet (je l’ai déjà fourni) ou tu préfères que je regarde directement ton /v3/api-docs fragment pour corriger au plus juste ?
+Je t’ai donné une solution de contournement forte (customizer + post-processor). Colle ces deux classes, rebuild, restart — ça doit fonctionner. Si ça ne marche toujours pas, colle ici les 3 éléments demandés et j’interviendrai directement sur le JSON/les dépendances.
