@@ -1,6 +1,63 @@
-En résumé :
+package eu.olkypay.business_registry.configuration;
 
-Malgré toutes les tentatives (mise à jour Spring Boot 4, SpringDoc 3.0-M1, springdoc.model-converters.nullable-properties=true, annotation sur champ ou getter, example="null"), SpringDoc ne gère pas correctement example="null" pour générer un vrai null dans OpenAPI 3.1.
-nullable=true est pris en compte pour le type (type: ["string","null"]), mais l’exemple reste "null" en string. Il n’y a actuellement aucune solution native simple pour obtenir "example": null sans passer par un customizer.
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.oas.models.media.Schema;
+import org.springdoc.core.customizers.PropertyCustomizer;
+import org.springframework.stereotype.Component;
 
-Bref : l’annotation seule ne suffit pas, c’est une limitation connue de SpringDoc 3.0-M1.
+
+import java.util.List;
+
+@Component
+public class NullablePropertyCustomizer implements PropertyCustomizer {
+    @Override
+    public Schema<?> customize(Schema property, AnnotatedType type) {
+        if (property == null) return null;
+        if (Boolean.TRUE.equals(property.getNullable()) && "string".equals(property.getType())) {
+            Schema<?> s1 = new Schema<>().type("string");
+            Schema<?> s2 = new Schema<>().type("null");
+            property.setOneOf(List.of(s1, s2));
+            property.setType(null);
+            property.setNullable(null);
+        }
+        return property;
+    }
+}
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.media.Schema;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springframework.stereotype.Component;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.List;
+
+@Component
+public class OpenApiNullablePostProcessor implements OpenApiCustomizer {
+    @Override
+    public void customise(OpenAPI openApi) {
+        if (openApi == null || openApi.getComponents() == null) return;
+        Map<String, Schema> schemas = openApi.getComponents().getSchemas();
+        if (schemas == null) return;
+        schemas.values().forEach(schema -> {
+            if (schema.getProperties() == null) return;
+            schema.getProperties().forEach((k, v) -> {
+                if (!(v instanceof Schema)) return;
+                Schema<?> p = (Schema<?>) v;
+                if ("string".equals(p.getType()) && Boolean.TRUE.equals(p.getNullable())) {
+                    Schema<?> s1 = new Schema<>().type("string");
+                    Schema<?> s2 = new Schema<>().type("null");
+                    p.setOneOf(List.of(s1, s2));
+                    p.setType(null);
+                    p.setNullable(null);
+                }
+            });
+        });
+    }
+}
+
+
+i ve made this two class on my configuration package but i still have the samùe result :
+{"openapi":"3.1.0","info":{"title":"API Documentation","version":"1.0"},"servers":[{"url":"http://localhost:8080","description":"Generated server url"}],"security":[{"Api-Key":[]}],"paths":{"/auth/appClient":{"post":{"tags":["authentication-controller"],"summary":"Create an app Client","operationId":"addAppClient","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RequestBodyCreateAppClient"}}},"required":true},"responses":{"200":{"description":"App Client created","content":{"*/*":{"schema":{"$ref":"#/components/schemas/AppClient"}}}}}}},"/api/country/{country}/company/{id}/follow":{"post":{"tags":["registry-controller"],"summary":"Follow new company","operationId":"followCompany","parameters":[{"name":"country","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","required":true,"schema":{"type":"string"}},{"name":"Api-Key","in":"header","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Company followed","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/api/connector":{"post":{"tags":["registry-controller"],"summary":"Create or update connector","operationId":"addConnector","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Connector"}}},"required":true},"responses":{"201":{"description":"Connector created/updated","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Connector"}}}}}}},"/health/connectors":{"get":{"tags":["health-controller"],"operationId":"getHealthConnector","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Health"}}}}}}},"/api/country/{country}/company/{id}":{"get":{"tags":["registry-controller"],"summary":"Get company's data ","operationId":"getDataForCountry","parameters":[{"name":"country","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Company's data returned","content":{"*/*":{"schema":{"$ref":"#/components/schemas/LegalEntity"}}}}}}},"/api/connector/{id}":{"get":{"tags":["registry-controller"],"summary":"Get connector ","operationId":"getConnector","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"Connector's data","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Connector"}}}}}}},"/api/alert":{"get":{"tags":["registry-controller"],"summary":"Get new alert for appClient","operationId":"getAlerts","parameters":[{"name":"Api-Key","in":"header","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"List of alerts","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/AlertDTO"}}}}}}}}},"components":{"schemas":{"RequestBodyCreateAppClient":{"properties":{"name":{"type":"string"},"callBackUrl":{"type":"string"}},"required":["name"]},"Address":{"properties":{"id":{"type":"integer","format":"int64"},"addressLine1":{"type":"string"},"addressLine2":{"type":"string"},"addressLine3":{"type":"string"},"zipCode":{"type":"string"},"city":{"type":"string"},"country":{"type":"string"}}},"AppClient":{"properties":{"id":{"type":"integer","format":"int64"},"apiKey":{"type":"string","format":"uuid"},"name":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"legalEntities":{"type":"array","items":{"$ref":"#/components/schemas/LegalEntity"}},"callBackUrl":{"type":"string"},"secretKey":{"type":"string"}},"required":["name"]},"BeneficialOwner":{"properties":{"id":{"type":"integer","format":"int64"},"percentageOfOwnership":{"type":"integer","format":"int32"},"natureOfOwnership":{"type":"string"},"naturalPerson":{"$ref":"#/components/schemas/NaturalPerson"},"legalEntity":{"required":["identifier","rcs"]},"startDate":{"type":"string","format":"date"},"endDate":{"type":"string","format":"date"}}},"Document":{"properties":{"identifier":{"type":"string"},"type":{"type":"string","enum":["Acte","Bilan"]},"name":{"type":"string"},"creationDate":{"type":"string","format":"date-time"},"updatedDate":{"type":"string","format":"date-time"},"details":{"type":"string"}}},"LegalEntity":{"properties":{"identifier":{"type":"string"},"rcs":{"type":"string"},"status":{"type":"string"},"country":{"type":"string"},"legalName":{"type":"string"},"legalForm":{"type":"string"},"capital":{"type":"integer","format":"int64"},"activityCode":{"type":"string"},"registrationDate":{"type":"string","format":"date"},"registrationCountry":{"type":"string"},"address":{"$ref":"#/components/schemas/Address"},"representatives":{"type":"array","items":{"$ref":"#/components/schemas/Representative"}},"beneficialOwners":{"type":"array","items":{"$ref":"#/components/schemas/BeneficialOwner"}},"secondaryOffices":{"type":"array","items":{"$ref":"#/components/schemas/LegalEntity"}},"legalEntityIdentifier":{"type":"string"},"intracommunityVATNumber":{"type":"string"},"documents":{"type":"array","items":{"$ref":"#/components/schemas/Document"}},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}},"required":["identifier","rcs"]},"NaturalPerson":{"properties":{"id":{"type":"integer","format":"int64"},"firstName":{"type":"string"},"lastName":{"type":"string"},"maidenName":{"type":"string"},"birthDate":{"type":"string","format":"date"},"birthCity":{"type":"string"},"birthCountry":{"type":"string"},"nationality":{"type":"string"},"address":{"$ref":"#/components/schemas/Address"}}},"Representative":{"properties":{"id":{"type":"integer","format":"int64"},"role":{"type":"string"},"naturalPerson":{"$ref":"#/components/schemas/NaturalPerson"},"legalEntity":{"$ref":"#/components/schemas/LegalEntity"}}},"Connector":{"properties":{"id":{"type":"integer","format":"int64"},"type":{"type":"array","items":{"$ref":"#/components/schemas/ConnectorType"}},"active":{"type":"boolean"},"country":{"type":"string"},"apiUrl":{"type":"string"},"credentials":{"$ref":"#/components/schemas/Credentials"},"apiToken":{"$ref":"#/components/schemas/Token"},"priority":{"type":"integer","format":"int32"},"serviceName":{"type":"string"},"createdDate":{"type":"string","format":"date-time"},"updateDate":{"type":"string","format":"date-time"}},"required":["active","country","serviceName"]},"ConnectorType":{"properties":{"id":{"type":"integer","format":"int64"},"name":{"type":"string"}}},"Credentials":{"properties":{"id":{"type":"integer","format":"int64"},"apiKey":{"type":"string"},"loginUrl":{"type":"string"},"username":{"type":"string"},"password":{"type":"string"}}},"Token":{"properties":{"id":{"type":"integer","format":"int64"},"token":{"type":"string"},"refreshToken":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"expiratedAt":{"type":"string","format":"date-time"}}},"Health":{"properties":{"details":{"type":"object","additionalProperties":{}}}},"AlertDTO":{"properties":{"id":{"type":"string"},"origin":{"type":"string"},"type":{"type":"string","enum":["LOCATION","ACTIVITY","STRIKING_OFF","BOARD_OF_DIRECTORS","UBO","COMPANY_NAME","LEGAL_FORM","SHARE_CAPITAL","ANNUAL_ACCOUNT","UPDATE_IDENTIFICATION_NUMBER","STATUTORY_AUDITOR","AGM_NOTICE","OTHER"]},"legalEntity":{"$ref":"#/components/schemas/LegalEntity"},"content":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}},"required":["id","origin","type"]}},"securitySchemes":{"Api-Key":{"type":"apiKey","name":"Api-Key","in":"header"}}}}
+can you review this and propose the perfect solutions
+
