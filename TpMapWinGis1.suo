@@ -1,1 +1,128 @@
-{"openapi":"3.1.0","info":{"title":"API Documentation","version":"1.0"},"servers":[{"url":"http://localhost:8080","description":"Generated server url"}],"security":[{"Api-Key":[]}],"paths":{"/auth/appClient":{"post":{"tags":["authentication-controller"],"summary":"Create an app Client","operationId":"addAppClient","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RequestBodyCreateAppClient"}}},"required":true},"responses":{"200":{"description":"App Client created","content":{"*/*":{"schema":{"$ref":"#/components/schemas/AppClient"}}}}}}},"/api/country/{country}/company/{id}/follow":{"post":{"tags":["registry-controller"],"summary":"Follow new company","operationId":"followCompany","parameters":[{"name":"country","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","required":true,"schema":{"type":"string"}},{"name":"Api-Key","in":"header","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Company followed","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/api/connector":{"post":{"tags":["registry-controller"],"summary":"Create or update connector","operationId":"addConnector","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Connector"}}},"required":true},"responses":{"201":{"description":"Connector created/updated","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Connector"}}}}}}},"/health/connectors":{"get":{"tags":["health-controller"],"operationId":"getHealthConnector","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Health"}}}}}}},"/api/country/{country}/company/{id}":{"get":{"tags":["registry-controller"],"summary":"Get company's data ","operationId":"getDataForCountry","parameters":[{"name":"country","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Company's data returned","content":{"*/*":{"schema":{"$ref":"#/components/schemas/LegalEntity"}}}}}}},"/api/connector/{id}":{"get":{"tags":["registry-controller"],"summary":"Get connector ","operationId":"getConnector","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"Connector's data","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Connector"}}}}}}},"/api/alert":{"get":{"tags":["registry-controller"],"summary":"Get new alert for appClient","operationId":"getAlerts","parameters":[{"name":"Api-Key","in":"header","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"List of alerts","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/AlertDTO"}}}}}}}}},"components":{"schemas":{"RequestBodyCreateAppClient":{"properties":{"name":{"type":"string"},"callBackUrl":{"type":"string"}},"required":["name"]},"Address":{"properties":{"id":{"type":"integer","format":"int64"},"addressLine1":{"type":"string"},"addressLine2":{"type":"string"},"addressLine3":{"type":"string"},"zipCode":{"type":"string"},"city":{"type":"string"},"country":{"type":"string"}}},"AppClient":{"properties":{"id":{"type":"integer","format":"int64"},"apiKey":{"type":"string","format":"uuid"},"name":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"},"legalEntities":{"type":"array","items":{"$ref":"#/components/schemas/LegalEntity"}},"callBackUrl":{"type":"string"},"secretKey":{"type":"string"}},"required":["name"]},"BeneficialOwner":{"properties":{"id":{"type":"integer","format":"int64"},"percentageOfOwnership":{"type":"integer","format":"int32"},"natureOfOwnership":{"type":"string"},"naturalPerson":{"$ref":"#/components/schemas/NaturalPerson"},"legalEntity":{"required":["identifier","rcs"]},"startDate":{"type":"string","format":"date"},"endDate":{"type":"string","format":"date"}}},"Document":{"properties":{"identifier":{"type":"string"},"type":{"type":"string","enum":["Acte","Bilan"]},"name":{"type":"string"},"creationDate":{"type":"string","format":"date-time"},"updatedDate":{"type":"string","format":"date-time"},"details":{"type":"string"}}},"LegalEntity":{"properties":{"identifier":{"type":"string"},"rcs":{"type":"string"},"status":{"type":"string"},"country":{"type":"string"},"legalName":{"type":"string"},"legalForm":{"type":"string"},"capital":{"type":"integer","format":"int64"},"activityCode":{"type":"string"},"registrationDate":{"type":"string","format":"date"},"registrationCountry":{"type":"string"},"address":{"$ref":"#/components/schemas/Address"},"representatives":{"type":"array","items":{"$ref":"#/components/schemas/Representative"}},"beneficialOwners":{"type":"array","items":{"$ref":"#/components/schemas/BeneficialOwner"}},"secondaryOffices":{"type":"array","items":{"$ref":"#/components/schemas/LegalEntity"}},"legalEntityIdentifier":{"type":"string"},"intracommunityVATNumber":{"type":"string"},"documents":{"type":"array","items":{"$ref":"#/components/schemas/Document"}},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}},"required":["identifier","rcs"]},"NaturalPerson":{"properties":{"id":{"type":"integer","format":"int64"},"firstName":{"type":"string"},"lastName":{"type":"string"},"maidenName":{"type":"string"},"birthDate":{"type":"string","format":"date"},"birthCity":{"type":"string"},"birthCountry":{"type":"string"},"nationality":{"type":"string"},"address":{"$ref":"#/components/schemas/Address"}}},"Representative":{"properties":{"id":{"type":"integer","format":"int64"},"role":{"type":"string"},"naturalPerson":{"$ref":"#/components/schemas/NaturalPerson"},"legalEntity":{"$ref":"#/components/schemas/LegalEntity"}}},"Connector":{"properties":{"id":{"type":"integer","format":"int64"},"type":{"type":"array","items":{"$ref":"#/components/schemas/ConnectorType"}},"active":{"type":"boolean"},"country":{"type":"string"},"apiUrl":{"type":"string"},"credentials":{"$ref":"#/components/schemas/Credentials"},"apiToken":{"$ref":"#/components/schemas/Token"},"priority":{"type":"integer","format":"int32"},"serviceName":{"type":"string"},"createdDate":{"type":"string","format":"date-time"},"updateDate":{"type":"string","format":"date-time"}},"required":["active","country","serviceName"]},"ConnectorType":{"properties":{"id":{"type":"integer","format":"int64"},"name":{"type":"string"}}},"Credentials":{"properties":{"id":{"type":"integer","format":"int64"},"apiKey":{"type":"string"},"loginUrl":{"type":"string"},"username":{"type":"string"},"password":{"type":"string"}}},"Token":{"properties":{"id":{"type":"integer","format":"int64"},"token":{"type":"string"},"refreshToken":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"expiratedAt":{"type":"string","format":"date-time"}}},"Health":{"properties":{"details":{"type":"object","additionalProperties":{}}}},"AlertDTO":{"properties":{"id":{"type":"string"},"origin":{"type":"string"},"type":{"type":"string","enum":["LOCATION","ACTIVITY","STRIKING_OFF","BOARD_OF_DIRECTORS","UBO","COMPANY_NAME","LEGAL_FORM","SHARE_CAPITAL","ANNUAL_ACCOUNT","UPDATE_IDENTIFICATION_NUMBER","STATUTORY_AUDITOR","AGM_NOTICE","OTHER"]},"legalEntity":{"$ref":"#/components/schemas/LegalEntity"},"content":{"type":"string"},"createdAt":{"type":"string","format":"date-time"},"updatedAt":{"type":"string","format":"date-time"}},"required":["id","origin","type"]}},"securitySchemes":{"Api-Key":{"type":"apiKey","name":"Api-Key","in":"header"}}}}
+D’accord — on y va au pas à pas pour faire marcher le rendu ["string","null"]. Tu dis “Jack ne marche tjr pas” — j’assume que tu veux dire Jackson / Swagger / SpringDoc : résumé — il reste un point bloquant côté génération du schéma OpenAPI. Voici une solution robuste et prête à coller dans ton projet, plus les vérifs à faire.
+
+⸻
+
+✅ Solution fiable (PropertyCustomizer + oneOf)
+
+Ajoute ce composant : il force, pour chaque propriété string annotée nullable, la génération oneOf: [ { type: "string" }, { type: "null" } ]. Ça contourne les différences de versions SpringDoc.
+
+package eu.olkypay.business_registry.config;
+
+import io.swagger.v3.oas.models.media.Schema;
+import org.springdoc.core.customizers.PropertyCustomizer;
+import org.springframework.stereotype.Component;
+
+import java.lang.reflect.Type;
+import java.util.Arrays;
+
+@Component
+public class NullablePropertyCustomizer implements PropertyCustomizer {
+
+    @Override
+    public Schema<?> customize(Schema<?> property, Type type) {
+        if (property == null) return null;
+
+        // Si la propriété est de type string et explicitement nullable, on transforme en oneOf [string, null]
+        if ("string".equals(property.getType()) && Boolean.TRUE.equals(property.getNullable())) {
+            Schema<?> stringSchema = new Schema<>().type("string");
+            Schema<?> nullSchema = new Schema<>().type("null");
+            property.setOneOf(Arrays.asList(stringSchema, nullSchema));
+            // clear simple type/nullable to avoid conflit d'affichage
+            property.setType(null);
+            property.setNullable(null);
+        }
+        return property;
+    }
+}
+
+Colle ce fichier, rebuild et restart.
+
+⸻
+
+🔎 Vérifications à faire (ordre important)
+	1.	Properties
+
+springdoc.api-docs.version=OPENAPI_3_1
+springdoc.model-converters.nullable-properties=true
+
+(tu peux laisser model-converters.nullable-properties=true même si on force le oneOf)
+
+	2.	Vérifier dépendances (pas de mélange incompatible)
+Dans ton projet, exécute :
+
+mvn dependency:tree | grep springdoc -n
+mvn dependency:tree | grep spring-boot -n
+
+Assure-toi d’avoir UNE seule version de springdoc-openapi-starter-webmvc-ui compatible avec ton Spring Boot. Pas de restes 3.0.0-M1 si tu es sur Boot 3.3.x/3.5.x.
+
+	3.	Nettoyer et rebuild
+
+mvn clean package -DskipTests
+
+Redémarre (mvn spring-boot:run ou via IntelliJ Run).
+
+	4.	Vider le cache du navigateur (Swagger UI met parfois en cache). Ouvre /v3/api-docs (ou ton path si tu l’as customisé) :
+http://localhost:8080/v3/api-docs
+Cherche la définition du zipCode / address. Tu dois voir :
+
+"zipCode": {
+  "oneOf": [
+    { "type": "string" },
+    { "type": "null" }
+  ],
+  "example": "75015"
+}
+
+
+	5.	Si tu vois toujours type: "string" :
+	•	Poste le fragment JSON correspondant (la partie zipCode dans /v3/api-docs).
+	•	Vérifie qu’il n’y a pas un autre PropertyCustomizer qui écrase.
+	•	Vérifie qu’il n’y a pas d’autre dépendance springdoc en transitif (par ex. springdoc-openapi-starter-common en double version).
+
+⸻
+
+Remarques importantes / pourquoi on fait oneOf
+	•	OpenAPI 3.1 permet type: ["string","null"]. SpringDoc/Swagger UI peuvent cependant préférer oneOf ou nullable:true selon versions.
+	•	property.setNullable(true) peut suffire sur certaines versions, mais pas systématiquement (bugs/versions). oneOf est la manière la plus portable pour que l’UI et les clients comprennent “string ou null”.
+	•	On vide type et nullable ensuite pour éviter un rendu ambigu.
+
+⸻
+
+Exemple minimal (DTO + contrôleur)
+
+Tu peux vérifier avec ce mini-exemple :
+
+// AddressDTO
+public class AddressDTO {
+    @Schema(description = "Code postal", nullable = true, example = "75015")
+    private String zipCode;
+    // getters/setters
+}
+
+// Controller
+@RestController
+public class TestController {
+    @GetMapping("/test/address")
+    public AddressDTO test() {
+        AddressDTO d = new AddressDTO();
+        d.setZipCode("75015");
+        return d;
+    }
+}
+
+Puis visite http://localhost:8080/v3/api-docs et cherche AddressDTO → zipCode.
+
+⸻
+
+Si ça marche toujours pas — que m’envoyer
+
+Colle ici (copier-coller) :
+	1.	Le fragment /v3/api-docs pour Address / zipCode (juste 20–50 lignes autour)
+	2.	Le dependency:tree output pour springdoc et spring-boot (les commandes ci-dessus)
+	3.	La version de Spring Boot dans ton pom.xml (parent).
+
+Avec ces 3 éléments je te fournis le patch exact.
+
+⸻
+
+Tu veux que je te génère ce NullablePropertyCustomizer complet (je l’ai déjà fourni) ou tu préfères que je regarde directement ton /v3/api-docs fragment pour corriger au plus juste ?
