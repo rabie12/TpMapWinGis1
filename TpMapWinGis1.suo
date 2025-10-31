@@ -1,24 +1,2 @@
-ive upgraded spring*-boot-version and now im able to work with:
-
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>3.0.0-M1</version>
-        </dependency>
-
-but still not able to have : { "type": ["string", "null"], "example": "75015" }
-
-this is muy property file :
-
-
-springdoc.api-docs.path=/swagger
 springdoc.api-docs.version=OPENAPI_3_1
 springdoc.model-converters.nullable-properties=true
-
-Update your application's configuration. The following values are valid:
-
-    OPENAPI_3_0
-    OPENAPI_3_1
-
-ivae this this why i change the property from 3.1.0 to   OPENAPI_3_1 due to error message of spring
-but still not being able to have  { "type": ["string", "null"], "example": "75015" }
