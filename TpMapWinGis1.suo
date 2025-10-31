@@ -21,3 +21,4 @@ Update your application's configuration. The following values are valid:
     OPENAPI_3_1
 
 ivae this this why i change the property from 3.1.0 to   OPENAPI_3_1 due to error message of spring
+but still not being able to have  { "type": ["string", "null"], "example": "75015" }
