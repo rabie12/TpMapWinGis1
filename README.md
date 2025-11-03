@@ -1,41 +1,115 @@
-package eu.olkypay.business_registry.configuration;
+package eu.olkypay.business_registry.dto.company;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.media.Schema;
-import org.springdoc.core.customizers.OpenApiCustomizer;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import java.util.List;
-import java.util.Map;
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@Schema(description = "Represents an address of a company or person")
+public class AddressDTO {
 
-@Component
-public class OpenApiNullablePostProcessor implements OpenApiCustomizer {
-    @Override
-    public void customise(OpenAPI openApi) {
-        if (openApi == null || openApi.getComponents() == null) return;
+    @Schema(
+            type = "string",
+            nullable = true,
+            requiredMode = Schema.RequiredMode.AUTO,
+            example = "23 RUE JEAN DIDIER"
+    )
+    private String addressLine1;
 
-        Map<String, Schema> schemas = openApi.getComponents().getSchemas();
-        if (schemas == null) return;
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "Résidence Les Lilas"
 
-        schemas.values().forEach(schema -> {
-            if (schema.getProperties() == null) return;
+    )
+    private String addressLine2;
 
-            schema.getProperties().forEach((name, prop) -> {
-                if (!(prop instanceof Schema<?> p)) return;
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "null"
+    )
+    private String addressLine3;
 
-                // ✅ handle when type is null or when it's a string
-                boolean isStringType = "string".equals(p.getType()) || p.getType() == null;
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "75015"
+    )
+    private String zipCode;
 
-                if (isStringType && Boolean.TRUE.equals(p.getNullable())) {
-                    Schema<?> stringSchema = new Schema<>().type("string");
-                    Schema<?> nullSchema = new Schema<>().type("null");
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "Paris"
+    )
+    private String city;
 
-                    // Replace type/nullable with oneOf
-                    p.setOneOf(List.of(stringSchema, nullSchema));
-                    p.setType(null);
-                    p.setNullable(null);
-                }
-            });
-        });
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    private String country;
+
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    public String getAddressLine1() {
+        return addressLine1;
+    }
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    public String getAddressLine2() {
+        return addressLine2;
+    }
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    public String getAddressLine3() {
+        return addressLine3;
+    }
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    public String getZipCode() {
+        return zipCode;
+    }
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    public String getCity() {
+        return city;
+    }
+
+    @Schema(
+            type = "string",
+            nullable = true,
+            example = "FR"
+    )
+    public String getCountry() {
+        return country;
+    }
+
+    public AddressDTO(String city) {
+        this.city = city;
     }
 }
+ive already add this but it doesnt work as im working with latest version of spring
