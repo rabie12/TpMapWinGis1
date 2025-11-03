@@ -1,41 +1,117 @@
-Statut:
-Nouveau
-Priorité:
-Planifié - Niveau 5
-Auteur:
-Rabie HABACHI
-Assigné à:
-Hamza FERRAG
-Catégorie:
-01 - Applications clientes (Web banking, Api, support, ...)
-Début:
-28/10/2025
-Echéance:
-06/11/2025 (Échéance dans 3 jours)
-% réalisé:
-0%
 
-Temps estimé:
-2:00 h
-Citer
-Historique
-Description
+    @RequestMapping(value = "/{orderId}/", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> generate(@PathVariable("orderId") int orderId) throws Exception {
+        LOGGER.info("Sct request for SCT order with ID <{}>", orderId);
+        byte[] content = _sctDebitPdfWriter.generateDocument(orderId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = new StringBuilder("Avis-débit-").append(orderId).append(".pdf").toString();
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        ResponseEntity<byte[]> response = new ResponseEntity<byte[]>(content, headers, HttpStatus.OK);
+        return response;
+    }
 
-Suite à la reprise des développement du projet OlkyRegister. J'aurais besoin des accès à la base de données en Dev.
+    private byte[] generate(Integer orderId, String txId, InputStream isTemplate, int saveFormat) throws Exception {
+        LOGGER.info("Generating SCT document for order with id <{}>", orderId);
 
-Ajouter
-Sous-tâches
+        Document document = new Document(isTemplate);
 
-Ajouter
-Demandes liées
+        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
+        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
+        document.getBuiltInDocumentProperties().setCompany("Olkypay");
+        document.getBuiltInDocumentProperties().setKeywords(String.format("%s %s", orderId, (txId != null ? txId : "")));
 
-Historique
- 
-Notes
- 
-Changements
-Citer
-Actions
-#2
-Mis à jour par Alexandre JOUFFROY il y a 2 jours
-Rabie HABACHI pour un meilleur délai de traitement merci de bien qualifier les demande avec le bon stracker c quoi le stracker?
+        setDocumentProperties(cdp, getContent(orderId));
+        document.updateFields();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        document.save(baos, saveFormat);
+        return baos.toByteArray();
+
+    }
+
+    private SctDebitPdfContent getContent(int orderPaymentId) {
+        SctDebitPdfContent result = new SctDebitPdfContent();
+        OrderPayment orderPayment = _orderPaymentSvc.findByPrimaryKey(orderPaymentId);
+
+        if (orderPayment == null) {
+            throw new IllegalArgumentException("No OrderPayment found");
+        }
+        if (Categories.SCT.getCategory().getId() != orderPayment.getCategory().getId() && Categories.IP.getCategory().getId() != orderPayment.getCategory().getId()) {
+            throw new IllegalArgumentException("Not an SCT");
+        }
+        if (OrderStatuses.COMPLETED.getOrderStatus().getId() != orderPayment.getOrderStatus().getId()) {
+            throw new IllegalArgumentException("Not a completed Order");
+        }
+        // Client...
+        Client client = orderPayment.getClient();
+        String clientName = client.getFullName();
+        
+        
+        Address clientAddress = client.getAddress();
+        if (clientAddress == null) {
+            throw new IllegalArgumentException("No address for client");
+        }
+        StringBuilder address = new StringBuilder().append(clientAddress.getAddress1()).append(", ");
+        if (!Strings.isEmpty(clientAddress.getPostcode())) {
+            address.append(clientAddress.getPostcode()).append(" ");
+        }
+        result.setOutAddress(address.append(clientAddress.getCity()).toString());
+        Supplier supplier = client.getSupplier();
+        // Supplier name
+        result.setSupplierName(supplier.getFullname());
+        // Order lines
+        OrderLine orderLine = null;
+        List<OrderLine> orderLines = _orderLineSvc.findByOrderPaymentId(orderPaymentId);
+        if (orderLines != null) {
+            for (OrderLine ol : orderLines) {
+                if (OrderStatuses.COMPLETED.getOrderStatus().getId() == ol.getOrderStatus().getId()) {
+                    orderLine = ol;
+                    result.setExecutionDate(ol.getSddSettlementDate().format(DTF));
+                    break;
+                }
+            }
+        }
+        if (orderLine == null) {
+            throw new IllegalArgumentException("No completed OrderLine for Order");
+        }
+        
+        result.setEndToEndId(orderPayment.getEndToEndId());
+        result.setTxId(orderLine.getPacsTxId());
+        
+        Payment orderLinePayment = orderLine.getPayment();
+        if (orderLinePayment != null) {
+        	BankAccount orderLineBankAccount = orderLinePayment.getBankAccount();
+        	if (orderLineBankAccount != null) {
+        		clientName = orderLineBankAccount.getName();
+        	}
+        }
+        
+        result.setOutName(clientName);
+        
+        
+        List<Sio4Ecriture> ecritures = _sio4EcritureService.findByCodeOrderLineWis(orderLine.getId());
+        if (ecritures == null || ecritures.isEmpty()) {
+            throw new IllegalArgumentException("Not Ecritures for OrderLine");
+        }
+        
+        
+        for (Sio4Ecriture e : ecritures) {
+            if (e.getCredit() != null && e.getCredit() > 0) {
+                result.setAmount(convertAmount(e.getCredit()));
+                result.setOutIban(e.getIban());
+                
+                result.setControlKey(encodeControlKey(String.valueOf(e.getIdCtp())));
+            } else if (e.getDebit() != null && e.getDebit() > 0) {
+                result.setSupplierIban(e.getIban());
+            }
+        }
+        if (!Strings.isEmpty(orderPayment.getComment())) {
+            result.setLabel(orderPayment.getComment());
+        }
+
+        return result;
+    }
+   je faire un service similairee qui genere un avis de débit mais au lieu de recevoir un objet il va recevoir un uobjet avec tout les elements necessaire poiur générer l'AB sans appeller la db peux tu me créer un avec un  code optimale
