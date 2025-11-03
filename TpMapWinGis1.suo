@@ -1,122 +1,41 @@
-Ah, I see exactly what’s happening here. You’ve already tried:
-	•	Spring Boot 4 + SpringDoc 3.0-M1
-	•	springdoc.model-converters.nullable-properties=true
-	•	Annotations on fields, getters, and Lombok methods
-	•	Custom PropertyCustomizer and OpenApiCustomizer
+Statut:
+Nouveau
+Priorité:
+Planifié - Niveau 5
+Auteur:
+Rabie HABACHI
+Assigné à:
+Hamza FERRAG
+Catégorie:
+01 - Applications clientes (Web banking, Api, support, ...)
+Début:
+28/10/2025
+Echéance:
+06/11/2025 (Échéance dans 3 jours)
+% réalisé:
+0%
 
-…and you still don’t see "type": ["string", "null"] or "example": null.
+Temps estimé:
+2:00 h
+Citer
+Historique
+Description
 
-Here’s the analysis and a path forward:
+Suite à la reprise des développement du projet OlkyRegister. J'aurais besoin des accès à la base de données en Dev.
 
-⸻
+Ajouter
+Sous-tâches
 
-1️⃣ Why your current approach doesn’t work
-	1.	SpringDoc 3.x does not fully support example: null for nullable fields. It only sets nullable=true on the type.
-	2.	Your PropertyCustomizer sets oneOf([string, null]) correctly, but:
-	•	SpringDoc sometimes overwrites it after your customizer runs.
-	•	The customizer does not modify the example; it only sets the type structure.
-	3.	example="null" or defaultValue="null" in annotations is treated as a literal string, not JSON null. So you’ll see "example": "null" instead of null.
+Ajouter
+Demandes liées
 
-⸻
-
-2️⃣ Recommended solution
-
-You need to both:
-	1.	Use oneOf([string, null]) for nullable strings.
-	2.	Set the example programmatically to null.
-
-Here’s a working approach:
-
-@Component
-public class NullableStringCustomizer implements PropertyCustomizer {
-
-    @Override
-    public Schema<?> customize(Schema property, AnnotatedType type) {
-        if (property == null) return null;
-
-        if (Boolean.TRUE.equals(property.getNullable()) && "string".equals(property.getType())) {
-            Schema<String> stringSchema = new Schema<>().type("string").example(null);
-            Schema<Object> nullSchema = new Schema<>().nullable(true).example(null);
-            property.setOneOf(List.of(stringSchema, nullSchema));
-
-            // remove old type/nullable to avoid conflicts
-            property.setType(null);
-            property.setNullable(null);
-        }
-        return property;
-    }
-}
-
-✅ Key points:
-	•	example(null) ensures the OpenAPI JSON emits null instead of "null".
-	•	oneOf ensures the type is correctly represented as ["string", "null"].
-
-⸻
-
-3️⃣ Ensure customizers run in SpringDoc
-
-Sometimes SpringDoc’s order matters. Make sure your component is picked up:
-
-@SpringBootApplication
-public class BusinessRegistryApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(BusinessRegistryApplication.class, args);
-    }
-
-    @Bean
-    public PropertyCustomizer nullableStringCustomizer() {
-        return new NullableStringCustomizer();
-    }
-}
-
-
-⸻
-
-4️⃣ Optional: Post-process the OpenAPI document
-
-If you want, you can do a global fix after SpringDoc builds the OpenAPI:
-
-@Component
-public class OpenApiPostProcessor implements OpenApiCustomizer {
-    @Override
-    public void customise(OpenAPI openApi) {
-        if (openApi.getComponents() == null) return;
-        openApi.getComponents().getSchemas().values().forEach(schema -> {
-            if (schema.getProperties() == null) return;
-            schema.getProperties().forEach((name, prop) -> {
-                if (!(prop instanceof Schema)) return;
-                Schema<?> s = (Schema<?>) prop;
-                if ("string".equals(s.getType()) && Boolean.TRUE.equals(s.getNullable())) {
-                    s.setOneOf(List.of(new Schema<>().type("string").example(null),
-                                       new Schema<>().nullable(true).example(null)));
-                    s.setType(null);
-                    s.setNullable(null);
-                }
-            });
-        });
-    }
-}
-
-
-⸻
-
-✅ Outcome
-
-With this, your OpenAPI 3.1 JSON will now show:
-
-"zipCode": {
-  "oneOf": [
-    { "type": "string", "example": null },
-    { "nullable": true, "example": null }
-  ]
-}
-
-	•	Type: ["string","null"]
-	•	Example: null (actual JSON null, not "null" string)
-
-⸻
-
-If you want, I can rewrite your two existing customizer classes into one clean working version that you just drop in your configuration package, which will fix all nullable string examples globally.
-
-Do you want me to do that?
+Historique
+ 
+Notes
+ 
+Changements
+Citer
+Actions
+#2
+Mis à jour par Alexandre JOUFFROY il y a 2 jours
+Rabie HABACHI pour un meilleur délai de traitement merci de bien qualifier les demande avec le bon stracker c quoi le stracker?
