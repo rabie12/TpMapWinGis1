@@ -1,117 +1,152 @@
+Parfait 👍 Tu veux donc un service Spring Boot qui génère un avis de débit (PDF) comme ton code existant, mais sans appel à la base de données : tu veux simplement passer un objet contenant toutes les données nécessaires (client, fournisseur, montants, IBAN, etc.), et le service doit produire un PDF directement.
 
-    @RequestMapping(value = "/{orderId}/", method = RequestMethod.GET)
-    public ResponseEntity<byte[]> generate(@PathVariable("orderId") int orderId) throws Exception {
-        LOGGER.info("Sct request for SCT order with ID <{}>", orderId);
-        byte[] content = _sctDebitPdfWriter.generateDocument(orderId);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        String filename = new StringBuilder("Avis-débit-").append(orderId).append(".pdf").toString();
-        headers.setContentDispositionFormData(filename, filename);
-        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        ResponseEntity<byte[]> response = new ResponseEntity<byte[]>(content, headers, HttpStatus.OK);
-        return response;
-    }
+Voici un exemple complet, clair et optimisé en Java (Spring Boot + Aspose/WOPI-like logique), structuré de manière professionnelle.
 
-    private byte[] generate(Integer orderId, String txId, InputStream isTemplate, int saveFormat) throws Exception {
-        LOGGER.info("Generating SCT document for order with id <{}>", orderId);
+⸻
 
-        Document document = new Document(isTemplate);
+🧩 1. DTO : Objet d’entrée pour générer le PDF
 
-        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SctDebitData {
+    private Integer orderId;
+    private String txId;
+    private String executionDate;
+    private String endToEndId;
+    private String outName;
+    private String outAddress;
+    private String outIban;
+    private String supplierName;
+    private String supplierIban;
+    private String controlKey;
+    private BigDecimal amount;
+    private String label;
+}
+
+Cet objet contient tout ce dont ton PDF a besoin, sans dépendre de la base de données.
+
+⸻
+
+🧠 2. Service : génération du PDF sans DB
+
+@Service
+public class SctDebitPdfGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SctDebitPdfGenerator.class);
+
+    public byte[] generatePdf(SctDebitData data, InputStream template, int saveFormat) throws Exception {
+        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
+
+        Document document = new Document(template);
+
+        // 🧾 Propriétés générales du document
         document.getBuiltInDocumentProperties().setTitle("Avis de débit");
         document.getBuiltInDocumentProperties().setAuthor("Olkypay");
         document.getBuiltInDocumentProperties().setCompany("Olkypay");
-        document.getBuiltInDocumentProperties().setKeywords(String.format("%s %s", orderId, (txId != null ? txId : "")));
+        document.getBuiltInDocumentProperties().setKeywords(
+                String.format("%s %s", data.getOrderId(), Optional.ofNullable(data.getTxId()).orElse(""))
+        );
 
-        setDocumentProperties(cdp, getContent(orderId));
+        // 🔧 Ajout des champs personnalisés
+        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+        setDocumentProperties(cdp, data);
+
         document.updateFields();
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         document.save(baos, saveFormat);
         return baos.toByteArray();
-
     }
 
-    private SctDebitPdfContent getContent(int orderPaymentId) {
-        SctDebitPdfContent result = new SctDebitPdfContent();
-        OrderPayment orderPayment = _orderPaymentSvc.findByPrimaryKey(orderPaymentId);
-
-        if (orderPayment == null) {
-            throw new IllegalArgumentException("No OrderPayment found");
-        }
-        if (Categories.SCT.getCategory().getId() != orderPayment.getCategory().getId() && Categories.IP.getCategory().getId() != orderPayment.getCategory().getId()) {
-            throw new IllegalArgumentException("Not an SCT");
-        }
-        if (OrderStatuses.COMPLETED.getOrderStatus().getId() != orderPayment.getOrderStatus().getId()) {
-            throw new IllegalArgumentException("Not a completed Order");
-        }
-        // Client...
-        Client client = orderPayment.getClient();
-        String clientName = client.getFullName();
-        
-        
-        Address clientAddress = client.getAddress();
-        if (clientAddress == null) {
-            throw new IllegalArgumentException("No address for client");
-        }
-        StringBuilder address = new StringBuilder().append(clientAddress.getAddress1()).append(", ");
-        if (!Strings.isEmpty(clientAddress.getPostcode())) {
-            address.append(clientAddress.getPostcode()).append(" ");
-        }
-        result.setOutAddress(address.append(clientAddress.getCity()).toString());
-        Supplier supplier = client.getSupplier();
-        // Supplier name
-        result.setSupplierName(supplier.getFullname());
-        // Order lines
-        OrderLine orderLine = null;
-        List<OrderLine> orderLines = _orderLineSvc.findByOrderPaymentId(orderPaymentId);
-        if (orderLines != null) {
-            for (OrderLine ol : orderLines) {
-                if (OrderStatuses.COMPLETED.getOrderStatus().getId() == ol.getOrderStatus().getId()) {
-                    orderLine = ol;
-                    result.setExecutionDate(ol.getSddSettlementDate().format(DTF));
-                    break;
-                }
-            }
-        }
-        if (orderLine == null) {
-            throw new IllegalArgumentException("No completed OrderLine for Order");
-        }
-        
-        result.setEndToEndId(orderPayment.getEndToEndId());
-        result.setTxId(orderLine.getPacsTxId());
-        
-        Payment orderLinePayment = orderLine.getPayment();
-        if (orderLinePayment != null) {
-        	BankAccount orderLineBankAccount = orderLinePayment.getBankAccount();
-        	if (orderLineBankAccount != null) {
-        		clientName = orderLineBankAccount.getName();
-        	}
-        }
-        
-        result.setOutName(clientName);
-        
-        
-        List<Sio4Ecriture> ecritures = _sio4EcritureService.findByCodeOrderLineWis(orderLine.getId());
-        if (ecritures == null || ecritures.isEmpty()) {
-            throw new IllegalArgumentException("Not Ecritures for OrderLine");
-        }
-        
-        
-        for (Sio4Ecriture e : ecritures) {
-            if (e.getCredit() != null && e.getCredit() > 0) {
-                result.setAmount(convertAmount(e.getCredit()));
-                result.setOutIban(e.getIban());
-                
-                result.setControlKey(encodeControlKey(String.valueOf(e.getIdCtp())));
-            } else if (e.getDebit() != null && e.getDebit() > 0) {
-                result.setSupplierIban(e.getIban());
-            }
-        }
-        if (!Strings.isEmpty(orderPayment.getComment())) {
-            result.setLabel(orderPayment.getComment());
-        }
-
-        return result;
+    private void setDocumentProperties(CustomDocumentProperties cdp, SctDebitData data) {
+        cdp.add("OrderId", data.getOrderId());
+        cdp.add("ExecutionDate", data.getExecutionDate());
+        cdp.add("OutName", data.getOutName());
+        cdp.add("OutAddress", data.getOutAddress());
+        cdp.add("OutIban", data.getOutIban());
+        cdp.add("SupplierName", data.getSupplierName());
+        cdp.add("SupplierIban", data.getSupplierIban());
+        cdp.add("ControlKey", data.getControlKey());
+        cdp.add("Amount", data.getAmount().toPlainString());
+        cdp.add("Label", data.getLabel());
     }
-   je faire un service similairee qui genere un avis de débit mais au lieu de recevoir un objet il va recevoir un uobjet avec tout les elements necessaire poiur générer l'AB sans appeller la db peux tu me créer un avec un  code optimale
+}
+
+✅ Ici, aucune dépendance à la DB. Tout vient de SctDebitData.
+✅ Compatible avec Aspose Words / PDF save format (Word → PDF).
+
+⸻
+
+🌐 3. Contrôleur REST
+
+@RestController
+@RequestMapping("/api/sct-debit")
+public class SctDebitController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SctDebitController.class);
+
+    private final SctDebitPdfGenerator pdfGenerator;
+
+    @Autowired
+    public SctDebitController(SctDebitPdfGenerator pdfGenerator) {
+        this.pdfGenerator = pdfGenerator;
+    }
+
+    @PostMapping(value = "/generate", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generate(@RequestBody SctDebitData data) {
+        try (InputStream template = getClass().getResourceAsStream("/templates/avis-debit-template.docx")) {
+            byte[] pdf = pdfGenerator.generatePdf(data, template, SaveFormat.PDF);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
+            headers.setContentDispositionFormData(filename, filename);
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
+            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            LOGGER.error("Error generating SCT PDF", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Erreur lors de la génération : " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
+        }
+    }
+}
+
+
+⸻
+
+📁 4. Exemple de requête API
+
+POST http://localhost:8080/api/sct-debit/generate
+
+{
+  "orderId": 12345,
+  "txId": "TX987654321",
+  "executionDate": "2025-11-03",
+  "endToEndId": "E2E12345",
+  "outName": "Jean Dupont",
+  "outAddress": "10 rue de la Paix, 75002 Paris",
+  "outIban": "FR7612345987654321009876543",
+  "supplierName": "Olkypay SARL",
+  "supplierIban": "FR7610002000123456789012345",
+  "controlKey": "ABC123",
+  "amount": 250.75,
+  "label": "Paiement facture 456"
+}
+
+🔥 Le service renverra directement le PDF en réponse (comme un téléchargement).
+
+⸻
+
+⚙️ 5. Points d’optimisation
+	•	✅ Aucune dépendance DB : tout est injecté via SctDebitData.
+	•	✅ Réutilisable : tu peux appeler generatePdf() depuis d’autres services (API, batch…).
+	•	✅ Template flexible : ton modèle Word/PDF (avis-debit-template.docx) peut contenir des champs à remplacer (MERGEFIELDS).
+	•	✅ Robuste : gestion des erreurs propre et réponse HTTP cohérente.
+
+⸻
+
+Souhaites-tu que je te montre une version qui remplit directement le template Word (avec les champs dynamiques) au lieu d’utiliser uniquement les propriétés personnalisées ?
+Cela permettrait que ton fichier modèle contienne des tags du type « <<NomClient>> », remplacés automatiquement avant export PDF.
