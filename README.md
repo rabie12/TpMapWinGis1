@@ -1,8 +1,77 @@
-{"openapi":"3.1.0","info":{"title":"API Documentation","version":"1.0"},"servers":[{"url":"http://localhost:8080","description":"Generated server url"}],"security":[{"Api-Key":[]}],"paths":{"/auth/appClient":{"post":{"tags":["authentication-controller"],"summary":"Create an app Client","operationId":"addAppClient","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/RequestBodyCreateAppClient"}}},"required":true},"responses":{"200":{"description":"App Client created","content":{"*/*":{"schema":{"$ref":"#/components/schemas/AppClient"}}}}}}},"/api/country/{country}/company/{id}/follow":{"post":{"tags":["registry-controller"],"summary":"Follow new company","operationId":"followCompany","parameters":[{"name":"country","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","required":true,"schema":{"type":"string"}},{"name":"Api-Key","in":"header","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Company followed","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/api/connector":{"post":{"tags":["registry-controller"],"summary":"Create or update connector","operationId":"addConnector","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/Connector"}}},"required":true},"responses":{"201":{"description":"Connector created/updated","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Connector"}}}}}}},"/health/connectors":{"get":{"tags":["health-controller"],"operationId":"getHealthConnector","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Health"}}}}}}},"/api/country/{country}/company/{id}":{"get":{"tags":["registry-controller"],"summary":"Get company's data ","operationId":"getDataForCountry","parameters":[{"name":"country","in":"path","required":true,"schema":{"type":"string"}},{"name":"id","in":"path","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"Company's data returned","content":{"*/*":{"schema":{"$ref":"#/components/schemas/LegalEntity"}}}}}}},"/api/connector/{id}":{"get":{"tags":["registry-controller"],"summary":"Get connector ","operationId":"getConnector","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"Connector's data","content":{"*/*":{"schema":{"$ref":"#/components/schemas/Connector"}}}}}}},"/api/alert":{"get":{"tags":["registry-controller"],"summary":"Get new alert for appClient","operationId":"getAlerts","parameters":[{"name":"Api-Key","in":"header","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"List of alerts","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/AlertDTO"}}}}}}}}},"components":{"schemas":{"RequestBodyCreateAppClient":{"properties":{"name":{"type":"string","oneOf":[{},{}]},"callBackUrl":{"type":"string","oneOf":[{},{}]}},"required":["name"]},"Address":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"addressLine1":{"type":"string","oneOf":[{},{}]},"addressLine2":{"type":"string","oneOf":[{},{}]},"addressLine3":{"type":"string","oneOf":[{},{}]},"zipCode":{"type":"string","oneOf":[{},{}]},"city":{"type":"string","oneOf":[{},{}]},"country":{"type":"string","oneOf":[{},{}]}}},"AppClient":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"apiKey":{"type":"string","format":"uuid","oneOf":[{},{}]},"name":{"type":"string","oneOf":[{},{}]},"createdAt":{"type":"string","format":"date-time","oneOf":[{},{}]},"updatedAt":{"type":"string","format":"date-time","oneOf":[{},{}]},"legalEntities":{"type":"array","items":{"$ref":"#/components/schemas/LegalEntity"},"oneOf":[{},{}]},"callBackUrl":{"type":"string","oneOf":[{},{}]},"secretKey":{"type":"string","oneOf":[{},{}]}},"required":["name"]},"BeneficialOwner":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"percentageOfOwnership":{"type":"integer","format":"int32","oneOf":[{},{}]},"natureOfOwnership":{"type":"string","oneOf":[{},{}]},"naturalPerson":{"$ref":"#/components/schemas/NaturalPerson","oneOf":[{},{}]},"legalEntity":{"oneOf":[{},{}],"required":["identifier","rcs"]},"startDate":{"type":"string","format":"date","oneOf":[{},{}]},"endDate":{"type":"string","format":"date","oneOf":[{},{}]}}},"Document":{"properties":{"identifier":{"type":"string","oneOf":[{},{}]},"type":{"type":"string","enum":["Acte","Bilan"],"oneOf":[{},{}]},"name":{"type":"string","oneOf":[{},{}]},"creationDate":{"type":"string","format":"date-time","oneOf":[{},{}]},"updatedDate":{"type":"string","format":"date-time","oneOf":[{},{}]},"details":{"type":"string","oneOf":[{},{}]}}},"LegalEntity":{"properties":{"identifier":{"type":"string","oneOf":[{},{}]},"rcs":{"type":"string","oneOf":[{},{}]},"status":{"type":"string","oneOf":[{},{}]},"country":{"type":"string","oneOf":[{},{}]},"legalName":{"type":"string","oneOf":[{},{}]},"legalForm":{"type":"string","oneOf":[{},{}]},"capital":{"type":"integer","format":"int64","oneOf":[{},{}]},"activityCode":{"type":"string","oneOf":[{},{}]},"registrationDate":{"type":"string","format":"date","oneOf":[{},{}]},"registrationCountry":{"type":"string","oneOf":[{},{}]},"address":{"$ref":"#/components/schemas/Address","oneOf":[{},{}]},"representatives":{"type":"array","items":{"$ref":"#/components/schemas/Representative"},"oneOf":[{},{}]},"beneficialOwners":{"type":"array","items":{"$ref":"#/components/schemas/BeneficialOwner"},"oneOf":[{},{}]},"secondaryOffices":{"type":"array","items":{"$ref":"#/components/schemas/LegalEntity"},"oneOf":[{},{}]},"legalEntityIdentifier":{"type":"string","oneOf":[{},{}]},"intracommunityVATNumber":{"type":"string","oneOf":[{},{}]},"documents":{"type":"array","items":{"$ref":"#/components/schemas/Document"},"oneOf":[{},{}]},"createdAt":{"type":"string","format":"date-time","oneOf":[{},{}]},"updatedAt":{"type":"string","format":"date-time","oneOf":[{},{}]}},"required":["identifier","rcs"]},"NaturalPerson":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"firstName":{"type":"string","oneOf":[{},{}]},"lastName":{"type":"string","oneOf":[{},{}]},"maidenName":{"type":"string","oneOf":[{},{}]},"birthDate":{"type":"string","format":"date","oneOf":[{},{}]},"birthCity":{"type":"string","oneOf":[{},{}]},"birthCountry":{"type":"string","oneOf":[{},{}]},"nationality":{"type":"string","oneOf":[{},{}]},"address":{"$ref":"#/components/schemas/Address","oneOf":[{},{}]}}},"Representative":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"role":{"type":"string","oneOf":[{},{}]},"naturalPerson":{"$ref":"#/components/schemas/NaturalPerson","oneOf":[{},{}]},"legalEntity":{"$ref":"#/components/schemas/LegalEntity","oneOf":[{},{}]}}},"Connector":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"type":{"type":"array","items":{"$ref":"#/components/schemas/ConnectorType"},"oneOf":[{},{}]},"active":{"type":"boolean","oneOf":[{},{}]},"country":{"type":"string","oneOf":[{},{}]},"apiUrl":{"type":"string","oneOf":[{},{}]},"credentials":{"$ref":"#/components/schemas/Credentials","oneOf":[{},{}]},"apiToken":{"$ref":"#/components/schemas/Token","oneOf":[{},{}]},"priority":{"type":"integer","format":"int32","oneOf":[{},{}]},"serviceName":{"type":"string","oneOf":[{},{}]},"createdDate":{"type":"string","format":"date-time","oneOf":[{},{}]},"updateDate":{"type":"string","format":"date-time","oneOf":[{},{}]}},"required":["active","country","serviceName"]},"ConnectorType":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"name":{"type":"string","oneOf":[{},{}]}}},"Credentials":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"apiKey":{"type":"string","oneOf":[{},{}]},"loginUrl":{"type":"string","oneOf":[{},{}]},"username":{"type":"string","oneOf":[{},{}]},"password":{"type":"string","oneOf":[{},{}]}}},"Token":{"properties":{"id":{"type":"integer","format":"int64","oneOf":[{},{}]},"token":{"type":"string","oneOf":[{},{}]},"refreshToken":{"type":"string","oneOf":[{},{}]},"createdAt":{"type":"string","format":"date-time","oneOf":[{},{}]},"expiratedAt":{"type":"string","format":"date-time","oneOf":[{},{}]}}},"Health":{"properties":{"details":{"type":"object","additionalProperties":{},"oneOf":[{},{}]}}},"AlertDTO":{"properties":{"id":{"type":"string","oneOf":[{},{}]},"origin":{"type":"string","oneOf":[{},{}]},"type":{"type":"string","enum":["LOCATION","ACTIVITY","STRIKING_OFF","BOARD_OF_DIRECTORS","UBO","COMPANY_NAME","LEGAL_FORM","SHARE_CAPITAL","ANNUAL_ACCOUNT","UPDATE_IDENTIFICATION_NUMBER","STATUTORY_AUDITOR","AGM_NOTICE","OTHER"],"oneOf":[{},{}]},"legalEntity":{"$ref":"#/components/schemas/LegalEntity","oneOf":[{},{}]},"content":{"type":"string","oneOf":[{},{}]},"createdAt":{"type":"string","format":"date-time","oneOf":[{},{}]},"updatedAt":{"type":"string","format":"date-time","oneOf":[{},{}]}},"required":["id","origin","type"]}},"securitySchemes":{"Api-Key":{"type":"apiKey","name":"Api-Key","in":"header"}}}}
+Perfect — let’s make Swagger UI actually show that your fields can be "null" ✅
 
+Since Swagger UI does not render oneOf: [string, null] properly, the right approach is to use nullable: true (OpenAPI 3.0+ supported and Swagger UI recognizes it visually).
 
+⸻
 
+✅ Option 1 – Use nullable: true instead of oneOf
 
-is there any changes ? 
+Change your OpenApiNullablePostProcessor logic like this:
 
-if yes it doesnt change on swaggerui on Company's data returned section can you check why ?
+@Component
+public class OpenApiNullablePostProcessor implements OpenApiCustomizer {
+
+    @Override
+    public void customise(OpenAPI openApi) {
+        if (openApi == null || openApi.getComponents() == null) return;
+
+        Map<String, Schema> schemas = openApi.getComponents().getSchemas();
+        if (schemas == null) return;
+
+        schemas.values().forEach(schema -> {
+            if (schema.getProperties() == null) return;
+
+            schema.getProperties().forEach((name, prop) -> {
+                if (!(prop instanceof Schema<?> p)) return;
+
+                // Only apply to strings
+                if ("string".equals(p.getType())) {
+                    p.setNullable(true);      // ✅ Swagger UI shows this clearly
+                }
+            });
+        });
+    }
+}
+
+🔍 Result:
+Swagger UI will now render it like:
+
+legalName:
+  type: string
+  nullable: true
+
+and when you open the example body, Swagger UI will display:
+
+"legalName": "string"
+
+and also mark that it can be null (tooltip + schema description).
+
+⸻
+
+🧭 Option 2 – Keep oneOf and help Swagger UI visualize it
+
+If you must keep oneOf (for strict OpenAPI 3.1 semantics), Swagger UI won’t show null in the example —
+but you can help users by adding an example:
+
+if ("string".equals(p.getType()) || p.getType() == null) {
+    p.setType("string");
+    p.setExample("string or null");  // 👁 visible in UI
+    p.setNullable(true);             // ✅ UI highlights nullable
+}
+
+This gives you both machine-readable and visually helpful behavior.
+
+⸻
+
+✅ Recommended final setup
+
+If your goal is for developers to see in Swagger UI that a field may be null:
+
+p.setNullable(true);
+
+is the correct and supported way.
+Swagger UI clearly labels such fields as “nullable” in both the schema and the sample.
+
+⸻
+
+Would you like me to show you what the Swagger UI output will look like (screenshot-style example of the new section)?
