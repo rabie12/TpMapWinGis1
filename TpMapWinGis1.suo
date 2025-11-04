@@ -83,4 +83,26 @@ public class SctDebitPdfContent {
     }
 
 
-i want to use thois method in order to be suyre tha t its working
+i want to use thois method in order to be sure that its working because on this method wotrking correctly :
+
+    public byte[] generatePdf(SctDebitData data, InputStream template, int saveFormat) throws Exception {
+        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
+        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
+        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
+        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
+        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
+        document.getBuiltInDocumentProperties().setCompany("Olkypay");
+        document.getBuiltInDocumentProperties().setKeywords(
+                String.format("%s %s", data.getOrderId(), Optional.ofNullable(data.getTxId()).orElse(""))
+        );
+        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+        setDocumentProperties(cdp, data);
+
+        document.updateFields();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        document.save(baos, saveFormat);
+        return baos.toByteArray();
+    }
+
+its genrate pdf without issue
