@@ -1,5 +1,86 @@
-        if (data.getAmount() != null) {
-    cdp.add("Amount", data.getAmount().stripTrailingZeros().toPlainString());
-} else {
-    cdp.add("Amount", "0.00");
+public class SctDebitPdfContent {
+
+    public static final String SUPPLIER_IBAN = "SUPPLIER_IBAN";
+    public static final String SUPPLIER_NAME = "SUPPLIER_NAME";
+
+    public static final String OUT_IBAN = "OUT_IBAN";
+    public static final String OUT_NAME = "OUT_NAME";
+    public static final String OUT_ADDRESS = "OUT_ADDRESS";
+
+    public static final String AMOUNT = "AMOUNT";
+    public static final String EXECUTION_DATE = "EXECUTION_DATE";
+    public static final String LABEL = "LABEL";
+
+    public static final String CONTROL_KEY = "CONTROL_KEY";
+    
+    // new fields EndToEndId and TxId (https://support.olky.eu/issues/5673) :
+    public static final String END_TO_END_ID = "END_TO_END_ID";
+    public static final String TX_ID = "TX_ID";
+
+    private Map<String, String> fields;
+
+    public SctDebitPdfContent() {
+        fields = new HashMap<>();
+    }
+    
+    public void setEndToEndId(String endToEndId) {
+    	fields.put(END_TO_END_ID, endToEndId);
+    }
+    
+    public void setTxId(String txId) {
+    	fields.put(TX_ID, txId);
+    }
+
+    public void setSupplierIban(String supplierIban) {
+        fields.put(SUPPLIER_IBAN, supplierIban);
+    }
+
+    public void setSupplierName(String supplierName) {
+        fields.put(SUPPLIER_NAME, supplierName);
+    }
+
+    public void setOutIban(String outIban) {
+        fields.put(OUT_IBAN, outIban);
+    }
+
+    public void setOutName(String outName) {
+        fields.put(OUT_NAME, outName);
+    }
+
+    public void setOutAddress(String outAddress) {
+        fields.put(OUT_ADDRESS, outAddress);
+    }
+
+    public void setAmount(String amount) {
+        fields.put(AMOUNT, amount);
+    }
+
+    public void setExecutionDate(String executionDate) {
+        fields.put(EXECUTION_DATE, executionDate);
+    }
+
+    public void setLabel(String label) {
+        fields.put(LABEL, label);
+    }
+
+    public void setControlKey(String key) {
+        fields.put(CONTROL_KEY, key);
+    }
+
+    public String getField(String key) {
+        return fields.get(key);
+    }
 }
+
+
+    private void setDocumentProperties(CustomDocumentProperties cdp, SctDebitPdfContent content) {
+        Iterator<DocumentProperty> iterator = cdp.iterator();
+        while (iterator.hasNext()) {
+            DocumentProperty dp = iterator.next();
+            String value = content.getField(dp.getName());
+            dp.setValue(value == null ? "" : value);
+        }
+    }
+
+
+i want to use thois method in order to be suyre tha t its working
