@@ -1,2 +1,5 @@
-        cdp.add("Amount", data.getAmount().toPlainString());
-it blocks here i ve change byt toString and is doesnt work
+        if (data.getAmount() != null) {
+    cdp.add("Amount", data.getAmount().stripTrailingZeros().toPlainString());
+} else {
+    cdp.add("Amount", "0.00");
+}
