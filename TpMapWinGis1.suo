@@ -17,4 +17,4 @@
         content.setControlKey(data.getTxId());
         return content;
     }
-i want to manage also null value
+i want to manage also null value check if one of them is null
