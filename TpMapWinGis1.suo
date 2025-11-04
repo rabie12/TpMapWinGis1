@@ -1,108 +1,101 @@
-public class SctDebitPdfContent {
+Got it ✅ — you want to reuse your existing working mechanism (the one that uses setDocumentProperties(CustomDocumentProperties, SctDebitPdfContent)),
+but now with your new DTO (SctDebitData), without touching the DB.
 
-    public static final String SUPPLIER_IBAN = "SUPPLIER_IBAN";
-    public static final String SUPPLIER_NAME = "SUPPLIER_NAME";
+The idea is:
+	1.	Build a SctDebitPdfContent object from your DTO (SctDebitData).
+	2.	Pass that to the same setDocumentProperties(cdp, content) method — which already works and fills the fields correctly.
+	3.	Generate your PDF with Aspose as before.
 
-    public static final String OUT_IBAN = "OUT_IBAN";
-    public static final String OUT_NAME = "OUT_NAME";
-    public static final String OUT_ADDRESS = "OUT_ADDRESS";
+⸻
 
-    public static final String AMOUNT = "AMOUNT";
-    public static final String EXECUTION_DATE = "EXECUTION_DATE";
-    public static final String LABEL = "LABEL";
+✅ Step-by-step implementation
 
-    public static final String CONTROL_KEY = "CONTROL_KEY";
+1️⃣ Add a mapper method
+Add a small private helper that converts SctDebitData → SctDebitPdfContent:
+
+private SctDebitPdfContent mapToContent(SctDebitData data) {
+    SctDebitPdfContent content = new SctDebitPdfContent();
     
-    // new fields EndToEndId and TxId (https://support.olky.eu/issues/5673) :
-    public static final String END_TO_END_ID = "END_TO_END_ID";
-    public static final String TX_ID = "TX_ID";
-
-    private Map<String, String> fields;
-
-    public SctDebitPdfContent() {
-        fields = new HashMap<>();
+    content.setSupplierName(data.getBeneficiaireNom());
+    content.setSupplierIban(data.getBeneficiaireIban());
+    
+    content.setOutName(data.getTitulaire());
+    content.setOutIban(data.getIban());
+    content.setOutAddress(data.getBeneficiaireAdresse());
+    
+    if (data.getAmount() != null) {
+        content.setAmount(data.getAmount().stripTrailingZeros().toPlainString());
+    } else {
+        content.setAmount("0.00");
     }
     
-    public void setEndToEndId(String endToEndId) {
-    	fields.put(END_TO_END_ID, endToEndId);
-    }
+    content.setExecutionDate(data.getDateExecution());
+    content.setLabel(data.getLibelle());
+    content.setEndToEndId(data.getEndToEndId());
+    content.setTxId(data.getTxId());
+    content.setControlKey(data.getTxId()); // optional if you reuse txId as control key
     
-    public void setTxId(String txId) {
-    	fields.put(TX_ID, txId);
-    }
-
-    public void setSupplierIban(String supplierIban) {
-        fields.put(SUPPLIER_IBAN, supplierIban);
-    }
-
-    public void setSupplierName(String supplierName) {
-        fields.put(SUPPLIER_NAME, supplierName);
-    }
-
-    public void setOutIban(String outIban) {
-        fields.put(OUT_IBAN, outIban);
-    }
-
-    public void setOutName(String outName) {
-        fields.put(OUT_NAME, outName);
-    }
-
-    public void setOutAddress(String outAddress) {
-        fields.put(OUT_ADDRESS, outAddress);
-    }
-
-    public void setAmount(String amount) {
-        fields.put(AMOUNT, amount);
-    }
-
-    public void setExecutionDate(String executionDate) {
-        fields.put(EXECUTION_DATE, executionDate);
-    }
-
-    public void setLabel(String label) {
-        fields.put(LABEL, label);
-    }
-
-    public void setControlKey(String key) {
-        fields.put(CONTROL_KEY, key);
-    }
-
-    public String getField(String key) {
-        return fields.get(key);
-    }
+    return content;
 }
 
 
-    private void setDocumentProperties(CustomDocumentProperties cdp, SctDebitPdfContent content) {
-        Iterator<DocumentProperty> iterator = cdp.iterator();
-        while (iterator.hasNext()) {
-            DocumentProperty dp = iterator.next();
-            String value = content.getField(dp.getName());
-            dp.setValue(value == null ? "" : value);
-        }
-    }
+⸻
+
+2️⃣ Use your existing working logic unchanged
+Now, in your generator method, simply use that mapper before calling your trusted working method:
+
+public byte[] generatePdf(SctDebitData data, InputStream template, int saveFormat) throws Exception {
+    LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
+
+    // 1️⃣ Load template (or use the one from DB if needed)
+    DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
+    Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
+
+    // 2️⃣ Built-in properties
+    document.getBuiltInDocumentProperties().setTitle("Avis de débit");
+    document.getBuiltInDocumentProperties().setAuthor("Olkypay");
+    document.getBuiltInDocumentProperties().setCompany("Olkypay");
+    document.getBuiltInDocumentProperties().setKeywords(
+            String.format("%s %s", data.getOrderId(), 
+                    Optional.ofNullable(data.getTxId()).orElse(""))
+    );
+
+    // 3️⃣ Convert your DTO into the existing SctDebitPdfContent object
+    SctDebitPdfContent content = mapToContent(data);
+
+    // 4️⃣ Use your working method (no code duplication!)
+    CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+    setDocumentProperties(cdp, content);
+
+    // 5️⃣ Save PDF
+    document.updateFields();
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    document.save(baos, saveFormat);
+    return baos.toByteArray();
+}
 
 
-i want to use thois method in order to be sure that its working because on this method wotrking correctly :
+⸻
 
-    public byte[] generatePdf(SctDebitData data, InputStream template, int saveFormat) throws Exception {
-        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
-        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
-        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
-        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
-        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
-        document.getBuiltInDocumentProperties().setCompany("Olkypay");
-        document.getBuiltInDocumentProperties().setKeywords(
-                String.format("%s %s", data.getOrderId(), Optional.ofNullable(data.getTxId()).orElse(""))
-        );
-        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
-        setDocumentProperties(cdp, data);
+🧩 What this does
 
-        document.updateFields();
+✅ Keeps your existing setDocumentProperties(CustomDocumentProperties, SctDebitPdfContent) — no risk of breaking what already works.
+✅ Avoids DB calls entirely — all data come from the incoming SctDebitData.
+✅ Ensures all fields (OUT_IBAN, SUPPLIER_NAME, etc.) are set consistently, since SctDebitPdfContent uses the same map keys as before.
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        document.save(baos, saveFormat);
-        return baos.toByteArray();
-    }
+⸻
 
-its genrate pdf without issue
+🧠 Summary of the flow
+
+POST JSON → SctDebitData
+        ↓
+mapToContent(data) → SctDebitPdfContent
+        ↓
+setDocumentProperties(cdp, content)
+        ↓
+Aspose Document.save(PDF)
+
+
+⸻
+
+Would you like me to show how to automatically fill placeholders (like <<AMOUNT>>, <<OUT_NAME>>) inside the Word template using the same SctDebitPdfContent map — so you can generate fully dynamic PDFs without relying only on CustomDocumentProperties?
