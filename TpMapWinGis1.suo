@@ -1,20 +1,30 @@
-    private SctDebitPdfContent mapToContent(SctDebitData data) {
-        SctDebitPdfContent content = new SctDebitPdfContent();
-        content.setSupplierName(data.getSupplierName());
-        content.setSupplierIban(data.getSupplierIban());
-        content.setOutName(data.getOutName());
-        content.setOutIban(data.getOutIban());
-        content.setOutAddress(data.getOutAddress());
-        if (data.getAmount() != null) {
-            content.setAmount(data.getAmount().stripTrailingZeros().toPlainString());
-        } else {
-            content.setAmount("0.00");
-        }
-        content.setExecutionDate(data.getExecutionDate());
-        content.setLabel(data.getLabel());
-        content.setEndToEndId(data.getEndToEndId());
-        content.setTxId(data.getTxId());
-        content.setControlKey(data.getTxId());
-        return content;
+private SctDebitPdfContent mapToContent(SctDebitData data) {
+    SctDebitPdfContent content = new SctDebitPdfContent();
+
+    content.setSupplierName(nonNull(data.getSupplierName()));
+    content.setSupplierIban(nonNull(data.getSupplierIban()));
+    content.setOutName(nonNull(data.getOutName()));
+    content.setOutIban(nonNull(data.getOutIban()));
+    content.setOutAddress(nonNull(data.getOutAddress()));
+
+    if (data.getAmount() != null) {
+        content.setAmount(data.getAmount().stripTrailingZeros().toPlainString());
+    } else {
+        content.setAmount("0.00");
     }
-i want to manage also null value check if one of them is null
+
+    content.setExecutionDate(nonNull(data.getExecutionDate()));
+    content.setLabel(nonNull(data.getLabel()));
+    content.setEndToEndId(nonNull(data.getEndToEndId()));
+    content.setTxId(nonNull(data.getTxId()));
+    content.setControlKey(nonNull(data.getTxId())); // or maybe compute it separately
+
+    return content;
+}
+
+/**
+ * Utility method to replace null with an empty string
+ */
+private String nonNull(String value) {
+    return value != null ? value : "";
+}
