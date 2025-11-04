@@ -1,152 +1,21 @@
-Parfait 👍 Tu veux donc un service Spring Boot qui génère un avis de débit (PDF) comme ton code existant, mais sans appel à la base de données : tu veux simplement passer un objet contenant toutes les données nécessaires (client, fournisseur, montants, IBAN, etc.), et le service doit produire un PDF directement.
+BAN : FR907481700001LU75644598201
+Titulaire : PETER AUTO
+BENEFICIAIRE
+IBAN : FR907481700001LU75644598201
+Nom : PETER AUTO
+Adresse : 103 RUE DE LAMARCK, 75018 PARIS
+REFERENCE DU PAIEMENT
+Montant : 689,00
+Devise : Euro
+Date exécution : 29/03/2016
+Libellé : 12 HOUSSEAU JOELLE suppl/ta
+End To End ID : 165-1518-237
+TX ID : V-5000266-237-LU756445982
 
-Voici un exemple complet, clair et optimisé en Java (Spring Boot + Aspose/WOPI-like logique), structuré de manière professionnelle.
-
-⸻
-
-🧩 1. DTO : Objet d’entrée pour générer le PDF
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SctDebitData {
-    private Integer orderId;
-    private String txId;
-    private String executionDate;
-    private String endToEndId;
-    private String outName;
-    private String outAddress;
-    private String outIban;
-    private String supplierName;
-    private String supplierIban;
-    private String controlKey;
-    private BigDecimal amount;
-    private String label;
-}
-
-Cet objet contient tout ce dont ton PDF a besoin, sans dépendre de la base de données.
-
-⸻
-
-🧠 2. Service : génération du PDF sans DB
-
-@Service
-public class SctDebitPdfGenerator {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SctDebitPdfGenerator.class);
-
-    public byte[] generatePdf(SctDebitData data, InputStream template, int saveFormat) throws Exception {
-        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
-
-        Document document = new Document(template);
-
-        // 🧾 Propriétés générales du document
-        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
-        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
-        document.getBuiltInDocumentProperties().setCompany("Olkypay");
-        document.getBuiltInDocumentProperties().setKeywords(
-                String.format("%s %s", data.getOrderId(), Optional.ofNullable(data.getTxId()).orElse(""))
-        );
-
-        // 🔧 Ajout des champs personnalisés
-        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
-        setDocumentProperties(cdp, data);
-
-        document.updateFields();
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        document.save(baos, saveFormat);
-        return baos.toByteArray();
-    }
-
-    private void setDocumentProperties(CustomDocumentProperties cdp, SctDebitData data) {
-        cdp.add("OrderId", data.getOrderId());
-        cdp.add("ExecutionDate", data.getExecutionDate());
-        cdp.add("OutName", data.getOutName());
-        cdp.add("OutAddress", data.getOutAddress());
-        cdp.add("OutIban", data.getOutIban());
-        cdp.add("SupplierName", data.getSupplierName());
-        cdp.add("SupplierIban", data.getSupplierIban());
-        cdp.add("ControlKey", data.getControlKey());
-        cdp.add("Amount", data.getAmount().toPlainString());
-        cdp.add("Label", data.getLabel());
-    }
-}
-
-✅ Ici, aucune dépendance à la DB. Tout vient de SctDebitData.
-✅ Compatible avec Aspose Words / PDF save format (Word → PDF).
-
-⸻
-
-🌐 3. Contrôleur REST
-
-@RestController
-@RequestMapping("/api/sct-debit")
-public class SctDebitController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SctDebitController.class);
-
-    private final SctDebitPdfGenerator pdfGenerator;
-
-    @Autowired
-    public SctDebitController(SctDebitPdfGenerator pdfGenerator) {
-        this.pdfGenerator = pdfGenerator;
-    }
-
-    @PostMapping(value = "/generate", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> generate(@RequestBody SctDebitData data) {
-        try (InputStream template = getClass().getResourceAsStream("/templates/avis-debit-template.docx")) {
-            byte[] pdf = pdfGenerator.generatePdf(data, template, SaveFormat.PDF);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
-            headers.setContentDispositionFormData(filename, filename);
-            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-
-            LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
-            return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            LOGGER.error("Error generating SCT PDF", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Erreur lors de la génération : " + e.getMessage()).getBytes(StandardCharsets.UTF_8));
-        }
-    }
-}
-
-
-⸻
-
-📁 4. Exemple de requête API
-
-POST http://localhost:8080/api/sct-debit/generate
+this is the info i need and ive made post request and ive have this issue : 
 
 {
-  "orderId": 12345,
-  "txId": "TX987654321",
-  "executionDate": "2025-11-03",
-  "endToEndId": "E2E12345",
-  "outName": "Jean Dupont",
-  "outAddress": "10 rue de la Paix, 75002 Paris",
-  "outIban": "FR7612345987654321009876543",
-  "supplierName": "Olkypay SARL",
-  "supplierIban": "FR7610002000123456789012345",
-  "controlKey": "ABC123",
-  "amount": 250.75,
-  "label": "Paiement facture 456"
+  "HttpMessageConversionException": {
+    "message": "Type definition error: [simple type, class eu.olkypay.tournesol.api.dto.SctDebitData]; nested exception is com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `eu.olkypay.tournesol.api.dto.SctDebitData` (no Creators, like default construct, exist): cannot deserialize from Object value (no delegate- or property-based Creator)\n at [Source: (org.springframework.util.StreamUtils$NonClosingInputStream); line: 1, column: 2]"
+  }
 }
-
-🔥 Le service renverra directement le PDF en réponse (comme un téléchargement).
-
-⸻
-
-⚙️ 5. Points d’optimisation
-	•	✅ Aucune dépendance DB : tout est injecté via SctDebitData.
-	•	✅ Réutilisable : tu peux appeler generatePdf() depuis d’autres services (API, batch…).
-	•	✅ Template flexible : ton modèle Word/PDF (avis-debit-template.docx) peut contenir des champs à remplacer (MERGEFIELDS).
-	•	✅ Robuste : gestion des erreurs propre et réponse HTTP cohérente.
-
-⸻
-
-Souhaites-tu que je te montre une version qui remplit directement le template Word (avec les champs dynamiques) au lieu d’utiliser uniquement les propriétés personnalisées ?
-Cela permettrait que ton fichier modèle contienne des tags du type « <<NomClient>> », remplacés automatiquement avant export PDF.
