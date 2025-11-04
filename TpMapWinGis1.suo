@@ -1,21 +1,2 @@
-BAN : FR907481700001LU75644598201
-Titulaire : PETER AUTO
-BENEFICIAIRE
-IBAN : FR907481700001LU75644598201
-Nom : PETER AUTO
-Adresse : 103 RUE DE LAMARCK, 75018 PARIS
-REFERENCE DU PAIEMENT
-Montant : 689,00
-Devise : Euro
-Date exécution : 29/03/2016
-Libellé : 12 HOUSSEAU JOELLE suppl/ta
-End To End ID : 165-1518-237
-TX ID : V-5000266-237-LU756445982
-
-this is the info i need and ive made post request and ive have this issue : 
-
-{
-  "HttpMessageConversionException": {
-    "message": "Type definition error: [simple type, class eu.olkypay.tournesol.api.dto.SctDebitData]; nested exception is com.fasterxml.jackson.databind.exc.InvalidDefinitionException: Cannot construct instance of `eu.olkypay.tournesol.api.dto.SctDebitData` (no Creators, like default construct, exist): cannot deserialize from Object value (no delegate- or property-based Creator)\n at [Source: (org.springframework.util.StreamUtils$NonClosingInputStream); line: 1, column: 2]"
-  }
-}
+        cdp.add("Amount", data.getAmount().toPlainString());
+it blocks here i ve change byt toString and is doesnt work
