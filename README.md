@@ -4,10 +4,8 @@ tell about my self current position college post collegecurrent role details out
 
 
 
-Rabie HABACHI a écrit :
+Voici une version courte et claire :
 
-Suite à la reprise des développement du projet OlkyRegister. J'aurais besoin des accès à la base de données en Dev.
+Je souhaite un accès admin à la base de données de dev pour pouvoir gérer la structure, exécuter les scripts de migration et corriger les données si besoin.
 
-Rabie,
-
-Tu peux préciser quel type d'accés pour quel nom de user.
+User proposé : rabie_dev_admin.
