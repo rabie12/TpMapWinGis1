@@ -17,3 +17,4 @@
         content.setControlKey(data.getTxId());
         return content;
     }
+i want to manage also null value
