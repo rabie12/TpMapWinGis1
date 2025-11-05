@@ -1,2 +1,86 @@
-Ce n’est pas envisageable d’intégrer cette migration directement dans le script de déploiement, car elle correspond à un script d’insertion de plus de 200 000 lignes.
-Ce volume de données rend l’opération longue et consommatrice en ressources, ce qui risquerait de ralentir ou bloquer le processus de déploiement.
+public class SecurityConfig {
+    @Bean
+    public UserDetailsService userDetailsService(DataSource dataSource) {
+        return new JdbcUserDetailsManager(dataSource);
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+              http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/**").hasAuthority("OLKY_ADMIN")
+                        .anyRequest().permitAll()
+                )
+                .httpBasic(basic -> {})
+                .formLogin(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // Stateless session
+
+        return http.build();
+    }
+
+}
+{
+  "timestamp": "2025-11-05T09:01:31.2345846",
+  "status": 500,
+  "error": "BankInfo Api Internal Server Error",
+  "message": "Content-Type 'application/x-www-form-urlencoded;charset=UTF-8' is not supported",
+  "path": "/api/validate/DE43250501800000198080"
+}
+
+package eu.olkypay.bankInfo.web;
+
+import eu.olkypay.bankInfo.dto.BankInfoDTO;
+
+import eu.olkypay.bankInfo.dto.BicValidationResponse;
+import eu.olkypay.bankInfo.dto.IbanInfoUtilsDTO;
+import eu.olkypay.bankInfo.dto.IbanSearchHistoryDTO;
+import eu.olkypay.bankInfo.service.BankInfoValidationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
+
+@RestController
+@RequestMapping("/api/")
+@Tag(name = "Bank Info", description = "Bank Info Validation")
+public class BankInfoValidationController {
+
+    private final BankInfoValidationService bankInfoValidationService;
+
+    public BankInfoValidationController(BankInfoValidationService bankInfoValidationService) {
+        this.bankInfoValidationService = bankInfoValidationService;
+    }
+
+    @Operation(summary = "Validate Iban")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Validation completed",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = IbanSearchHistoryDTO.class)))),
+            @ApiResponse(responseCode = "401", description = "Forbidden", content = @Content)
+    })
+    @PostMapping("/validate/{iban}")
+    public Optional<IbanSearchHistoryDTO> validateIban(@PathVariable String iban, @RequestBody(required = false)  IbanInfoUtilsDTO infoUtilsDTO) {
+        return bankInfoValidationService.validateIban(iban, infoUtilsDTO);
+    }
+sur bruno j'ai l'erreur : {
+  "timestamp": "2025-11-05T09:01:31.2345846",
+  "status": 500,
+  "error": "BankInfo Api Internal Server Error",
+  "message": "Content-Type 'application/x-www-form-urlencoded;charset=UTF-8' is not supported",
+  "path": "/api/validate/DE43250501800000198080"
+}
+
+peux tu me verifier j'ai fait le basic authent et j'ai ajouté les bon crédentials
