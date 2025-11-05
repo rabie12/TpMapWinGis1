@@ -1,24 +1,192 @@
-Excellent question — yes ✅, Liquibase fully supports inserting initial data into your tables right after they are created.
+Perfect ✅ — below is your final complete Liquibase baseline changelog:
+	•	All id columns are now autoIncrement: true
+	•	All foreign key relationships are preserved
+	•	The spring_properties table includes your three insert statements
 
-You can do this directly in the same changelog file (or in a separate changeset), using the insert change type.
-Liquibase will ensure it runs after the table is created and will only execute once.
+This version is ready to drop into:
+src/main/resources/db/changelog/db.changelog-master.yaml
 
 ⸻
 
-✅ Updated spring_properties section with inserts
+📄 db.changelog-master.yaml
 
-Here’s how you can extend your existing baseline changelog:
-
+databaseChangeLog:
   - changeSet:
-      id: 6-create-spring-properties
-      author: RHI
+      id: 1-baseline-schema
+      author: olkypay
       changes:
+
+        # === USERS TABLE ===
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: enabled
+                  type: boolean
+
+        # === AUTHORITIES TABLE ===
+        - createTable:
+            tableName: authorities
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+              - column:
+                  name: authority
+                  type: varchar(255)
+
+        - addForeignKeyConstraint:
+            baseTableName: authorities
+            baseColumnNames: username
+            referencedTableName: users
+            referencedColumnNames: username
+            constraintName: fk_authorities_user
+
+        # === BANK INFO TABLE ===
+        - createTable:
+            tableName: bank_info
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bic
+                  type: varchar(50)
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: institution
+                  type: varchar(255)
+              - column:
+                  name: address1
+                  type: varchar(255)
+              - column:
+                  name: location
+                  type: varchar(255)
+              - column:
+                  name: can_do_sct
+                  type: boolean
+              - column:
+                  name: can_do_core_sdd
+                  type: boolean
+              - column:
+                  name: can_do_b2b_sdd
+                  type: boolean
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: search_result
+                  type: longtext
+
+        # === BANK AGENCY TABLE ===
+        - createTable:
+            tableName: bank_agency
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: bank_code
+                  type: varchar(50)
+              - column:
+                  name: branch_code
+                  type: varchar(50)
+              - column:
+                  name: branch_name
+                  type: varchar(255)
+              - column:
+                  name: bank_and_branch_code
+                  type: varchar(100)
+              - column:
+                  name: bank_info_id
+                  type: bigint
+
+        - addForeignKeyConstraint:
+            baseTableName: bank_agency
+            baseColumnNames: bank_info_id
+            referencedTableName: bank_info
+            referencedColumnNames: id
+            constraintName: fk_agency_bankinfo
+
+        # === IBAN SEARCH HISTORY TABLE ===
+        - createTable:
+            tableName: iban_search_history
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: iban
+                  type: varchar(255)
+              - column:
+                  name: result
+                  type: varchar(255)
+              - column:
+                  name: response_details
+                  type: longtext
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: bank_agency_id
+                  type: bigint
+
+        - addForeignKeyConstraint:
+            baseTableName: iban_search_history
+            baseColumnNames: bank_agency_id
+            referencedTableName: bank_agency
+            referencedColumnNames: id
+            constraintName: fk_history_agency
+
+        # === SPRING PROPERTIES TABLE ===
         - createTable:
             tableName: spring_properties
             columns:
               - column:
                   name: id
                   type: bigint
+                  autoIncrement: true
                   constraints:
                     primaryKey: true
                     nullable: false
@@ -30,15 +198,12 @@ Here’s how you can extend your existing baseline changelog:
                   type: varchar(255)
 
   - changeSet:
-      id: 7-insert-spring-properties
-      author: RHI
+      id: 2-insert-spring-properties
+      author: olkypay
       changes:
         - insert:
             tableName: spring_properties
             columns:
-              - column:
-                  name: id
-                  valueNumeric: 1
               - column:
                   name: prop_key
                   value: sepa.url
@@ -50,9 +215,6 @@ Here’s how you can extend your existing baseline changelog:
             tableName: spring_properties
             columns:
               - column:
-                  name: id
-                  valueNumeric: 2
-              - column:
                   name: prop_key
                   value: sepa.username
               - column:
@@ -63,9 +225,6 @@ Here’s how you can extend your existing baseline changelog:
             tableName: spring_properties
             columns:
               - column:
-                  name: id
-                  valueNumeric: 3
-              - column:
                   name: prop_key
                   value: sepa.secret
               - column:
@@ -75,28 +234,27 @@ Here’s how you can extend your existing baseline changelog:
 
 ⸻
 
-💡 Notes
-	•	You can safely use value: for strings and valueNumeric: for numbers.
-	•	Liquibase will escape the backslash automatically in YAML; no extra quoting needed.
-	•	This data is tracked like schema changes — Liquibase won’t re-insert unless you remove the changeset entry from the DATABASECHANGELOG table.
+⚙️ application.yml (to enable Liquibase)
 
-⸻
-
-🧩 Optional — For auto-increment IDs
-
-If your spring_properties.id should auto-increment, you can skip the id columns in the inserts and let the DB generate them:
-
-- insert:
-    tableName: spring_properties
-    columns:
-      - column:
-          name: prop_key
-          value: sepa.url
-      - column:
-          name: prop_value
-          value: https://rest.sepatools.eu
+spring:
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
 
 
 ⸻
 
-Would you like me to show you a complete merged version of your changelog (baseline + inserts + autoIncrement IDs)?
+✅ Summary
+
+Table	ID Type	Auto Increment	FK
+users	username (PK)	❌	—
+authorities	bigint	✅	→ users.username
+bank_info	bigint	✅	—
+bank_agency	bigint	✅	→ bank_info.id
+iban_search_history	char(36) (UUID)	❌	→ bank_agency.id
+spring_properties	bigint	✅	— (plus 3 inserted rows)
+
+
+⸻
+
+Would you like me to also generate a Liquibase rollback section (to drop tables and data safely)?
