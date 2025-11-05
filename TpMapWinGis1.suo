@@ -1,8 +1,2 @@
-Je ne sais pas s'il est possible d'imaginer tes actions de migration incorporées dans le script de déploiement /opt/script/gitlab/deploy_bankinfo.sh
-
-C'est le cas du script  /opt/script/gitlab/deploy_node.sh il me semble.
-
-Si tu penses que c'est réalisable, cela permettrai d'harmoniser les scripts de migration/déploiement.
-
-
-j'ai pas compris le mot incorporéesdans ce contexte
+Ce n’est pas envisageable d’intégrer cette migration directement dans le script de déploiement, car elle correspond à un script d’insertion de plus de 200 000 lignes.
+Ce volume de données rend l’opération longue et consommatrice en ressources, ce qui risquerait de ralentir ou bloquer le processus de déploiement.
