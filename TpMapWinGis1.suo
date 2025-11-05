@@ -1,86 +1,67 @@
-public class SecurityConfig {
-    @Bean
-    public UserDetailsService userDetailsService(DataSource dataSource) {
-        return new JdbcUserDetailsManager(dataSource);
-    }
+Parfait 👌 tu utilises Bruno, donc voici exactement comment faire dans cet outil (c’est très proche de Postman, mais avec une interface plus légère).
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+⸻
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-              http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/**").hasAuthority("OLKY_ADMIN")
-                        .anyRequest().permitAll()
-                )
-                .httpBasic(basic -> {})
-                .formLogin(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // Stateless session
+⚙️ Étapes pour corriger l’erreur dans Bruno
 
-        return http.build();
-    }
+1️⃣ Méthode et URL
+	•	Méthode : POST
+	•	URL :
 
-}
-{
-  "timestamp": "2025-11-05T09:01:31.2345846",
-  "status": 500,
-  "error": "BankInfo Api Internal Server Error",
-  "message": "Content-Type 'application/x-www-form-urlencoded;charset=UTF-8' is not supported",
-  "path": "/api/validate/DE43250501800000198080"
-}
+http://<ton-serveur>:<port>/api/validate/DE43250501800000198080
 
-package eu.olkypay.bankInfo.web;
+(exemple : http://localhost:8080/api/validate/DE43250501800000198080)
 
-import eu.olkypay.bankInfo.dto.BankInfoDTO;
+⸻
 
-import eu.olkypay.bankInfo.dto.BicValidationResponse;
-import eu.olkypay.bankInfo.dto.IbanInfoUtilsDTO;
-import eu.olkypay.bankInfo.dto.IbanSearchHistoryDTO;
-import eu.olkypay.bankInfo.service.BankInfoValidationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+2️⃣ Authentification Basic
 
-import java.util.Optional;
+Dans Bruno :
+	•	Clique sur Auth dans le panneau de gauche ou l’onglet correspondant à ta requête.
+	•	Sélectionne Basic Auth
+	•	Renseigne :
+	•	Username → OLKY_ADMIN
+	•	Password → ton mot de passe
+	•	(Bruno ajoutera automatiquement l’en-tête Authorization: Basic ...)
 
-@RestController
-@RequestMapping("/api/")
-@Tag(name = "Bank Info", description = "Bank Info Validation")
-public class BankInfoValidationController {
+⸻
 
-    private final BankInfoValidationService bankInfoValidationService;
+3️⃣ En-tête HTTP
 
-    public BankInfoValidationController(BankInfoValidationService bankInfoValidationService) {
-        this.bankInfoValidationService = bankInfoValidationService;
-    }
+Va dans l’onglet Headers et ajoute cette ligne (si elle n’est pas déjà là) :
 
-    @Operation(summary = "Validate Iban")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation completed",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = IbanSearchHistoryDTO.class)))),
-            @ApiResponse(responseCode = "401", description = "Forbidden", content = @Content)
-    })
-    @PostMapping("/validate/{iban}")
-    public Optional<IbanSearchHistoryDTO> validateIban(@PathVariable String iban, @RequestBody(required = false)  IbanInfoUtilsDTO infoUtilsDTO) {
-        return bankInfoValidationService.validateIban(iban, infoUtilsDTO);
-    }
-sur bruno j'ai l'erreur : {
-  "timestamp": "2025-11-05T09:01:31.2345846",
-  "status": 500,
-  "error": "BankInfo Api Internal Server Error",
-  "message": "Content-Type 'application/x-www-form-urlencoded;charset=UTF-8' is not supported",
-  "path": "/api/validate/DE43250501800000198080"
-}
+Content-Type: application/json
 
-peux tu me verifier j'ai fait le basic authent et j'ai ajouté les bon crédentials
+
+⸻
+
+4️⃣ Corps de la requête
+	•	Clique sur Body
+	•	Choisis Raw → JSON
+	•	Mets un contenu vide ou minimal :
+
+{}
+
+(Si ton service validateIban n’a pas besoin d’infos particulières dans IbanInfoUtilsDTO)
+
+⸻
+
+5️⃣ Envoie la requête 🚀
+
+Clique sur Send.
+Tu devrais maintenant obtenir une réponse JSON (et non plus l’erreur Content-Type 'application/x-www-form-urlencoded' is not supported).
+
+⸻
+
+🧩 Pourquoi ça marche
+
+Avant, Bruno envoyait ta requête en form-urlencoded, c’est-à-dire comme un formulaire HTML :
+
+Content-Type: application/x-www-form-urlencoded
+
+Ton contrôleur Spring n’accepte pas ce format, il attend du JSON.
+En choisissant Raw JSON + Content-Type: application/json, tu règles le problème.
+
+⸻
+
+Souhaites-tu que je t’indique aussi comment passer un vrai objet IbanInfoUtilsDTO dans le body si ton service en a besoin (par exemple avec des champs comme country, bankCode, etc.) ?
