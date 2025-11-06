@@ -1,77 +1,279 @@
-Ah, merci pour votre patience — je vois qu’on a un problème récurrent et que les solutions classiques (classpath: + relativeToChangelogFile: false) ne fonctionnent pas dans votre contexte. Ça arrive souvent avec Spring Boot + Liquibase si les fichiers ne sont pas réellement présents dans le classpath au runtime, ou si SpringLiquibase ne voit pas le bon chemin.
+databaseChangeLog:
+  - changeSet:
+      id: 1-baseline-schema
+      author: RHI
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: enabled
+                  type: boolean
 
-On va régler ça de manière sûre et définitive.
+        - createTable:
+            tableName: authorities
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+              - column:
+                  name: authority
+                  type: varchar(255)
 
-⸻
+        - addForeignKeyConstraint:
+            baseTableName: authorities
+            baseColumnNames: username
+            referencedTableName: users
+            referencedColumnNames: username
+            constraintName: fk_authorities_user
 
-1️⃣ Vérifier absolument que les fichiers sont dans le classpath
+        - createTable:
+            tableName: bank_info
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bic
+                  type: varchar(50)
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: institution
+                  type: varchar(255)
+              - column:
+                  name: address1
+                  type: varchar(255)
+              - column:
+                  name: location
+                  type: varchar(255)
+              - column:
+                  name: can_do_sct
+                  type: boolean
+              - column:
+                  name: can_do_core_sdd
+                  type: boolean
+              - column:
+                  name: can_do_b2b_sdd
+                  type: boolean
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: search_result
+                  type: longtext
+        - loadData:
+            tableName: bank_info
+            file: classpath:db/changelog/data/bank_info.csv
+            separator: ","
+            encoding: UTF
+        - createTable:
+            tableName: bank_agency
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: bank_code
+                  type: varchar(50)
+              - column:
+                  name: branch_code
+                  type: varchar(50)
+              - column:
+                  name: branch_name
+                  type: varchar(255)
+              - column:
+                  name: bank_and_branch_code
+                  type: varchar(100)
+              - column:
+                  name: bank_info_id
+                  type: bigint
 
-SpringBoot ne peut voir que ce qui est dans le classpath (le dossier resources compilé dans le JAR).
-	•	Vos fichiers SQL/CSV doivent être dans src/main/resources, par exemple :
+        - addForeignKeyConstraint:
+            baseTableName: bank_agency
+            baseColumnNames: bank_info_id
+            referencedTableName: bank_info
+            referencedColumnNames: id
+            constraintName: fk_agency_bankinfo
 
-src/main/resources/db/changelog/baseline.yaml
-src/main/resources/db/changelog/sql/bank_info.sql
-src/main/resources/db/changelog/sql/bank_agency.sql
+        - createTable:
+            tableName: iban_search_history
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: iban
+                  type: varchar(255)
+              - column:
+                  name: result
+                  type: varchar(255)
+              - column:
+                  name: response_details
+                  type: longtext
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: bank_agency_id
+                  type: bigint
 
-	•	Vérifiez qu’ils sont réellement dans le JAR après compilation :
+        - addForeignKeyConstraint:
+            baseTableName: iban_search_history
+            baseColumnNames: bank_agency_id
+            referencedTableName: bank_agency
+            referencedColumnNames: id
+            constraintName: fk_history_agency
 
-mvn clean package
-jar tf target/*.jar | grep bank_info.sql
+        - createTable:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: prop_key
+                  type: varchar(255)
+              - column:
+                  name: prop_value
+                  type: varchar(255)
 
-Si la commande ne retourne rien, vos fichiers ne sont pas copiés dans le JAR, donc SpringLiquibase ne peut pas les trouver.
+  - changeSet:
+      id: 2-init-db-data
+      author: RHI
+      changes:
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.url
+              - column:
+                  name: prop_value
+                  value: https://rest.sepatools.eu
 
-⸻
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.username
+              - column:
+                  name: prop_value
+                  value: ibancalculatorolkypay
 
-2️⃣ Utiliser loadFile directement depuis le SpringLiquibase bean
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.secret
+              - column:
+                  name: prop_value
+                  value: 4u\\Z*4.(+ZK%P<E5mA
 
-Parfois, même avec classpath:, SpringLiquibase échoue à résoudre des fichiers via YAML. La solution la plus fiable est de définir explicitement un bean SpringLiquibase et charger les fichiers via Resource :
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  valueBoolean: true
 
-@Bean
-public SpringLiquibase liquibase(DataSource dataSource, ResourceLoader resourceLoader) {
-    SpringLiquibase liquibase = new SpringLiquibase();
-    liquibase.setDataSource(dataSource);
-    liquibase.setChangeLog(resourceLoader.getResource("classpath:db/changelog/baseline.yaml").getURI().toString());
-    return liquibase;
-}
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  valueBoolean: true
 
-Ici, on s’assure que SpringLiquibase reçoit un URI exact vers le fichier au lieu de tenter de résoudre un chemin relatif.
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
 
-⸻
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
 
-3️⃣ Alternative ultra-fiable : utiliser <sql> inline dans YAML
-
-Si vos fichiers sont petits ou moyens, vous pouvez mettre directement vos inserts SQL dans le YAML au lieu de dépendre d’un fichier externe :
-
-- changeSet:
-    id: 3-load-bank-data
-    author: RHI
-    changes:
-      - sql:
-          sql: |
-            INSERT INTO bank_info (id, bic, name, bank_info_id)
-            VALUES
-            (177845, NULL, 'SRLG', 37105),
-            (177846, NULL, 'SRLG', 37105);
-
-✅ Cela supprime totalement les problèmes de path, car tout est inline dans le YAML.
-
-⸻
-
-4️⃣ Résumé des causes possibles
-
-Cause	Effet
-Fichiers CSV/SQL hors resources	SpringLiquibase ne les trouve pas → relativePath null
-Chemins relatifs avec relativeToChangelogFile: true	Fonctionne souvent avec CLI mais pas Spring Boot
-IDE (IntelliJ/Eclipse) qui n’inclut pas les fichiers dans le runtime classpath	SpringLiquibase ne trouve rien
-Mauvais préfixe (file: ou classpath: mal utilisé)	Erreur de résolution Spring
+  - changeSet:
+      id: 3-load-bank-data
+      author: RHI
+      changes:
+        - sqlFile:
+            path: bank_agency.sql
+            relativeToChangelogFile: false
+            endDelimiter: ";"
+        - sqlFile:
+            path: db/changelog/data/bank_agency.sql
+            relativeToChangelogFile: false
+            endDelimiter: ";"
 
 
-⸻
-
-💡 Mon conseil final :
-	1.	Assurez-vous que les fichiers sont dans src/main/resources/db/changelog/sql/.
-	2.	Faites un mvn clean package et vérifiez le JAR.
-	3.	Utilisez soit classpath: avec relativeToChangelogFile: false, soit insérez vos SQL inline dans YAML si les fichiers restent introuvables.
-	4.	Si vous voulez, je peux vous générer un baseline.yaml prêt à l’emploi avec vos tables et données bancaires, 100% compatible Spring Boot, en SQL inline pour éviter tout problème de path.
-
-Voulez-vous que je fasse ça ?
+	in ve tried as well and it still doesnt working
