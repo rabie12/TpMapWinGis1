@@ -1,116 +1,31 @@
-Yes — you’ve provided a Liquibase changelog (YAML) and the error stack trace showing a ChangeLogParseException with the message:
-
-Unknown change type 'columns' ... check for spelling or capitalization errors
-
-This error means Liquibase doesn’t recognize the structure of your YAML file — specifically, the nesting around columns:. Let’s review and fix it carefully.
-
-⸻
-
-🧩 Root Cause
-
-In several places (for example, under insert:), you have this incorrect structure:
-
-- insert:
-    tableName: spring_properties
-    columns:
-      - column:
-          name: prop_key
-          value: sepa.url
-      - column:
-          name: prop_value
-          value: https://rest.sepatools.eu
-
-✅ This part is fine.
-
-❌ However, elsewhere (like the later inserts for users), the indentation or dash placement is broken:
-
-- insert:
-  tableName: users
-  columns:
-    - column:
-        name: username
-        value: tournesol
-
-Notice that tableName and columns are not properly indented under insert: — Liquibase treats columns as a top-level key, not part of the insert object.
-This triggers:
-
-Unknown change type 'columns'
-
-⸻
-
-✅ Corrected Version (key structure fixed)
-
-Here’s the corrected snippet for the problematic part — properly aligned:
-
-- insert:
-    tableName: users
-    columns:
-      - column:
-          name: username
-          value: tournesol
-      - column:
-          name: password
-          value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
-      - column:
-          name: enabled
-          value: 1
-
-- insert:
-    tableName: users
-    columns:
-      - column:
-          name: username
-          value: bitbang
-      - column:
-          name: password
-          value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
-      - column:
-          name: enabled
-          value: 1
-
-- insert:
-    tableName: authorities
-    columns:
-      - column:
-          name: authority
-          value: OLKY_ADMIN
-      - column:
-          name: username
-          value: tournesol
-
-- insert:
-    tableName: authorities
-    columns:
-      - column:
-          name: authority
-          value: OLKY_ADMIN
-      - column:
-          name: username
-          value: bitbang
-
-
-⸻
-
-🧠 Summary of Fixes
-	1.	Ensure consistent indentation (2 spaces per level recommended).
-	2.	Every change (createTable, insert, etc.) must start with - under changes:.
-	3.	Inside insert, both tableName and columns must be indented under insert:.
-	4.	Avoid mixing tabs and spaces — Liquibase YAML parsing is sensitive to that.
-
-⸻
-
-✅ Next Step
-
-After correcting indentation, run:
-
-mvn clean spring-boot:run
-
-or
-
-./mvnw liquibase:update
-
-You should see Liquibase applying your baseline successfully.
-
-⸻
-
-If you’d like, I can produce a fully corrected and validated Liquibase YAML file (ready to copy–paste) — would you like me to do that?
+aused by: liquibase.exception.MigrationFailedException: Migration failed for changeset db/changelog/baseline.yaml::2-init-db-data::olkypay:
+     Reason: liquibase.exception.DatabaseException: (conn=30) You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'null, enabled) VALUES (NULL, '1')' at line 1 [Failed SQL: (1064) INSERT INTO external_bank_data.users (null, enabled) VALUES (NULL, '1')]
+	at liquibase.changelog.ChangeSet.execute(ChangeSet.java:821) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.visitor.UpdateVisitor.executeAcceptedChange(UpdateVisitor.java:126) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.visitor.UpdateVisitor.visit(UpdateVisitor.java:70) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeLogIterator.lambda$run$0(ChangeLogIterator.java:133) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeLogIterator.lambda$run$1(ChangeLogIterator.java:122) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:260) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:264) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeLogIterator.run(ChangeLogIterator.java:91) ~[liquibase-core-4.30.0.jar:na]
+	... 48 common frames omitted
+Caused by: liquibase.exception.DatabaseException: (conn=30) You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'null, enabled) VALUES (NULL, '1')' at line 1 [Failed SQL: (1064) INSERT INTO external_bank_data.users (null, enabled) VALUES (NULL, '1')]
+	at liquibase.executor.jvm.JdbcExecutor$ExecuteStatementCallback.doInStatement(JdbcExecutor.java:497) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.executor.jvm.JdbcExecutor.execute(JdbcExecutor.java:83) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.executor.jvm.JdbcExecutor.execute(JdbcExecutor.java:185) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.executor.AbstractExecutor.execute(AbstractExecutor.java:141) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.database.AbstractJdbcDatabase.executeStatements(AbstractJdbcDatabase.java:1189) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.execute(ChangeSet.java:777) ~[liquibase-core-4.30.0.jar:na]
+	... 63 common frames omitted
+Caused by: java.sql.SQLSyntaxErrorException: (conn=30) You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'null, enabled) VALUES (NULL, '1')' at line 1
+	at org.mariadb.jdbc.export.ExceptionFactory.createException(ExceptionFactory.java:289) ~[mariadb-java-client-3.4.1.jar:na]
+	at org.mariadb.jdbc.export.ExceptionFactory.create(ExceptionFactory.java:378) ~[mariadb-java-client-3.4.1.jar:na]
+	at org.mariadb.jdb
