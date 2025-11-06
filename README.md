@@ -1,54 +1,339 @@
-Perfect ✅ — Liquibase supports bulk data loading from CSV files via the loadData change type.
-You can easily load your bank_info and bank_agency tables automatically during migration — no need for long YAML insert lists.
+Caused by: liquibase.exception.CommandExecutionException: liquibase.exception.LiquibaseException: liquibase.exception.MigrationFailedException: Migration failed for changeset db/changelog/baseline.yaml::3-load-bank-data::olkypay:
+     Reason: java.lang.RuntimeException: java.lang.NullPointerException: Cannot invoke "String.matches(String)" because "searchPath" is null
+	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:278) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.command.CommandScope.execute(CommandScope.java:219) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Liquibase.lambda$update$0(Liquibase.java:216) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Liquibase.runInScope(Liquibase.java:1329) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Liquibase.update(Liquibase.java:205) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Liquibase.update(Liquibase.java:188) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.integration.spring.SpringLiquibase.performUpdate(SpringLiquibase.java:310) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.integration.spring.SpringLiquibase.lambda$afterPropertiesSet$0(SpringLiquibase.java:262) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:255) ~[liquibase-core-4.30.0.jar:na]
+	... 22 common frames omitted
+Caused by: liquibase.exception.LiquibaseException: liquibase.exception.MigrationFailedException: Migration failed for changeset db/changelog/baseline.yaml::3-load-bank-data::olkypay:
+     Reason: java.lang.RuntimeException: java.lang.NullPointerException: Cannot invoke "String.matches(String)" because "searchPath" is null
+	at liquibase.changelog.ChangeLogIterator.run(ChangeLogIterator.java:155) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.command.core.AbstractUpdateCommandStep.lambda$run$0(AbstractUpdateCommandStep.java:114) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.command.core.AbstractUpdateCommandStep.run(AbstractUpdateCommandStep.java:112) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.command.core.UpdateCommandStep.run(UpdateCommandStep.java:100) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:231) ~[liquibase-core-4.30.0.jar:na]
+	... 40 common frames omitted
+Caused by: liquibase.exception.MigrationFailedException: Migration failed for changeset db/changelog/baseline.yaml::3-load-bank-data::olkypay:
+     Reason: java.lang.RuntimeException: java.lang.NullPointerException: Cannot invoke "String.matches(String)" because "searchPath" is null
+	at liquibase.changelog.ChangeSet.execute(ChangeSet.java:821) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.visitor.UpdateVisitor.executeAcceptedChange(UpdateVisitor.java:126) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.visitor.UpdateVisitor.visit(UpdateVisitor.java:70) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeLogIterator.lambda$run$0(ChangeLogIterator.java:133) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeLogIterator.lambda$run$1(ChangeLogIterator.java:122) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:260) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:264) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeLogIterator.run(ChangeLogIterator.java:91) ~[liquibase-core-4.30.0.jar:na]
+	... 48 common frames omitted
+Caused by: java.lang.RuntimeException: java.lang.NullPointerException: Cannot invoke "String.matches(String)" because "searchPath" is null
+	at liquibase.change.core.LoadDataChange.generateStatements(LoadDataChange.java:482) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.lambda$addSqlMdc$2(ChangeSet.java:1624) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.addSqlMdc(ChangeSet.java:1623) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.execute(ChangeSet.java:774) ~[liquibase-core-4.30.0.jar:na]
+	... 63 common frames omitted
+Caused by: java.lang.NullPointerException: Cannot invoke "String.matches(String)" because "searchPath" is null
+	at liquibase.integration.spring.SpringResourceAccessor.finalizeSearchPath(SpringResourceAccessor.java:185) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.integration.spring.SpringResourceAccessor.getAll(SpringResourceAccessor.java:42) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.resource.ResourceAccessor.get(ResourceAccessor.java:234) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.change.core.LoadDataChange.generateStatements(LoadDataChange.java:399) ~[liquibase-core-4.30.0.jar:na]
+	... 70 common frames omitted
 
-Here’s how to integrate your two CSV imports cleanly into your Liquibase changelog 👇
+Disconnected from the target VM, address: '127.0.0.1:57696', transport: 'socket'
 
-⸻
+Process finished with exit code 0
+this is my liquibase :
+databaseChangeLog:
+  - changeSet:
+      id: 1-baseline-schema
+      author: RHI
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: enabled
+                  type: boolean
 
-🧩 1. Folder structure
+        - createTable:
+            tableName: authorities
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+              - column:
+                  name: authority
+                  type: varchar(255)
 
-Make sure your project looks like this (typical setup):
+        - addForeignKeyConstraint:
+            baseTableName: authorities
+            baseColumnNames: username
+            referencedTableName: users
+            referencedColumnNames: username
+            constraintName: fk_authorities_user
 
-src/
- └── main/
-     └── resources/
-         └── db/
-             └── changelog/
-                 ├── db.changelog-master.yaml
-                 ├── baseline.yaml
-                 ├── data/
-                 │   ├── bank_info.csv
-                 │   └── bank_agency.csv
+        - createTable:
+            tableName: bank_info
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bic
+                  type: varchar(50)
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: institution
+                  type: varchar(255)
+              - column:
+                  name: address1
+                  type: varchar(255)
+              - column:
+                  name: location
+                  type: varchar(255)
+              - column:
+                  name: can_do_sct
+                  type: boolean
+              - column:
+                  name: can_do_core_sdd
+                  type: boolean
+              - column:
+                  name: can_do_b2b_sdd
+                  type: boolean
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: search_result
+                  type: longtext
 
-✅ Keep your CSV files in a data/ subfolder inside your changelog directory.
+        - createTable:
+            tableName: bank_agency
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: bank_code
+                  type: varchar(50)
+              - column:
+                  name: branch_code
+                  type: varchar(50)
+              - column:
+                  name: branch_name
+                  type: varchar(255)
+              - column:
+                  name: bank_and_branch_code
+                  type: varchar(100)
+              - column:
+                  name: bank_info_id
+                  type: bigint
 
-⸻
+        - addForeignKeyConstraint:
+            baseTableName: bank_agency
+            baseColumnNames: bank_info_id
+            referencedTableName: bank_info
+            referencedColumnNames: id
+            constraintName: fk_agency_bankinfo
 
-🧾 2. Example CSV format
+        - createTable:
+            tableName: iban_search_history
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: iban
+                  type: varchar(255)
+              - column:
+                  name: result
+                  type: varchar(255)
+              - column:
+                  name: response_details
+                  type: longtext
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: bank_agency_id
+                  type: bigint
 
-bank_info.csv
+        - addForeignKeyConstraint:
+            baseTableName: iban_search_history
+            baseColumnNames: bank_agency_id
+            referencedTableName: bank_agency
+            referencedColumnNames: id
+            constraintName: fk_history_agency
 
-id,bic,name,institution,address1,location,can_do_sct,can_do_core_sdd,can_do_b2b_sdd,country_iso_2,created_at,updated_at,search_result
-1,BICCODE1,Bank A,Inst A,123 Street,Paris,true,true,false,FR,2025-01-01 10:00:00,2025-01-01 10:00:00,sample data
-2,BICCODE2,Bank B,Inst B,456 Road,Berlin,true,false,true,DE,2025-01-01 10:00:00,2025-01-01 10:00:00,sample data
-
-bank_agency.csv
-
-id,country_iso_2,bank_code,branch_code,branch_name,bank_and_branch_code,bank_info_id
-1,FR,BNKA,0001,Paris Branch,BNKA0001,1
-2,DE,BNKB,0002,Berlin Branch,BNKB0002,2
-
-⚠️ Column names in the CSV must match the table column names in your Liquibase schema.
-
-⸻
-
-🧱 3. Add a new Liquibase changeset
-
-At the end of your baseline.yaml, add this:
+        - createTable:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: prop_key
+                  type: varchar(255)
+              - column:
+                  name: prop_value
+                  type: varchar(255)
 
   - changeSet:
+      id: 2-init-db-data
+      author: RHI
+      changes:
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.url
+              - column:
+                  name: prop_value
+                  value: https://rest.sepatools.eu
+
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.username
+              - column:
+                  name: prop_value
+                  value: ibancalculatorolkypay
+
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.secret
+              - column:
+                  name: prop_value
+                  value: 4u\\Z*4.(+ZK%P<E5mA
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  valueBoolean: true
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  valueBoolean: true
+
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
+
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
+  - changeSet:
       id: 3-load-bank-data
-      author: olkypay
+      author: RHI
       changes:
         - loadData:
             file: db/changelog/data/bank_info.csv
@@ -61,29 +346,3 @@ At the end of your baseline.yaml, add this:
             tableName: bank_agency
             separator: ","
             encoding: UTF-8
-
-🔹 file: is a classpath-relative path
-🔹 separator: is optional (default is ,)
-🔹 You can also add quotchar: '"' if your CSV has quoted text.
-
-⸻
-
-🚀 4. Run the migration
-
-Then execute:
-
-./mvnw liquibase:update
-
-Liquibase will:
-	1.	Create all tables (from previous changeSets),
-	2.	Load CSV data into bank_info and bank_agency.
-
-⸻
-
-🧠 Tip
-
-If your CSV has a header but you don’t want to include certain columns (e.g. auto-generated IDs), simply remove them from the CSV or mark them as autoIncrement in Liquibase — Liquibase will skip empty values for those.
-
-⸻
-
-Would you like me to show you an example of CSVs with auto-increment IDs handled automatically (so you don’t have to include id in the CSV)?
