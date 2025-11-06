@@ -1,44 +1,7 @@
-Perfect! Let’s make a fully working Spring Boot + Liquibase setup using your tables and bank data. This version avoids all path issues by using classpath references and ensures the change sets execute in the right order.
+Can't parse numeric value [can_do_core_sdd] using formatter
+DATA TOO long adress1
 
-⸻
-
-Folder structure
-
-src
- └── main
-     └── resources
-         └── db
-             └── changelog
-                 ├── master.yaml
-                 ├── baseline.yaml
-                 ├── changeSet
-                 │    └── 01-populate-bankinfo.yaml
-                 └── data
-                      ├── bank_info.sql
-                      └── bank_agency.sql
-
-
-⸻
-
-1️⃣ master.yaml
-
-This is the top-level changelog Spring Boot will use:
-
-databaseChangeLog:
-  - include:
-      file: db/changelog/baseline.yaml
-      relativeToChangelogFile: false
-
-  - include:
-      file: db/changelog/changeSet/01-populate-bankinfo.yaml
-      relativeToChangelogFile: false
-
-
-⸻
-
-2️⃣ baseline.yaml
-
-Creates all tables:
+this is what i want to import fril an old db 
 
 databaseChangeLog:
   - changeSet:
@@ -106,7 +69,7 @@ databaseChangeLog:
                   type: varchar(255)
               - column:
                   name: address1
-                  type: varchar(255)
+                  type: longtext
               - column:
                   name: location
                   type: varchar(255)
@@ -131,7 +94,6 @@ databaseChangeLog:
               - column:
                   name: search_result
                   type: longtext
-
         - createTable:
             tableName: bank_agency
             columns:
@@ -220,65 +182,150 @@ databaseChangeLog:
                   name: prop_value
                   type: varchar(255)
 
-
-⸻
-
-3️⃣ 01-populate-bankinfo.yaml
-
-Loads your SQL files:
-
-databaseChangeLog:
   - changeSet:
-      id: 01-populate-bankinfo
+      id: 2-init-db-data
       author: RHI
       changes:
-        - sqlFile:
-            path: classpath:db/changelog/data/bank_info.sql
-            relativeToChangelogFile: false
-            endDelimiter: ";"
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.url
+              - column:
+                  name: prop_value
+                  value: https://rest.sepatools.eu
 
-        - sqlFile:
-            path: classpath:db/changelog/data/bank_agency.sql
-            relativeToChangelogFile: false
-            endDelimiter: ";"
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.username
+              - column:
+                  name: prop_value
+                  value: ibancalculatorolkypay
 
-✅ Important: both SQL files must be under src/main/resources/db/changelog/data/.
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.secret
+              - column:
+                  name: prop_value
+                  value: 4u\\Z*4.(+ZK%P<E5mA
 
-⸻
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  valueBoolean: true
 
-4️⃣ Spring Boot configuration
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  valueBoolean: true
 
-In application.properties:
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
 
-spring.liquibase.change-log=classpath:db/changelog/master.yaml
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
+    
+long text fix adresse 1 but i dont how to fix to boolean value this is a part of script that i want to start :
 
-	•	This ensures SpringLiquibase uses the master file, which includes both baseline and population change sets.
+INSERT INTO external_bank_data.bank_info (address1,bic,can_dob2b_sdd,can_do_core_sdd,can_do_sct,country_iso2,created_at,institution,location,name,search_result,updated_at) VALUES
+	 ('AEGIDIENTORPLATZ 1','SPKHDE2HXXX',1,1,1,'DE','2015-04-01 16:56:07.000000','SPARKASSE HANNOVER','HANNOVER','Sparkasse Hannover',NULL,'2025-10-23 11:52:02.094260'),
+	 ('28, PLACE RIHOUR','NORDFRPPXXX',1,1,1,'FR','2015-04-01 16:56:07.000000','CREDIT DU NORD','LILLE','AG FLANDRES',NULL,'2025-10-23 11:52:02.094260'),
+	 ('','SOGEFRPPXXX',1,1,1,'FR','2015-04-01 16:56:08.000000','Societe Generale','PUTEAUX','Societe Generale',NULL,'2025-10-23 11:52:02.094260'),
+	 ('6 AVENUE DE PROVENCE','CMCIFRPPXXX',1,1,1,'FR','2015-04-01 16:56:08.000000','CM - CIC BANQUES','PARIS','CM - CIC BANQUES',NULL,'2025-10-23 11:52:02.094260'),
+	 ('1 ROND POINT DE LA NATION','CEPAFRPP213',1,1,1,'FR','2015-04-01 16:56:08.000000','CAISSE D''EPARGNE DE BOURGOGNE FRANCHE-COMTE','DIJON','AG SIEGE',NULL,'2025-10-23 11:52:02.094260'),
+	 ('33 RUE DES TROIS FONTANOT','CCOPFRPPXXX',1,1,1,'FR','2015-04-01 16:56:09.000000','CREDIT COOPERATIF','NANTERRE','AG SIEGE',NULL,'2025-10-23 11:52:02.094260'),
+	 ('','AGRIFRPP883',1,1,1,'FR','2015-04-01 16:56:09.000000','CREDIT AGRICOLE','ROUEN','AG SITE BOIS GUIL',NULL,'2025-10-23 11:52:02.094260'),
+	 ('RUE LEON LAVAL 4','CCRALULLXXX',1,1,1,'LU','2015-04-01 16:56:11.000000','BANQUE RAIFFEISEN','LEUDELANGE','',NULL,'2025-10-23 11:52:02.094260'),
+	 ('1 CHURCHILL PLACE','BARCGB22XXX',1,1,1,'GB','2015-04-01 16:56:12.000000','BARCLAYS BANK PLC','LONDON','BARCLAYS BANK PLC',NULL,'2025-10-23 11:52:02.094260'),
+	 ('38 PLACE DE LA GARE','CCPLLULLXXX',1,1,1,'FR','2015-04-01 16:56:13.000000','ENTREPRISE DES P ET T','LUXEMBOURG','',NULL,'2025-10-23 11:52:02.094260');
 
-⸻
+	 
+@Table(name = "bank_info")
+@NoArgsConstructor
+@Data
+@AllArgsConstructor
+@Entity
+public class BankInfo {
 
-5️⃣ Verify packaging
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name = "id", updatable = false, nullable = false)
+    private Long id;
 
-After mvn clean package, run:
+    private String bic;
+    private String name;
+    private String institution;
+    private String address1;
+    private String location;
+    private Boolean canDoSct;
+    private Boolean canDoCoreSdd;
+    private Boolean canDoB2bSdd;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String countryIso2;
+    @OneToMany(mappedBy = "bankInfo", cascade = CascadeType.ALL)
+    private List<BankAgency> bankAgencies = new ArrayList<>();
+    @Lob
+    @Column(name = "searchResult", columnDefinition = "LONGTEXT")
+    private String searchResult;
 
-jar tf target/*.jar | grep db/changelog/data/
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
-You should see:
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
-db/changelog/data/bank_info.sql
-db/changelog/data/bank_agency.sql
-
-If they appear, everything is correctly packaged.
-
-⸻
-
-With this setup:
-	•	Tables are created first (baseline.yaml)
-	•	Data is inserted second (01-populate-bankinfo.yaml)
-	•	No NullPointerException or file not found errors
-	•	Works fully in Spring Boot
-
-⸻
-
-If you want, I can also convert your CSV content into SQL inserts for bank_info.sql and bank_agency.sql so it’s ready to run.
-
-Do you want me to do that?
+    public BankInfo(String bic, String name, String institution, String address1, String location, Boolean canDoCoreSdd, Boolean canDoSct, Boolean canDoB2bSdd, String countryIso2) {
+        this.bic = bic;
+        this.name = name;
+        this.institution = institution;
+        this.address1 = address1;
+        this.location = location;
+        this.canDoCoreSdd = canDoCoreSdd;
+        this.canDoSct = canDoSct;
+        this.canDoB2bSdd = canDoB2bSdd;
+        this.countryIso2 = countryIso2;
+    }
+i think that there is an issue with the boolean value
