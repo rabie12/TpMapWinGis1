@@ -1,277 +1,111 @@
-databaseChangeLog:
-  - changeSet:
-      id: 1-baseline-schema
-      author: RHI
-      changes:
-        - createTable:
-            tableName: users
-            columns:
-              - column:
-                  name: username
-                  type: varchar(255)
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: password
-                  type: varchar(255)
-              - column:
-                  name: enabled
-                  type: boolean
+That NullPointerException: Cannot invoke "String.matches(String)" because "searchPath" is null almost never comes from your YAML syntax or CSV content—it’s a Liquibase classpath resolution bug that appears when Spring Boot’s SpringLiquibase bean can’t resolve the path you gave to loadData.
+Here’s how to make it work reliably in Spring Boot + Liquibase 4.30.
 
-        - createTable:
-            tableName: authorities
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: username
-                  type: varchar(255)
-              - column:
-                  name: authority
-                  type: varchar(255)
+⸻
 
-        - addForeignKeyConstraint:
-            baseTableName: authorities
-            baseColumnNames: username
-            referencedTableName: users
-            referencedColumnNames: username
-            constraintName: fk_authorities_user
+✅ 1. Put the CSVs in the right place
 
-        - createTable:
-            tableName: bank_info
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: bic
-                  type: varchar(50)
-              - column:
-                  name: name
-                  type: varchar(255)
-              - column:
-                  name: institution
-                  type: varchar(255)
-              - column:
-                  name: address1
-                  type: varchar(255)
-              - column:
-                  name: location
-                  type: varchar(255)
-              - column:
-                  name: can_do_sct
-                  type: boolean
-              - column:
-                  name: can_do_core_sdd
-                  type: boolean
-              - column:
-                  name: can_do_b2b_sdd
-                  type: boolean
-              - column:
-                  name: country_iso_2
-                  type: varchar(10)
-              - column:
-                  name: created_at
-                  type: datetime
-              - column:
-                  name: updated_at
-                  type: datetime
-              - column:
-                  name: search_result
-                  type: longtext
+src/
+ └── main/
+     └── resources/
+         └── db/
+             └── changelog/
+                 ├── db.changelog-master.yaml
+                 ├── baseline.yaml
+                 └── data/
+                     ├── bank_info.csv
+                     └── bank_agency.csv
 
-        - createTable:
-            tableName: bank_agency
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: country_iso_2
-                  type: varchar(10)
-              - column:
-                  name: bank_code
-                  type: varchar(50)
-              - column:
-                  name: branch_code
-                  type: varchar(50)
-              - column:
-                  name: branch_name
-                  type: varchar(255)
-              - column:
-                  name: bank_and_branch_code
-                  type: varchar(100)
-              - column:
-                  name: bank_info_id
-                  type: bigint
+Make sure both files are inside src/main/resources, and that the resources folder is correctly marked as a Resources Root in your IDE so it’s on the runtime classpath.
 
-        - addForeignKeyConstraint:
-            baseTableName: bank_agency
-            baseColumnNames: bank_info_id
-            referencedTableName: bank_info
-            referencedColumnNames: id
-            constraintName: fk_agency_bankinfo
+⸻
 
-        - createTable:
-            tableName: iban_search_history
-            columns:
-              - column:
-                  name: id
-                  type: char(36)
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: iban
-                  type: varchar(255)
-              - column:
-                  name: result
-                  type: varchar(255)
-              - column:
-                  name: response_details
-                  type: longtext
-              - column:
-                  name: created_at
-                  type: datetime
-              - column:
-                  name: updated_at
-                  type: datetime
-              - column:
-                  name: bank_agency_id
-                  type: bigint
+✅ 2. Reference them with a class-path URL, not a relative path
 
-        - addForeignKeyConstraint:
-            baseTableName: iban_search_history
-            baseColumnNames: bank_agency_id
-            referencedTableName: bank_agency
-            referencedColumnNames: id
-            constraintName: fk_history_agency
+Change your loadData blocks to use an absolute classpath URI:
 
-        - createTable:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: prop_key
-                  type: varchar(255)
-              - column:
-                  name: prop_value
-                  type: varchar(255)
-
-  - changeSet:
-      id: 2-init-db-data
-      author: RHI
-      changes:
-        - insert:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: prop_key
-                  value: sepa.url
-              - column:
-                  name: prop_value
-                  value: https://rest.sepatools.eu
-
-        - insert:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: prop_key
-                  value: sepa.username
-              - column:
-                  name: prop_value
-                  value: ibancalculatorolkypay
-
-        - insert:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: prop_key
-                  value: sepa.secret
-              - column:
-                  name: prop_value
-                  value: 4u\\Z*4.(+ZK%P<E5mA
-
-        - insert:
-            tableName: users
-            columns:
-              - column:
-                  name: username
-                  value: tournesol
-              - column:
-                  name: password
-                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
-              - column:
-                  name: enabled
-                  valueBoolean: true
-
-        - insert:
-            tableName: users
-            columns:
-              - column:
-                  name: username
-                  value: bitbang
-              - column:
-                  name: password
-                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
-              - column:
-                  name: enabled
-                  valueBoolean: true
-
-        - insert:
-            tableName: authorities
-            columns:
-              - column:
-                  name: username
-                  value: tournesol
-              - column:
-                  name: authority
-                  value: OLKY_ADMIN
-
-        - insert:
-            tableName: authorities
-            columns:
-              - column:
-                  name: username
-                  value: bitbang
-              - column:
-                  name: authority
-                  value: OLKY_ADMIN
   - changeSet:
       id: 3-load-bank-data
       author: RHI
       changes:
         - loadData:
-            file: classpath:db/changelog/data/bank_info.csv
+            file: "classpath:/db/changelog/data/bank_info.csv"
             tableName: bank_info
             separator: ","
             encoding: UTF-8
 
         - loadData:
-            file: classpath:db/changelog/data/bank_agency.csv
+            file: "classpath:/db/changelog/data/bank_agency.csv"
             tableName: bank_agency
             separator: ","
             encoding: UTF-8
 
+Notice the slash right after classpath: —
+classpath:/db/... → not classpath:db/....
 
-	and still have the same issue
+That leading / is what Spring’s SpringResourceAccessor expects to correctly build the searchPath.
+
+⸻
+
+✅ 3. Double-check your Spring Boot config
+
+In application.yml (or .properties):
+
+spring:
+  liquibase:
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+
+Again, include the leading /.
+
+⸻
+
+✅ 4. If you still hit the same stack trace
+
+Add an explicit context to Liquibase so it resolves resources from its own accessor instead of Spring’s:
+
+  - changeSet:
+      id: 3-load-bank-data
+      author: RHI
+      context: load-data
+      changes:
+        - loadData:
+            file: "classpath:/db/changelog/data/bank_info.csv"
+            tableName: bank_info
+            separator: ","
+            encoding: UTF-8
+        - loadData:
+            file: "classpath:/db/changelog/data/bank_agency.csv"
+            tableName: bank_agency
+            separator: ","
+            encoding: UTF-8
+
+Then run:
+
+./mvnw liquibase:update -Dliquibase.contexts=load-data
+
+
+⸻
+
+✅ 5. Quick sanity test
+
+Before running the full Spring Boot app, test the changelog directly with the CLI to confirm the CSVs are discoverable:
+
+./mvnw liquibase:update \
+  -Dliquibase.changeLogFile=src/main/resources/db/changelog/db.changelog-master.yaml \
+  -Dspring.config.location=classpath:/application.yml
+
+If that works, Spring Boot will too.
+
+⸻
+
+🧠 TL;DR
+	•	Use classpath:/... (with the slash).
+	•	Ensure CSVs are in src/main/resources.
+	•	Keep the same path style in both application.yml and YAML changeSet.
+
+Once you rebuild and restart, Liquibase should print:
+
+INFO  Successfully released change log lock
+INFO  ChangeSet db/changelog/baseline.yaml::3-load-bank-data::RHI ran successfully
+
+and your bank tables will be populated.
