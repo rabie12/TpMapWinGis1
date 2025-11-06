@@ -1,52 +1,77 @@
-ore locations can be added with the 'searchPath' parameter., db/changelog/baseline.yaml::3-load-bank-data::RHI
+Ah, merci pour votre patience — je vois qu’on a un problème récurrent et que les solutions classiques (classpath: + relativeToChangelogFile: false) ne fonctionnent pas dans votre contexte. Ça arrive souvent avec Spring Boot + Liquibase si les fichiers ne sont pas réellement présents dans le classpath au runtime, ou si SpringLiquibase ne voit pas le bon chemin.
 
-	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:272) ~[liquibase-core-4.30.0.jar:na]
-	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1859) ~[spring-beans-6.2.3.jar:6.2.3]
-	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1808) ~[spring-beans-6.2.3.jar:6.2.3]
-	... 20 common frames omitted
-Caused by: liquibase.exception.CommandExecutionException: liquibase.exception.ValidationFailedException: Validation Failed:
-     2 changes have validation failures
-          The file bank_info.sql was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter., db/changelog/baseline.yaml::3-load-bank-data::RHI
-          The file bank_agency.sql was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter., db/changelog/baseline.yaml::3-load-bank-data::RHI
+On va régler ça de manière sûre et définitive.
 
-	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:278) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.CommandScope.execute(CommandScope.java:219) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.lambda$update$0(Liquibase.java:216) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.runInScope(Liquibase.java:1329) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.update(Liquibase.java:205) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.update(Liquibase.java:188) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.performUpdate(SpringLiquibase.java:310) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.lambda$afterPropertiesSet$0(SpringLiquibase.java:262) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:255) ~[liquibase-core-4.30.0.jar:na]
-	... 22 common frames omitted
-Caused by: liquibase.exception.ValidationFailedException: Validation Failed:
-     2 changes have validation failures
-          The file bank_info.sql was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter., db/changelog/baseline.yaml::3-load-bank-data::RHI
-          The file bank_agency.sql was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter., db/changelog/baseline.yaml::3-load-bank-data::RHI
+⸻
 
-	at liquibase.changelog.DatabaseChangeLog.validate(DatabaseChangeLog.java:407) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.run(DatabaseChangelogCommandStep.java:92) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:231) ~[liquibase-core-4.30.0.jar:na]
-	... 40 common frames omitted
+1️⃣ Vérifier absolument que les fichiers sont dans le classpath
 
-Disconnected from the target VM, address: '127.0.0.1:56336', transport: 'socket'
+SpringBoot ne peut voir que ce qui est dans le classpath (le dossier resources compilé dans le JAR).
+	•	Vos fichiers SQL/CSV doivent être dans src/main/resources, par exemple :
 
-Process finished with exit code 0
+src/main/resources/db/changelog/baseline.yaml
+src/main/resources/db/changelog/sql/bank_info.sql
+src/main/resources/db/changelog/sql/bank_agency.sql
+
+	•	Vérifiez qu’ils sont réellement dans le JAR après compilation :
+
+mvn clean package
+jar tf target/*.jar | grep bank_info.sql
+
+Si la commande ne retourne rien, vos fichiers ne sont pas copiés dans le JAR, donc SpringLiquibase ne peut pas les trouver.
+
+⸻
+
+2️⃣ Utiliser loadFile directement depuis le SpringLiquibase bean
+
+Parfois, même avec classpath:, SpringLiquibase échoue à résoudre des fichiers via YAML. La solution la plus fiable est de définir explicitement un bean SpringLiquibase et charger les fichiers via Resource :
+
+@Bean
+public SpringLiquibase liquibase(DataSource dataSource, ResourceLoader resourceLoader) {
+    SpringLiquibase liquibase = new SpringLiquibase();
+    liquibase.setDataSource(dataSource);
+    liquibase.setChangeLog(resourceLoader.getResource("classpath:db/changelog/baseline.yaml").getURI().toString());
+    return liquibase;
+}
+
+Ici, on s’assure que SpringLiquibase reçoit un URI exact vers le fichier au lieu de tenter de résoudre un chemin relatif.
+
+⸻
+
+3️⃣ Alternative ultra-fiable : utiliser <sql> inline dans YAML
+
+Si vos fichiers sont petits ou moyens, vous pouvez mettre directement vos inserts SQL dans le YAML au lieu de dépendre d’un fichier externe :
+
+- changeSet:
+    id: 3-load-bank-data
+    author: RHI
+    changes:
+      - sql:
+          sql: |
+            INSERT INTO bank_info (id, bic, name, bank_info_id)
+            VALUES
+            (177845, NULL, 'SRLG', 37105),
+            (177846, NULL, 'SRLG', 37105);
+
+✅ Cela supprime totalement les problèmes de path, car tout est inline dans le YAML.
+
+⸻
+
+4️⃣ Résumé des causes possibles
+
+Cause	Effet
+Fichiers CSV/SQL hors resources	SpringLiquibase ne les trouve pas → relativePath null
+Chemins relatifs avec relativeToChangelogFile: true	Fonctionne souvent avec CLI mais pas Spring Boot
+IDE (IntelliJ/Eclipse) qui n’inclut pas les fichiers dans le runtime classpath	SpringLiquibase ne trouve rien
+Mauvais préfixe (file: ou classpath: mal utilisé)	Erreur de résolution Spring
+
+
+⸻
+
+💡 Mon conseil final :
+	1.	Assurez-vous que les fichiers sont dans src/main/resources/db/changelog/sql/.
+	2.	Faites un mvn clean package et vérifiez le JAR.
+	3.	Utilisez soit classpath: avec relativeToChangelogFile: false, soit insérez vos SQL inline dans YAML si les fichiers restent introuvables.
+	4.	Si vous voulez, je peux vous générer un baseline.yaml prêt à l’emploi avec vos tables et données bancaires, 100% compatible Spring Boot, en SQL inline pour éviter tout problème de path.
+
+Voulez-vous que je fasse ça ?
