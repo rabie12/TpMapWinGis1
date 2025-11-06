@@ -1,22 +1,9 @@
-Perfect ✅ — below is your final complete Liquibase baseline changelog:
-	•	All id columns are now autoIncrement: true
-	•	All foreign key relationships are preserved
-	•	The spring_properties table includes your three insert statements
-
-This version is ready to drop into:
-src/main/resources/db/changelog/db.changelog-master.yaml
-
-⸻
-
-📄 db.changelog-master.yaml
-
 databaseChangeLog:
   - changeSet:
       id: 1-baseline-schema
       author: olkypay
       changes:
 
-        # === USERS TABLE ===
         - createTable:
             tableName: users
             columns:
@@ -33,7 +20,6 @@ databaseChangeLog:
                   name: enabled
                   type: boolean
 
-        # === AUTHORITIES TABLE ===
         - createTable:
             tableName: authorities
             columns:
@@ -58,7 +44,6 @@ databaseChangeLog:
             referencedColumnNames: username
             constraintName: fk_authorities_user
 
-        # === BANK INFO TABLE ===
         - createTable:
             tableName: bank_info
             columns:
@@ -106,7 +91,6 @@ databaseChangeLog:
                   name: search_result
                   type: longtext
 
-        # === BANK AGENCY TABLE ===
         - createTable:
             tableName: bank_agency
             columns:
@@ -143,7 +127,6 @@ databaseChangeLog:
             referencedColumnNames: id
             constraintName: fk_agency_bankinfo
 
-        # === IBAN SEARCH HISTORY TABLE ===
         - createTable:
             tableName: iban_search_history
             columns:
@@ -179,7 +162,6 @@ databaseChangeLog:
             referencedColumnNames: id
             constraintName: fk_history_agency
 
-        # === SPRING PROPERTIES TABLE ===
         - createTable:
             tableName: spring_properties
             columns:
@@ -197,64 +179,90 @@ databaseChangeLog:
                   name: prop_value
                   type: varchar(255)
 
+
   - changeSet:
-      id: 2-insert-spring-properties
+      id: 2-init-db-data
       author: olkypay
       changes:
-        - insert:
-            tableName: spring_properties
+          - insert:
+              tableName: spring_properties
+              columns:
+                - column:
+                    name: prop_key
+                    value: sepa.url
+                - column:
+                    name: prop_value
+                    value: https://rest.sepatools.eu
+
+          - insert:
+              tableName: spring_properties
+              columns:
+                - column:
+                    name: prop_key
+                    value: sepa.username
+                - column:
+                    name: prop_value
+                    value: ibancalculatorolkypay
+
+          - insert:
+              tableName: spring_properties
+              columns:
+                - column:
+                    name: prop_key
+                    value: sepa.secret
+                - column:
+                    name: prop_value
+                    value: 4u\\Z*4.(+ZK%P<E5mA
+          - insert:
+            tableName: users
             columns:
               - column:
-                  name: prop_key
-                  value: sepa.url
+                  name: username
+                  value: tournesol
               - column:
-                  name: prop_value
-                  value: https://rest.sepatools.eu
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                    name: enabled
+                    value: 1
 
-        - insert:
-            tableName: spring_properties
+          - insert:
+            tableName: users
             columns:
               - column:
-                  name: prop_key
-                  value: sepa.username
+                  name: username
+                  value: bitbang
               - column:
-                  name: prop_value
-                  value: ibancalculatorolkypay
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  value: 1
 
-        - insert:
-            tableName: spring_properties
+          - insert:
+            tableName: authorities
             columns:
               - column:
-                  name: prop_key
-                  value: sepa.secret
+                  name: authority
+                  value: OLKY_ADMIN
               - column:
-                  name: prop_value
-                  value: 4u\\Z*4.(+ZK%P<E5mA
+                  name: username
+                  value: tournesol
+
+          - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
+              - column:
+                  name: username
+                  value: bitbang
+pringframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/autoconfigure/orm/jpa/HibernateJpaConfiguration.class]: Failed to initialize dependency 'liquibase' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'liquibase' defined in class path resource [org/springframework/boot/autoconfigure/liquibase/LiquibaseAutoConfiguration$LiquibaseConfiguration.class]: liquibase.exception.CommandExecutionException: liquibase.exception.ChangeLogParseException: Error parsing classpath:/db/changelog/db.changelog-master.yaml : Error parsing db/changelog/baseline.yaml : Error parsing db/changelog/baseline.yaml: Unknown change type 'columns'. Check for spelling or capitalization errors and missing extensions such as liquibase-commercial.
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:328) ~[spring-beans-6.2.3.jar:6.2.3]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:207) ~[spring-beans-6.2.3.jar:6.2.3]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:970) ~[spring-context-6.2.3.jar:6.2.3]
+	at org.springframework.context.support.AbstractAppl
 
 
-⸻
-
-⚙️ application.yml (to enable Liquibase)
-
-spring:
-  liquibase:
-    enabled: true
-    change-log: classpath:/db/changelog/db.changelog-master.yaml
-
-
-⸻
-
-✅ Summary
-
-Table	ID Type	Auto Increment	FK
-users	username (PK)	❌	—
-authorities	bigint	✅	→ users.username
-bank_info	bigint	✅	—
-bank_agency	bigint	✅	→ bank_info.id
-iban_search_history	char(36) (UUID)	❌	→ bank_agency.id
-spring_properties	bigint	✅	— (plus 3 inserted rows)
-
-
-⸻
-
-Would you like me to also generate a Liquibase rollback section (to drop tables and data safely)?
+	ca you review 
