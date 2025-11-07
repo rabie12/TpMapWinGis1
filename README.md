@@ -55,3 +55,6 @@ Caused by: liquibase.exception.CommandExecutionException: liquibase.exception.Li
 	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
 	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
 	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(Sprin
+
+
+c'est durant le premier build après implémentation liquibase
