@@ -1,32 +1,4 @@
-  - changeSet:
-      id: 4-load-bankagency-data
-      author: RHI
-      changes:
-        - loadData:
-            tableName: bank_agency
-            file: db/changelog/data/bank_agency.csv
-            separator: ","
-            encoding: UTF-8
-            quotchar: '"'
-            columns:
-              - column:
-                  name: id
-                  type: NUMERIC
-              - column:
-                  name: bank_and_branch_code
-                  type: STRING
-              - column:
-                  name: bank_code
-                  type: STRING
-              - column:
-                  name: branch_code
-                  type: STRING
-              - column:
-                  name: branch_name
-                  type: STRING
-              - column:
-                  name: country_iso_2
-                  type: STRING
-              - column:
-                  name: bank_info_id
-                  type: NUMERIC
+liquibase.exception.DatabaseException: java.sql.SQLIntegrityConstraintViolationException: (conn=184) Duplicate entry '100' for key 'PRIMARY'
+	at liquibase.statement.ExecutablePreparedStatementBase.execute(ExecutablePreparedStatementBase.java:123) ~[liquibase-core-4.30.0.jar:na]
+
+   idont have any id primary key 100 on my bank_agency table
