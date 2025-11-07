@@ -1,268 +1,50 @@
-databaseChangeLog:
   - changeSet:
-      id: 1-baseline-schema
+      id: 3-load-bankinfo-data
       author: RHI
       changes:
-        - createTable:
-            tableName: users
-            columns:
-              - column:
-                  name: username
-                  type: varchar(255)
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: password
-                  type: varchar(255)
-              - column:
-                  name: enabled
-                  type: tinyint(1)
-
-        - createTable:
-            tableName: authorities
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: username
-                  type: varchar(255)
-              - column:
-                  name: authority
-                  type: varchar(255)
-
-        - addForeignKeyConstraint:
-            baseTableName: authorities
-            baseColumnNames: username
-            referencedTableName: users
-            referencedColumnNames: username
-            constraintName: fk_authorities_user
-
-        - createTable:
+        - loadData:
             tableName: bank_info
+            file: db/changelog/data/bank_info.csv
+            separator: ","
+            encoding: UTF-8
+            quotchar: '"'
             columns:
               - column:
                   name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: bic
-                  type: varchar(50)
-              - column:
-                  name: name
-                  type: varchar(255)
-              - column:
-                  name: institution
-                  type: varchar(255)
+                  type: NUMERIC
               - column:
                   name: address1
-                  type: longtext
+                  type: STRING
               - column:
-                  name: location
-                  type: varchar(255)
-              - column:
-                  name: can_do_sct
-                  type: tinyint(1)
-              - column:
-                  name: can_do_core_sdd
-                  type: tinyint(1)
+                  name: bic
+                  type: STRING
               - column:
                   name: can_do_b2b_sdd
-                  type: tinyint(1)
+                  type: BOOLEAN
+              - column:
+                  name: can_do_core_sdd
+                  type: BOOLEAN
+              - column:
+                  name: can_do_sct
+                  type: BOOLEAN
               - column:
                   name: country_iso_2
-                  type: varchar(10)
+                  type: STRING
               - column:
                   name: created_at
-                  type: datetime
+                  type: DATETIME
               - column:
-                  name: updated_at
-                  type: datetime
+                  name: institution
+                  type: STRING
+              - column:
+                  name: location
+                  type: STRING
+              - column:
+                  name: name
+                  type: STRING
               - column:
                   name: search_result
-                  type: longtext
-        - createTable:
-            tableName: bank_agency
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: country_iso_2
-                  type: varchar(10)
-              - column:
-                  name: bank_code
-                  type: varchar(50)
-              - column:
-                  name: branch_code
-                  type: varchar(50)
-              - column:
-                  name: branch_name
-                  type: varchar(255)
-              - column:
-                  name: bank_and_branch_code
-                  type: varchar(100)
-              - column:
-                  name: bank_info_id
-                  type: bigint
-
-        - addForeignKeyConstraint:
-            baseTableName: bank_agency
-            baseColumnNames: bank_info_id
-            referencedTableName: bank_info
-            referencedColumnNames: id
-            constraintName: fk_agency_bankinfo
-
-        - createTable:
-            tableName: iban_search_history
-            columns:
-              - column:
-                  name: id
-                  type: char(36)
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: iban
-                  type: varchar(255)
-              - column:
-                  name: result
-                  type: varchar(255)
-              - column:
-                  name: response_details
-                  type: longtext
-              - column:
-                  name: created_at
-                  type: datetime
+                  type: STRING
               - column:
                   name: updated_at
-                  type: datetime
-              - column:
-                  name: bank_agency_id
-                  type: bigint
-
-        - addForeignKeyConstraint:
-            baseTableName: iban_search_history
-            baseColumnNames: bank_agency_id
-            referencedTableName: bank_agency
-            referencedColumnNames: id
-            constraintName: fk_history_agency
-
-        - createTable:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: id
-                  type: bigint
-                  autoIncrement: true
-                  constraints:
-                    primaryKey: true
-                    nullable: false
-              - column:
-                  name: prop_key
-                  type: varchar(255)
-              - column:
-                  name: prop_value
-                  type: varchar(255)
-
-  - changeSet:
-      id: 2-init-db-data
-      author: RHI
-      changes:
-        - insert:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: prop_key
-                  value: sepa.url
-              - column:
-                  name: prop_value
-                  value: https://rest.sepatools.eu
-
-        - insert:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: prop_key
-                  value: sepa.username
-              - column:
-                  name: prop_value
-                  value: ibancalculatorolkypay
-
-        - insert:
-            tableName: spring_properties
-            columns:
-              - column:
-                  name: prop_key
-                  value: sepa.secret
-              - column:
-                  name: prop_value
-                  value: 4u\\Z*4.(+ZK%P<E5mA
-
-        - insert:
-            tableName: users
-            columns:
-              - column:
-                  name: username
-                  value: tournesol
-              - column:
-                  name: password
-                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
-              - column:
-                  name: enabled
-                  value: 1
-
-        - insert:
-            tableName: users
-            columns:
-              - column:
-                  name: username
-                  value: bitbang
-              - column:
-                  name: password
-                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
-              - column:
-                  name: enabled
-                  value: 1
-
-        - insert:
-            tableName: authorities
-            columns:
-              - column:
-                  name: username
-                  value: tournesol
-              - column:
-                  name: authority
-                  value: OLKY_ADMIN
-
-        - insert:
-            tableName: authorities
-            columns:
-              - column:
-                  name: username
-                  value: bitbang
-              - column:
-                  name: authority
-                  value: OLKY_ADMIN
-voici le début du csv que je veux importéc'esprvu pour la table bankinfo
-
-id,"address1","bic","can_dob2b_sdd","can_do_core_sdd","can_do_sct","country_iso2","created_at","institution","location","name","search_result","updated_at"
-100,AEGIDIENTORPLATZ 1,SPKHDE2HXXX,1,1,1,DE,2015-04-01 16:56:07.000,SPARKASSE HANNOVER,HANNOVER,Sparkasse Hannover,,2025-10-23 11:52:02.094
-101,"28, PLACE RIHOUR",NORDFRPPXXX,1,1,1,FR,2015-04-01 16:56:07.000,CREDIT DU NORD,LILLE,AG FLANDRES,,2025-10-23 11:52:02.094
-102,"",SOGEFRPPXXX,1,1,1,FR,2015-04-01 16:56:08.000,Societe Generale,PUTEAUX,Societe Generale,,2025-10-23 11:52:02.094
-103,"6 AVENUE DE PROVENCE",CMCIFRPPXXX,1,1,1,FR,2015-04-01 16:56:08.000,CM - CIC BANQUES,PARIS,CM - CIC BANQUES,,2025-10-23 11:52:02.094
-104,"1 ROND POINT DE LA NATION",CEPAFRPP213,1,1,1,FR,2015-04-01 16:56:08.000,CAISSE D'EPARGNE DE BOURGOGNE FRANCHE-COMTE,DIJON,AG SIEGE,,2025-10-23 11:52:02.094
-105,"33 RUE DES TROIS FONTANOT",CCOPFRPPXXX,1,1,1,FR,2015-04-01 16:56:09.000,CREDIT COOPERATIF,NANTERRE,AG SIEGE,,2025-10-23 11:52:02.094
-je souhaite importé c'es données directement via le baseline
+                  type: DATETIME
