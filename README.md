@@ -1,128 +1,268 @@
-Parfait 👍 tu veux adapter le pipeline de bank-info pour olky-reporting,
-sans changer les noms des fichiers .jar (donc on garde bank-info.jar).
+databaseChangeLog:
+  - changeSet:
+      id: 1-baseline-schema
+      author: RHI
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: password
+                  type: varchar(255)
+              - column:
+                  name: enabled
+                  type: tinyint(1)
 
-Voici ce qu’on va faire :
-	•	✅ garder le bank-info.jar (pour compatibilité avec ton script de déploiement ou ton infra actuelle)
-	•	✅ adapter tout le reste (nom du script, tags, environnement, logique CI/CD, etc.)
-	•	✅ simplifier là où olky-reporting n’a pas besoin d’étapes supplémentaires
+        - createTable:
+            tableName: authorities
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+              - column:
+                  name: authority
+                  type: varchar(255)
 
-⸻
+        - addForeignKeyConstraint:
+            baseTableName: authorities
+            baseColumnNames: username
+            referencedTableName: users
+            referencedColumnNames: username
+            constraintName: fk_authorities_user
 
-🧩 Explications des adaptations
+        - createTable:
+            tableName: bank_info
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bic
+                  type: varchar(50)
+              - column:
+                  name: name
+                  type: varchar(255)
+              - column:
+                  name: institution
+                  type: varchar(255)
+              - column:
+                  name: address1
+                  type: longtext
+              - column:
+                  name: location
+                  type: varchar(255)
+              - column:
+                  name: can_do_sct
+                  type: tinyint(1)
+              - column:
+                  name: can_do_core_sdd
+                  type: tinyint(1)
+              - column:
+                  name: can_do_b2b_sdd
+                  type: tinyint(1)
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: search_result
+                  type: longtext
+        - createTable:
+            tableName: bank_agency
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: country_iso_2
+                  type: varchar(10)
+              - column:
+                  name: bank_code
+                  type: varchar(50)
+              - column:
+                  name: branch_code
+                  type: varchar(50)
+              - column:
+                  name: branch_name
+                  type: varchar(255)
+              - column:
+                  name: bank_and_branch_code
+                  type: varchar(100)
+              - column:
+                  name: bank_info_id
+                  type: bigint
 
-Élément	Valeur bank-info	Adapté pour olky-reporting
-Nom du JAR	bank-info.jar	inchangé
-Script de déploiement	/opt/script/gitlab/deploy_bankinfo.sh	/opt/script/gitlab/deploy_olkyreporting.sh
-Nom du projet	olky-reporting	modifié dans les noms de jobs et contextes
-Image Docker	maven:3.9.10-amazoncorretto-21-alpine	identique
-Stages	liquibase → build → publish	identique
-DB de test (liquibase)	olky_reporting	identique
-Tags GitLab (deploy_dev, etc.)	conservés	conservés
+        - addForeignKeyConstraint:
+            baseTableName: bank_agency
+            baseColumnNames: bank_info_id
+            referencedTableName: bank_info
+            referencedColumnNames: id
+            constraintName: fk_agency_bankinfo
 
+        - createTable:
+            tableName: iban_search_history
+            columns:
+              - column:
+                  name: id
+                  type: char(36)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: iban
+                  type: varchar(255)
+              - column:
+                  name: result
+                  type: varchar(255)
+              - column:
+                  name: response_details
+                  type: longtext
+              - column:
+                  name: created_at
+                  type: datetime
+              - column:
+                  name: updated_at
+                  type: datetime
+              - column:
+                  name: bank_agency_id
+                  type: bigint
 
-⸻
+        - addForeignKeyConstraint:
+            baseTableName: iban_search_history
+            baseColumnNames: bank_agency_id
+            referencedTableName: bank_agency
+            referencedColumnNames: id
+            constraintName: fk_history_agency
 
-🧩 Script .gitlab-ci.yml final pour olky-reporting
+        - createTable:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: prop_key
+                  type: varchar(255)
+              - column:
+                  name: prop_value
+                  type: varchar(255)
 
-(avec le même jar bank-info.jar)
+  - changeSet:
+      id: 2-init-db-data
+      author: RHI
+      changes:
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.url
+              - column:
+                  name: prop_value
+                  value: https://rest.sepatools.eu
 
-variables:
-  MAVEN_CLI_OPTS: "-B -DskipTests -DupdateReleaseInfo=true -s settings.xml"
-  MAVEN_OPTS: ""
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.username
+              - column:
+                  name: prop_value
+                  value: ibancalculatorolkypay
 
-  GIT_MAIN: "main"
-  GIT_UAT: "uat"
-  GIT_SNAPSHOT_REGEX: "(feat(ure)?/.*)|develop"
-  GITLAB_TAG: "deploy_dev"
-  GITLAB_ENV: "none"
+        - insert:
+            tableName: spring_properties
+            columns:
+              - column:
+                  name: prop_key
+                  value: sepa.secret
+              - column:
+                  name: prop_value
+                  value: 4u\\Z*4.(+ZK%P<E5mA
 
-workflow:
-  rules:
-    - if: $CI_COMMIT_BRANCH =~ $GIT_SNAPSHOT_REGEX
-      variables:
-        GITLAB_TAG: "deploy_dev"
-        GITLAB_ENV: "develop"
-    - if: $CI_COMMIT_BRANCH == $GIT_UAT
-      variables:
-        GITLAB_TAG: "deploy_uat"
-        GITLAB_ENV: "uat"
-    - if: $CI_COMMIT_BRANCH == $GIT_MAIN
-      variables:
-        GITLAB_TAG: "deploy_prd"
-        GITLAB_ENV: "prd"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  value: 1
 
-default:
-  image: maven:3.9.10-amazoncorretto-21-alpine
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: password
+                  value: $2a$12$7p4J5DYvDEP1MKbhw5WuA.gmfIqEi5Ukj/BgWF/spz23J7Oa2c4sO
+              - column:
+                  name: enabled
+                  value: 1
 
-stages:
-  - liquibase
-  - build
-  - publish
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: tournesol
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
 
-# --- Stage 1 : Liquibase (manuel) ---
-updateLiquibase:
-  stage: liquibase
-  environment: $GITLAB_ENV
-  script:
-    - echo "🔍 Vérification de la connexion DB olky_reporting..."
-    - echo $JDBC_DB_URL
-    - echo $DB_USERNAME
-    - mariadb -h 192.168.89.1 -u $DB_USERNAME -p$DB_PASSWORD --connect-timeout=4 -e '\q' olky_reporting
-  when: manual
-  tags:
-    - "$GITLAB_TAG"
+        - insert:
+            tableName: authorities
+            columns:
+              - column:
+                  name: username
+                  value: bitbang
+              - column:
+                  name: authority
+                  value: OLKY_ADMIN
+voici le début du csv que je veux importéc'esprvu pour la table bankinfo
 
-# --- Stage 2 : Build ---
-before_script:
-  - echo "$JAVA_HOME"
-  - java -version
-  - mvn -version
-  - echo "$OLKY_CA_BUNDLE_BASE64" | base64 -d > olky.pem
-  - echo "Import du certificat dans le truststore..."
-  - keytool -import -trustcacerts -alias olky_bundle -file olky.pem -storepass $JAVA_KEYSTORE_PASSWORD -noprompt -keystore $JAVA_HOME/lib/security/cacerts
-  - keytool -list -keystore $JAVA_HOME/lib/security/cacerts -storepass $JAVA_KEYSTORE_PASSWORD | grep olky
-
-build:
-  stage: build
-  script:
-    - mvn $MAVEN_CLI_OPTS clean install -X
-  artifacts:
-    paths:
-      - target/bank-info.jar   # <-- on garde le même jar !
-
-# --- Stage 3 : Publish ---
-publish:
-  stage: publish
-  script:
-    - mvn $MAVEN_CLI_OPTS deploy
-
-# --- Stage 4 : Deploy ---
-deploy:
-  needs:
-    - job: build
-  stage: publish
-  before_script: []  # pas besoin de réimporter le certificat
-  environment: $GITLAB_ENV
-  script:
-    - 'sudo /opt/script/gitlab/deploy_olkyreporting.sh'
-  tags:
-    - "$GITLAB_TAG"
-
-
-⸻
-
-✅ En résumé
-
-Élément	Statut
-JAR (bank-info.jar)	✅ inchangé
-Script de déploiement	✅ adapté (deploy_olkyreporting.sh)
-Pipeline logique	✅ identique à bank-info
-Tags GitLab	✅ conservés (deploy_dev, deploy_uat, deploy_prd)
-Compatibilité Maven / CA certs	✅ conservée
-Job Liquibase	✅ conservé (manuel)
-
-
-⸻
-
-Souhaites-tu que je te montre le script deploy_olkyreporting.sh minimal adapté à partir du deploy_bankinfo.sh ?
-(je peux te générer la version complète compatible avec ce pipeline)
+id,"address1","bic","can_dob2b_sdd","can_do_core_sdd","can_do_sct","country_iso2","created_at","institution","location","name","search_result","updated_at"
+100,AEGIDIENTORPLATZ 1,SPKHDE2HXXX,1,1,1,DE,2015-04-01 16:56:07.000,SPARKASSE HANNOVER,HANNOVER,Sparkasse Hannover,,2025-10-23 11:52:02.094
+101,"28, PLACE RIHOUR",NORDFRPPXXX,1,1,1,FR,2015-04-01 16:56:07.000,CREDIT DU NORD,LILLE,AG FLANDRES,,2025-10-23 11:52:02.094
+102,"",SOGEFRPPXXX,1,1,1,FR,2015-04-01 16:56:08.000,Societe Generale,PUTEAUX,Societe Generale,,2025-10-23 11:52:02.094
+103,"6 AVENUE DE PROVENCE",CMCIFRPPXXX,1,1,1,FR,2015-04-01 16:56:08.000,CM - CIC BANQUES,PARIS,CM - CIC BANQUES,,2025-10-23 11:52:02.094
+104,"1 ROND POINT DE LA NATION",CEPAFRPP213,1,1,1,FR,2015-04-01 16:56:08.000,CAISSE D'EPARGNE DE BOURGOGNE FRANCHE-COMTE,DIJON,AG SIEGE,,2025-10-23 11:52:02.094
+105,"33 RUE DES TROIS FONTANOT",CCOPFRPPXXX,1,1,1,FR,2015-04-01 16:56:09.000,CREDIT COOPERATIF,NANTERRE,AG SIEGE,,2025-10-23 11:52:02.094
+je souhaite importé c'es données directement via le baseline
