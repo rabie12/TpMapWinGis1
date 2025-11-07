@@ -1,68 +1,45 @@
 package eu.olkypay.bankInfo.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 
-@Table(name = "bank_info")
+@Entity
+@Table(name = "bank_agency")
 @NoArgsConstructor
 @Data
 @AllArgsConstructor
-@Entity
-public class BankInfo {
-
+public class BankAgency {
     @Id
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
-
-    private String bic;
-    private String name;
-    private String institution;
-    @Column(name = "address1", columnDefinition = "LONGTEXT")
-    private String address1;
-    private String location;
-    private Boolean canDoSct;
-    private Boolean canDoCoreSdd;
-    private Boolean canDoB2bSdd;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    @Column(name = "country_iso_2")
     private String countryIso2;
-    @OneToMany(mappedBy = "bankInfo", cascade = CascadeType.ALL)
-    private List<BankAgency> bankAgencies = new ArrayList<>();
-    @Lob
-    @Column(name = "searchResult", columnDefinition = "LONGTEXT")
-    private String searchResult;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    public BankInfo(String bic, String name, String institution, String address1, String location, Boolean canDoCoreSdd, Boolean canDoSct, Boolean canDoB2bSdd, String countryIso2) {
-        this.bic = bic;
-        this.name = name;
-        this.institution = institution;
-        this.address1 = address1;
-        this.location = location;
-        this.canDoCoreSdd = canDoCoreSdd;
-        this.canDoSct = canDoSct;
-        this.canDoB2bSdd = canDoB2bSdd;
-        this.countryIso2 = countryIso2;
-    }
-
+    @Column(name = "bank_code")
+    private String bankCode;
+    @Column(name = "branch_code")
+    private String branchCode;
+    @Column(name = "branch_name")
+    private String branchName;
+    @Column(name = "bank_and_branch_code")
+    private String bankAndBranchCode;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "bank_info_id")
+    private BankInfo bankInfo;
+    @OneToMany(mappedBy = "bankAgency", cascade = CascadeType.ALL)
+    private List<IbanSearchHistory> searchHistories = new ArrayList<>();
 
 }
-il y a il une difference entre les 3 ? liquibase csv et @entity java
+
+
+"id","bank_and_branch_code","bank_code","branch_code","branch_name","country_iso_2","bank_info_id"
+177845,,SRLG,"040011",,GB,37105
+177846,,SRLG,"040049",,GB,37105
+177847,,BARC,"250868",,GB,108
+177848,,"01005","03331",,IT,3824
+
+do the same bankagency
