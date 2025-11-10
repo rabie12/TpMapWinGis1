@@ -1,4 +1,4 @@
-    public Optional<IbanSearchHistoryDTO> validateIban(String iban, IbanInfoUtilsDTO infoUtilsDTO) {
+    public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
         String ibanFormatted = iban.replaceAll("\\s+", "");
         Iban ibanValue = null;
         try {
@@ -8,8 +8,8 @@
         }
         Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
         IbanSearchHistoryDTO ibanSearchHistoryDTO = new IbanSearchHistoryDTO();
-        if(infoUtilsDTO!= null){
-            BankAgency bankAgency = bankAgencyRepo
+        ibanValue = Iban.valueOf(ibanFormatted);
+        BankAgency bankAgency = bankAgencyRepo
                     .findByBranchCodeAndBankCodeAndCountryIso2(ibanValue.getBranchCode(), ibanValue.getBankCode(),
                             ibanValue.getCountryCode().name()).orElse(null);
 
@@ -21,7 +21,7 @@
                 ibanSearchHistoryDTO.setResult("VALID");
                 return Optional.of(ibanSearchHistoryDTO);
             }
-        }
+
         if (ibanSearchHistory.isPresent()) {
             IbanSearchHistory existingRecord = ibanSearchHistory.get();
             if (existingRecord.getUpdatedAt().isAfter(LocalDateTime.now().minusDays(300))) {
@@ -37,4 +37,5 @@
         }
     }
 
-    is possible to optimize the code not using         Iban ibanValue = null;
+    optimize this, avoid this         Iban ibanValue = null;
+ if yyou can
