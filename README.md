@@ -1,49 +1,33 @@
-public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
-    String ibanFormatted = iban.replaceAll("\\s+", "");
+       BankAgency bankAgency = bankAgencyRepo
+                .findByBankCodeAndCountryIso2(ibanInfo.getBranchCode(), ibanInfo.getBankCode(), ibanInfo.getCountry())
+                .orElse(null);
+                je veux faire ça mais je pense qu'il faut corriger findByBankCodeAndCountryIso2 je pense 
 
-    try {
-        IbanUtil.validate(ibanFormatted);
-    } catch (IbanFormatException ex) {
-        throw new IbanFormatException("Invalid IBAN format: " + iban, ex);
-    }
+                @Repository
+public interface BankAgencyRepository extends JpaRepository<BankAgency, Long> {
 
-    // Retrieve existing search history
-    Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
+    @Query("SELECT ba FROM BankAgency ba " +
+            "JOIN ba.bankInfo bi " +
+            "WHERE ((:branchCode IS NULL AND ba.branchCode IS NULL) " +
+            "OR (:branchCode IS NOT NULL AND ba.branchCode = :branchCode)) " +
+            "AND ba.bankCode = :bankCode " +
+            "AND ba.countryIso2 = :country")
+    Optional<BankAgency> findByBranchCodeAndBankCodeAndCountryIso2(
+            @Param("branchCode") String branchCode,
+            @Param("bankCode") String bankCode,
+            @Param("country") String country
+    );
 
-    // Parse IBAN and try to get bank/branch info
-    Iban ibanValue = Iban.valueOf(ibanFormatted);
-    BankAgency bankAgency = bankAgencyRepo
-            .findByBranchCodeAndBankCodeAndCountryIso2(
-                    ibanValue.getBranchCode(),
-                    ibanValue.getBankCode(),
-                    ibanValue.getCountryCode().name()
-            )
-            .orElse(null);
-
-    if (bankAgency != null) {
-        log.info("IBAN found in database and is up-to-date.");
-        IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO();
-        dto.setIban(iban);
-        dto.setBankInfoDTO(bankInfoMapper.toDto(bankAgency.getBankInfo()));
-        dto.setBankAgencyDTO(bankAgencyMapper.toDTO(bankAgency));
-        dto.setResult("VALID");
-        return Optional.of(dto);
-    }
-
-    if (ibanSearchHistory.isPresent()) {
-        IbanSearchHistory existingRecord = ibanSearchHistory.get();
-        boolean isUpToDate = existingRecord.getUpdatedAt()
-                .isAfter(LocalDateTime.now().minusDays(300));
-
-        if (isUpToDate) {
-            log.info("IBAN found in database and is up-to-date.");
-            return Optional.of(searchHistorymapper.toDTO(existingRecord));
-        }
-
-        log.info("IBAN found in database but outdated. Calling external API for an update.");
-        return updateFromExternalApi(ibanFormatted, existingRecord);
-    }
-
-    log.info("IBAN not found in database. Calling external API.");
-    return fetchFromExternalApi(ibanFormatted);
+    @Query("SELECT ba FROM BankAgency ba " +
+            "JOIN ba.bankInfo bi " +
+            "WHERE + ba.bankCode = :bankCode " +
+            "AND ba.countryIso2 = :country")
+    Optional<BankAgency> findByBankCodeAndCountryIso2(
+            @Param("bankCode") String bankCode,
+            @Param("country") String country
+    );
 }
+
+    je dois faire une demande d'ouverutre de port aussi pour l'env en uat peux tu m'adier à rédiger une peite demande aussi
+
+                
