@@ -1,4 +1,16 @@
-@Entity
+package eu.olkypay.bankInfo.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+
+
 @Table(name = "bank_info")
 @NoArgsConstructor
 @Data
@@ -73,4 +85,42 @@ public class BankInfo {
         this.canDoB2bSdd = canDoB2bSdd;
         this.countryIso2 = countryIso2;
     }
+}
+
+
+package eu.olkypay.bankInfo.model;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+@Entity
+@Table(name = "bank_agency")
+@NoArgsConstructor
+@Data
+@AllArgsConstructor
+public class BankAgency {
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    @Column(name = "id", updatable = false, nullable = false)
+    private Long id;
+    @Column(name = "country_iso_2")
+    private String countryIso2;
+    @Column(name = "bank_code")
+    private String bankCode;
+    @Column(name = "branch_code")
+    private String branchCode;
+    @Column(name = "branch_name")
+    private String branchName;
+    @Column(name = "bank_and_branch_code")
+    private String bankAndBranchCode;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "bank_info_id")
+    private BankInfo bankInfo;
+    @OneToMany(mappedBy = "bankAgency", cascade = CascadeType.ALL)
+    private List<IbanSearchHistory> searchHistories = new ArrayList<>();
+
 }
