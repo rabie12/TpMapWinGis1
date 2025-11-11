@@ -1,3 +1,9 @@
-Nous avons appliqué des migrations de données depuis TS vers le module bank-info (informations bancaires) via Liquibase. Il serait donc nécessaire de valider leur intégration également sur l’UAT pour s’assurer que tout est bien en place.
+C'est au TeamLead de vérifier en UAT comme déjà indiqué :
 
-Serait-il possible d’envisager une ouverture temporaire de l’UAT afin de réaliser ces tests de validation ? Cela nous permettrait de confirmer que la migration est correcte avant de passer à la suite.
+- DEV = DEV
+
+- UAT = TeamLead
+
+- PRDO = Infra
+
+Je suppose que tu passeras aussi ces script en PROD ? Pour autant on ne va pas te donner un accès. 
