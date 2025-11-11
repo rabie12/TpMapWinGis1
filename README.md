@@ -1,5 +1,3 @@
-Pour moi les tests en direct c'est en local ou sur l'env de DEV comme d'hab.
+Nous avons appliqué des migrations de données depuis TS vers le module bank-info (informations bancaires) via Liquibase. Il serait donc nécessaire de valider leur intégration également sur l’UAT pour s’assurer que tout est bien en place.
 
-l'uat c'est pour "user acceptance test".
-
-expliquer qu'on avait appliquer des moigrations de données de donées à partir de TS au module bank-info des informations bancaire s via liquibase et qu'il faudrait valider leur intégration aussi au niveau de l'uat proposé une ouverture temporaire pour les tests si possible essayer de negocier ça 
+Serait-il possible d’envisager une ouverture temporaire de l’UAT afin de réaliser ces tests de validation ? Cela nous permettrait de confirmer que la migration est correcte avant de passer à la suite.
