@@ -38,3 +38,80 @@ About expectations
 ⸻
 
 Would you like me to make a spoken-style version (like what you could say naturally at the end of the interview)?
+
+
+
+why during deployement we should create for exemple business-registry.service :
+
+[Service]
+Environment=JAVA_HOME=/usr/java/jdk-21
+EnvironmentFile=/opt/business-registry/java.env
+EnvironmentFile=/opt/business-registry/business-registry.env
+User=business-registry
+Group=business-registry
+
+WorkingDirectory=/opt/business-registry
+
+ExecStart=/usr/java/jdk-21/bin/java -Djava.io.tmpdir=/opt/business-registry/tmp $OLKY_OPTS $OLKY_PROXY $OLKY_NO_PROXY -jar /opt/business-registry/business-registry.jar
+
+Restart=always
+RestartSec=10
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.targetin system file on server and thenwe should specify the path /opt/business-registry/ whhere we add our jar and our .env file in the path /opt/business-registry/ and then we should do yaml file in our gitlab project that look like this :
+variables:
+  MAVEN_CLI_OPTS: "-B -s settings.xml"
+  MAVEN_OPTS: "-Dmaven.repo.local=${CI_PROJECT_DIR}/.m2"
+  GIT_DEVELOP_REGEX: "/(feat(ure)?\/.*)|develop/"
+  GITLAB_TAG: "none"
+  GITLAB_ENV: "none"
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH =~ $GIT_DEVELOP_REGEX
+      variables:
+        GITLAB_TAG: "deploy_dev"
+        GITLAB_ENV: "develop"
+
+default:
+  image: maven:3.9.10-amazoncorretto-21-alpine
+
+stages:
+  - build
+  - publish
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - ${CI_PROJECT_DIR}/.m2
+
+before_script:
+  - echo "Importing Olky CA trust to jdk cacert store"
+  - echo "$OLKY_CA_BUNDLE_BASE64" | base64 -d > olky.pem
+  - keytool -importcert -alias olky-root -file ./olky.pem -storepass $JAVA_KEYSTORE_PASSWORD -noprompt -keystore $JAVA_HOME/lib/security/cacerts
+
+build-job:
+  stage: build
+  script:
+    - echo " Build..."
+    - mvn $MAVEN_CLI_OPTS clean package
+  artifacts:
+    paths:
+      - target/business-registry.jar
+
+publish:
+  stage: publish
+  script:
+    - mvn $MAVEN_CLI_OPTS deploy
+
+deploy:
+  needs:
+    - job: build-job
+  stage: publish
+  before_script: [] # No need to import certs for this job
+  environment: $GITLAB_ENV
+  script:
+    - 'sudo /opt/script/gitlab/deploy_business_registry.sh'
+  tags:
+    - "$GITLAB_TAG"
