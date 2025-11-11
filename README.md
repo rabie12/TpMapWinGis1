@@ -12,3 +12,17 @@
 
     i want to make validation for this inpu,
     all of them should be man,datary before calling this api
+    public class SctDebitData {
+
+    private Integer orderId;
+    private String txId;
+    private String executionDate;
+    private String endToEndId;
+    private String outName;
+    private String outAddress;
+    private String outIban;
+    private String supplierName;
+    private String supplierIban;
+    private String controlKey;
+    private BigDecimal amount;
+    private String label;
