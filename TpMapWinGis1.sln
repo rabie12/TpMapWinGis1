@@ -1,1 +1,2 @@
-Les retours ont été adaptés à l’existant. Toute modification pourrait entraîner des ruptures de compatibilité (breaking changes) sur les projets qui utilisent ces validations, notamment Symwis.
+Une évolution est possible, mais il faut s’attendre à d’éventuels dysfonctionnements dans d’autres projets consommateurs.
+Les équipes concernées devront alors s’adapter au nouveau format de retour.
