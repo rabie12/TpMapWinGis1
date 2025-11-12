@@ -1,1 +1,1 @@
-c'est des retours qui ont été adapté à l'existant si on on modifie il y aura propablement des breaking sur les projets qui appels ces validations principalement symwis.
+Les retours ont été adaptés à l’existant. Toute modification pourrait entraîner des ruptures de compatibilité (breaking changes) sur les projets qui utilisent ces validations, notamment Symwis.
