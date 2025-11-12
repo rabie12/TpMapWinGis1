@@ -1,67 +1,153 @@
-    @Operation(summary = "Validate Iban")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation completed",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = IbanSearchHistoryDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN", content = @Content)
-    })
-    @PostMapping("/validate/{iban}")
-    public ResponseEntity<?> validateIban(@PathVariable String iban) {
-        try {
-            Optional<IbanSearchHistoryDTO> result = bankInfoValidationService.validateIban(iban);
+Perfect — you want to make sure:
+✅ The service throws a proper structured exception (with details about the invalid IBAN).
+✅ The controller catches it and returns HTTP 400 (Bad Request) with the exact response object.
+✅ Everything else continues to work as normal (200 OK when valid, 400 when invalid).
 
-            return result
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> (ResponseEntity<IbanSearchHistoryDTO>) ResponseEntity.status(HttpStatus.BAD_REQUEST));
-        } catch (IbanFormatException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
+Here’s the clean, production-ready version 👇
+
+⸻
+
+✅ 1️⃣ Define a custom exception
+
+We’ll give IbanFormatException the ability to carry a response object.
+
+// package: com.yourcompany.yourproject.exception
+
+public class IbanFormatException extends RuntimeException {
+    private final BankInfoValidationResponse response;
+
+    public IbanFormatException(String message, BankInfoValidationResponse response) {
+        super(message);
+        this.response = response;
     }
 
+    public BankInfoValidationResponse getResponse() {
+        return response;
+    }
+}
 
-    public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
-        String ibanFormatted = iban.replaceAll("\\s+", "");
-        Iban ibanValue = validateIbanFormat(ibanFormatted);
-        if (ibanValue == null) {
-            BankInfoValidationResponse response = new BankInfoValidationResponse();
-            response.setIban(iban);
-            response.setStatus("INVALID_IBAN");
-            throw new IbanFormatException("Invalid IBAN format: " + iban);
-        }
-        List<BankAgency> agencies = bankAgencyRepo.findByBankCodeAndCountryIso2(
-                ibanValue.getBankCode(),
-                ibanValue.getCountryCode().name()
-        );
 
-        BankAgency bankAgency = agencies.isEmpty() ? null : agencies.get(0);
+⸻
 
-        if (bankAgency != null) {
+✅ 2️⃣ Service layer (validateIban)
+
+Modified so it throws the exception with a structured response.
+
+public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
+    String ibanFormatted = iban.replaceAll("\\s+", "");
+    Iban ibanValue = validateIbanFormat(ibanFormatted);
+
+    if (ibanValue == null) {
+        // Build structured response
+        BankInfoValidationResponse response = new BankInfoValidationResponse();
+        response.setIban(iban);
+        response.setStatus("INVALID_IBAN");
+        response.setMessage("Invalid IBAN format: " + iban);
+
+        // Throw custom exception with attached response
+        throw new IbanFormatException("Invalid IBAN format", response);
+    }
+
+    List<BankAgency> agencies = bankAgencyRepo.findByBankCodeAndCountryIso2(
+            ibanValue.getBankCode(),
+            ibanValue.getCountryCode().name()
+    );
+
+    BankAgency bankAgency = agencies.isEmpty() ? null : agencies.get(0);
+
+    if (bankAgency != null) {
+        log.info("IBAN found in database and is up-to-date.");
+        IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO();
+        dto.setIban(iban);
+        dto.setBankInfoDTO(bankInfoMapper.toDto(bankAgency.getBankInfo()));
+        dto.setBankAgencyDTO(bankAgencyMapper.toDTO(bankAgency));
+        dto.setResult("VALID");
+        return Optional.of(dto);
+    }
+
+    Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
+    if (ibanSearchHistory.isPresent()) {
+        IbanSearchHistory existingRecord = ibanSearchHistory.get();
+        boolean isUpToDate = existingRecord.getUpdatedAt()
+                .isAfter(LocalDateTime.now().minusDays(300));
+
+        if (isUpToDate) {
             log.info("IBAN found in database and is up-to-date.");
-            IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO();
-            dto.setIban(iban);
-            dto.setBankInfoDTO(bankInfoMapper.toDto(bankAgency.getBankInfo()));
-            dto.setBankAgencyDTO(bankAgencyMapper.toDTO(bankAgency));
-            dto.setResult("VALID");
-            return Optional.of(dto);
-        }
-        Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
-        if (ibanSearchHistory.isPresent()) {
-            IbanSearchHistory existingRecord = ibanSearchHistory.get();
-            boolean isUpToDate = existingRecord.getUpdatedAt()
-                    .isAfter(LocalDateTime.now().minusDays(300));
-
-            if (isUpToDate) {
-                log.info("IBAN found in database and is up-to-date.");
-                return Optional.of(searchHistorymapper.toDTO(existingRecord));
-            }
-
-            log.info("IBAN found in database but outdated. Calling external API for an update.");
-            return updateFromExternalApi(ibanFormatted, existingRecord);
+            return Optional.of(searchHistorymapper.toDTO(existingRecord));
         }
 
-        log.info("IBAN not found in database. Calling external API.");
-        return fetchFromExternalApi(ibanFormatted);
+        log.info("IBAN found in database but outdated. Calling external API for an update.");
+        return updateFromExternalApi(ibanFormatted, existingRecord);
     }
 
-can you apply on both api and service and make sure to return 400 when it's invalid
+    log.info("IBAN not found in database. Calling external API.");
+    return fetchFromExternalApi(ibanFormatted);
+}
+
+
+⸻
+
+✅ 3️⃣ Controller (validateIban endpoint)
+
+Catches the IbanFormatException and returns the same structured response with HTTP 400.
+
+@Operation(summary = "Validate IBAN")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Validation completed",
+                content = @Content(schema = @Schema(implementation = IbanSearchHistoryDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid IBAN",
+                content = @Content(schema = @Schema(implementation = BankInfoValidationResponse.class)))
+})
+@PostMapping("/validate/{iban}")
+public ResponseEntity<?> validateIban(@PathVariable String iban) {
+    try {
+        Optional<IbanSearchHistoryDTO> result = bankInfoValidationService.validateIban(iban);
+
+        // ✅ Return valid result (HTTP 200)
+        return result.map(ResponseEntity::ok)
+                     .orElseGet(() ->
+                             ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                     .body("INVALID_IBAN"));
+
+    } catch (IbanFormatException e) {
+        // ✅ Return structured response from service (HTTP 400)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getResponse());
+
+    } catch (RuntimeException e) {
+        // ✅ Unexpected error (HTTP 500)
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+    }
+}
+
+
+⸻
+
+✅ Example responses
+
+➡ Valid IBAN
+
+{
+  "iban": "LU280019400644750000",
+  "result": "VALID",
+  "bankInfoDTO": { ... },
+  "bankAgencyDTO": { ... }
+}
+
+➡ Invalid IBAN format
+
+{
+  "iban": "123ABC",
+  "status": "INVALID_IBAN",
+  "message": "Invalid IBAN format: 123ABC"
+}
+
+➡ Internal error
+
+{
+  "error": "Something went wrong"
+}
+
+
+⸻
+
+Would you like me to add a @ControllerAdvice global handler version next (so you don’t need to catch exceptions manually in every controller)?
