@@ -1,18 +1,42 @@
-Parfait 👍 — tu veux donc garder exactement les mêmes objets de réponse (BicValidationResponse, IbanSearchHistoryDTO, etc.), sans changer le JSON, mais simplement faire en sorte que le code HTTP soit 400 quand le statut fonctionnel est "INVALID_IBAN", "INVALID_BIC" ou "BIC_MISMATCH".
+    public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
+        String ibanFormatted = iban.replaceAll("\\s+", "");
+        Iban ibanValue = validateIbanFormat(ibanFormatted);
+        if (ibanValue == null) {
+            throw new IbanFormatException("Invalid IBAN format: " + iban);
+        }
+        List<BankAgency> agencies = bankAgencyRepo.findByBankCodeAndCountryIso2(
+                ibanValue.getBankCode(),
+                ibanValue.getCountryCode().name()
+        );
 
-Voici la version corrigée et minimale de ton BankInfoValidationController 👇
+        BankAgency bankAgency = agencies.isEmpty() ? null : agencies.get(0);
 
-⸻
+        if (bankAgency != null) {
+            log.info("IBAN found in database and is up-to-date.");
+            IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO();
+            dto.setIban(iban);
+            dto.setBankInfoDTO(bankInfoMapper.toDto(bankAgency.getBankInfo()));
+            dto.setBankAgencyDTO(bankAgencyMapper.toDTO(bankAgency));
+            dto.setResult("VALID");
+            return Optional.of(dto);
+        }
+        Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
+        if (ibanSearchHistory.isPresent()) {
+            IbanSearchHistory existingRecord = ibanSearchHistory.get();
+            boolean isUpToDate = existingRecord.getUpdatedAt()
+                    .isAfter(LocalDateTime.now().minusDays(300));
 
+            if (isUpToDate) {
+                log.info("IBAN found in database and is up-to-date.");
+                return Optional.of(searchHistorymapper.toDTO(existingRecord));
+            }
 
-@RestController
-@RequestMapping("/api/bank-info")
-public class BankInfoValidationController {
+            log.info("IBAN found in database but outdated. Calling external API for an update.");
+            return updateFromExternalApi(ibanFormatted, existingRecord);
+        }
 
-    private final BankInfoValidationService bankInfoValidationService;
-
-    public BankInfoValidationController(BankInfoValidationService bankInfoValidationService) {
-        this.bankInfoValidationService = bankInfoValidationService;
+        log.info("IBAN not found in database. Calling external API.");
+        return fetchFromExternalApi(ibanFormatted);
     }
 
     @Operation(summary = "Validate Iban")
@@ -35,87 +59,4 @@ public class BankInfoValidationController {
         }
     }
 
-    @Operation(summary = "find bank by bic")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation completed",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = BankInfoDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid BIC", content = @Content)
-    })
-    @GetMapping("/bic/{bic}")
-    public ResponseEntity<BankInfoDTO> getBankInfoByBic(@PathVariable String bic) {
-        Optional<BankInfoDTO> response = bankInfoValidationService.findBankByBic(bic);
-        if (response.isPresent()) {
-            if ("INVALID_BIC".equalsIgnoreCase(response.get().getStatus())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.get());
-            }
-            return ResponseEntity.ok(response.get());
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
-
-    @Operation(summary = "Validate BIC format only")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC validation result",
-                    content = @Content(schema = @Schema(implementation = BicValidationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid BIC")
-    })
-    @GetMapping("/validate/bic/{bic}")
-    public ResponseEntity<BicValidationResponse> validateBic(@PathVariable String bic) {
-        BicValidationResponse response = bankInfoValidationService.validateBic(bic);
-        if ("INVALID_BIC".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Validate BIC and IBAN combination")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation result",
-                    content = @Content(schema = @Schema(implementation = BicValidationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN/BIC or mismatch")
-    })
-    @PostMapping("/validate/{bic}/{iban}")
-    public ResponseEntity<BicValidationResponse> validateIBANBIC(
-            @RequestBody IbanInfoUtilsDTO ibanInfo,
-            @PathVariable String bic,
-            @PathVariable String iban
-    ) {
-        BicValidationResponse response = bankInfoValidationService.validateIbanAndBic(bic, iban, ibanInfo);
-        if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())
-                || "INVALID_BIC".equalsIgnoreCase(response.getStatus())
-                || "BIC_MISMATCH".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Derive BIC from IBAN")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC found"),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN")
-    })
-    @PostMapping("/deriveBICFromIBAN/{iban}")
-    public ResponseEntity<BicValidationResponse> deriveBICFromIBAN(@PathVariable String iban) {
-        BicValidationResponse response = bankInfoValidationService.getBicFromIban(iban);
-        if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-}
-
-
-⸻
-
-🔍 Ce que fait cette version
-	•	Même JSON qu’avant : les objets de réponse ne changent pas.
-	•	Code HTTP 400 dès que :
-	•	status = INVALID_IBAN
-	•	status = INVALID_BIC
-	•	status = BIC_MISMATCH
-	•	Code HTTP 200 sinon.
-	•	Code 404 si aucun résultat pour findBankByBic.
-
-⸻
-
-Souhaites-tu aussi que je te montre comment tester ça facilement avec MockMvc (Spring Boot Test) pour vérifier les 400 et 200 ?
+it return only mssg INVALID_IBAN i wxant it to returnthe respone returne dd from the service
