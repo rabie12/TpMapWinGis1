@@ -1,12 +1,67 @@
-public class IbanFormatException extends RuntimeException {
-    private final BankInfoValidationResponse response;
+    @Operation(summary = "Validate Iban")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Validation completed",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = IbanSearchHistoryDTO.class)))),
+            @ApiResponse(responseCode = "400", description = "Invalid IBAN", content = @Content)
+    })
+    @PostMapping("/validate/{iban}")
+    public ResponseEntity<?> validateIban(@PathVariable String iban) {
+        try {
+            Optional<IbanSearchHistoryDTO> result = bankInfoValidationService.validateIban(iban);
 
-    public IbanFormatException(String message, BankInfoValidationResponse response) {
-        super(message);
-        this.response = response;
+            return result
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> (ResponseEntity<IbanSearchHistoryDTO>) ResponseEntity.status(HttpStatus.BAD_REQUEST));
+        } catch (IbanFormatException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
-    public BankInfoValidationResponse getResponse() {
-        return response;
+
+    public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
+        String ibanFormatted = iban.replaceAll("\\s+", "");
+        Iban ibanValue = validateIbanFormat(ibanFormatted);
+        if (ibanValue == null) {
+            BankInfoValidationResponse response = new BankInfoValidationResponse();
+            response.setIban(iban);
+            response.setStatus("INVALID_IBAN");
+            throw new IbanFormatException("Invalid IBAN format: " + iban);
+        }
+        List<BankAgency> agencies = bankAgencyRepo.findByBankCodeAndCountryIso2(
+                ibanValue.getBankCode(),
+                ibanValue.getCountryCode().name()
+        );
+
+        BankAgency bankAgency = agencies.isEmpty() ? null : agencies.get(0);
+
+        if (bankAgency != null) {
+            log.info("IBAN found in database and is up-to-date.");
+            IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO();
+            dto.setIban(iban);
+            dto.setBankInfoDTO(bankInfoMapper.toDto(bankAgency.getBankInfo()));
+            dto.setBankAgencyDTO(bankAgencyMapper.toDTO(bankAgency));
+            dto.setResult("VALID");
+            return Optional.of(dto);
+        }
+        Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
+        if (ibanSearchHistory.isPresent()) {
+            IbanSearchHistory existingRecord = ibanSearchHistory.get();
+            boolean isUpToDate = existingRecord.getUpdatedAt()
+                    .isAfter(LocalDateTime.now().minusDays(300));
+
+            if (isUpToDate) {
+                log.info("IBAN found in database and is up-to-date.");
+                return Optional.of(searchHistorymapper.toDTO(existingRecord));
+            }
+
+            log.info("IBAN found in database but outdated. Calling external API for an update.");
+            return updateFromExternalApi(ibanFormatted, existingRecord);
+        }
+
+        log.info("IBAN not found in database. Calling external API.");
+        return fetchFromExternalApi(ibanFormatted);
     }
-}
+
+can you apply on both api and service and make sure to return 400 when it's invalid
