@@ -1,11 +1,12 @@
-    public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
-        String ibanFormatted = iban.replaceAll("\\s+", "");
-        Iban ibanValue = validateIbanFormat(ibanFormatted);
-        if (ibanValue == null) {
-            BankInfoValidationResponse response = new BankInfoValidationResponse();
-            response.setIban(iban);
-            response.setStatus("INVALID_IBAN");
-            throw new IbanFormatException("Invalid IBAN format: " + iban);
-        }
+public class IbanFormatException extends RuntimeException {
+    private final BankInfoValidationResponse response;
 
-in order to IbanFormatException return response 
+    public IbanFormatException(String message, BankInfoValidationResponse response) {
+        super(message);
+        this.response = response;
+    }
+
+    public BankInfoValidationResponse getResponse() {
+        return response;
+    }
+}
