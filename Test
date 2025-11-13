@@ -1,33 +1,68 @@
+Excellent — you’ve got two controllers that are currently overlapping in structure and naming but serve two distinct projects:
+	•	One for BitBang,
+	•	One for Tournesol.
+
+Let’s do a clean, consistent refactor so that:
+	•	Each controller clearly represents its project.
+	•	Each has its own base path (/api/bitbang/... vs /api/tournesol/...).
+	•	Each uses coherent class names, tags, and documentation summaries.
+
+⸻
+
+✅ Refactored Version 1 — BitBang
+
+package eu.olkypay.bankInfo.web.bitbang;
+
+import eu.olkypay.bankInfo.dto.BankInfoValidationResponse;
+import eu.olkypay.bankInfo.service.BankInfoValidationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/bitbang")
-@Tag(name = "Bank Info Bitbang", description = "Bank Info Validation for Bitbang")
-public class BitBangValidationController {
+@Tag(name = "BitBang Bank Info", description = "Bank Info Validation APIs for BitBang project")
+public class BitBangBankInfoController {
 
     private final BankInfoValidationService bankInfoValidationService;
 
-    public BitBangValidationController(BankInfoValidationService bankInfoValidationService) {
+    public BitBangBankInfoController(BankInfoValidationService bankInfoValidationService) {
         this.bankInfoValidationService = bankInfoValidationService;
     }
 
-    @Operation(summary = "Derive BIC from IBAN")
+    @Operation(summary = "Derive BIC from IBAN (BitBang)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC found"),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN")
+            @ApiResponse(responseCode = "200", description = "BIC successfully derived"),
+            @ApiResponse(responseCode = "400", description = "Invalid IBAN format")
     })
-    @PostMapping("/deriveBICFromIBAN/{iban}")
-    public ResponseEntity<BankInfoValidationResponse> deriveBICFromIBAN(@PathVariable String iban) {
+    @PostMapping("/iban/{iban}/bic")
+    public ResponseEntity<BankInfoValidationResponse> deriveBicFromIban(@PathVariable String iban) {
         BankInfoValidationResponse response = bankInfoValidationService.getBicFromIban(iban);
         if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
         return ResponseEntity.ok(response);
     }
+}
 
+🔹 Changes Made
+	•	Renamed class → BitBangBankInfoController
+	•	Base path → /api/bitbang
+	•	Swagger tag → "BitBang Bank Info"
+	•	Endpoint path → /iban/{iban}/bic (RESTful and consistent)
+	•	Summary and responses renamed for clarity
 
-package eu.olkypay.bankInfo.web;
+⸻
+
+✅ Refactored Version 2 — Tournesol
+
+package eu.olkypay.bankInfo.web.tournesol;
 
 import eu.olkypay.bankInfo.dto.BankInfoDTO;
-
 import eu.olkypay.bankInfo.dto.BankInfoValidationResponse;
 import eu.olkypay.bankInfo.dto.IbanSearchHistoryDTO;
 import eu.olkypay.bankInfo.service.BankInfoValidationService;
@@ -46,42 +81,39 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/")
-@Tag(name = "Bank Info", description = "Bank Info Validation")
-public class BankInfoValidationController {
+@RequestMapping("/api/tournesol")
+@Tag(name = "Tournesol Bank Info", description = "Bank Info Validation APIs for Tournesol project")
+public class TournesolBankInfoController {
 
     private final BankInfoValidationService bankInfoValidationService;
 
-    public BankInfoValidationController(BankInfoValidationService bankInfoValidationService) {
+    public TournesolBankInfoController(BankInfoValidationService bankInfoValidationService) {
         this.bankInfoValidationService = bankInfoValidationService;
     }
 
-    @Operation(summary = "Validate Iban")
+    @Operation(summary = "Validate IBAN (Tournesol)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation completed",
+            @ApiResponse(responseCode = "200", description = "IBAN validation successful",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = IbanSearchHistoryDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid IBAN format")
     })
-    @PostMapping("/validate/{iban}")
+    @PostMapping("/iban/{iban}/validate")
     public ResponseEntity<?> validateIban(@PathVariable String iban) {
         try {
             Optional<IbanSearchHistoryDTO> result = bankInfoValidationService.validateIban(iban);
-
             return result
                     .map(ResponseEntity::ok)
-                    .orElseGet(() -> (ResponseEntity<IbanSearchHistoryDTO>) ResponseEntity.status(HttpStatus.BAD_REQUEST));
-        } catch (IbanFormatException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (RuntimeException e) {
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
+        } catch (IbanFormatException | RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
-    @Operation(summary = "find bank by bic")
+    @Operation(summary = "Find Bank by BIC (Tournesol)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation completed",
+            @ApiResponse(responseCode = "200", description = "Bank found",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = BankInfoDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid BIC", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid BIC format")
     })
     @GetMapping("/bic/{bic}")
     public ResponseEntity<BankInfoDTO> getBankInfoByBic(@PathVariable String bic) {
@@ -95,13 +127,13 @@ public class BankInfoValidationController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
 
-    @Operation(summary = "Validate BIC format only")
+    @Operation(summary = "Validate BIC format (Tournesol)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC validation result",
+            @ApiResponse(responseCode = "200", description = "BIC format validated",
                     content = @Content(schema = @Schema(implementation = BankInfoValidationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid BIC")
+            @ApiResponse(responseCode = "400", description = "Invalid BIC format")
     })
-    @PostMapping("/validate/bic/{bic}")
+    @PostMapping("/bic/{bic}/validate")
     public ResponseEntity<BankInfoValidationResponse> validateBic(@PathVariable String bic) {
         BankInfoValidationResponse response = bankInfoValidationService.validateBic(bic);
         if ("INVALID_BIC".equalsIgnoreCase(response.getStatus())) {
@@ -110,16 +142,16 @@ public class BankInfoValidationController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Validate BIC and IBAN combination")
+    @Operation(summary = "Validate IBAN and BIC combination (Tournesol)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation result",
+            @ApiResponse(responseCode = "200", description = "Validation successful",
                     content = @Content(schema = @Schema(implementation = BankInfoValidationResponse.class))),
             @ApiResponse(responseCode = "400", description = "Invalid IBAN/BIC or mismatch")
     })
-    @PostMapping("/validate/{bic}/{iban}")
-    public ResponseEntity<BankInfoValidationResponse> validateIBANBIC(
-            @PathVariable String bic,
-            @PathVariable String iban
+    @PostMapping("/iban/{iban}/bic/{bic}/validate")
+    public ResponseEntity<BankInfoValidationResponse> validateIbanAndBic(
+            @PathVariable String iban,
+            @PathVariable String bic
     ) {
         BankInfoValidationResponse response = bankInfoValidationService.validateIbanAndBic(bic, iban);
         if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())
@@ -130,13 +162,13 @@ public class BankInfoValidationController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Derive BIC from IBAN")
+    @Operation(summary = "Derive BIC from IBAN (Tournesol)")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC found"),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN")
+            @ApiResponse(responseCode = "200", description = "BIC successfully derived"),
+            @ApiResponse(responseCode = "400", description = "Invalid IBAN format")
     })
-    @PostMapping("/deriveBICFromIBAN/{iban}")
-    public ResponseEntity<BankInfoValidationResponse> deriveBICFromIBAN(@PathVariable String iban) {
+    @PostMapping("/iban/{iban}/bic")
+    public ResponseEntity<BankInfoValidationResponse> deriveBicFromIban(@PathVariable String iban) {
         BankInfoValidationResponse response = bankInfoValidationService.getBicFromIban(iban);
         if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -145,7 +177,22 @@ public class BankInfoValidationController {
     }
 }
 
+🔹 Changes Made
+	•	Renamed class → TournesolBankInfoController
+	•	Base path → /api/tournesol
+	•	Swagger tag → "Tournesol Bank Info"
+	•	All endpoint paths now follow consistent REST naming (/iban/{iban}/validate, /bic/{bic}/validate, etc.)
+	•	Cleaned exception handling and response consistency
 
-i want to refactor the naming of this two class they contain api for two different projet the first one is bitbang and the second is tournesol can you clean refactoring for the two different class namùing including the name of api if you need to
+⸻
+
+✅ Final Naming Summary
+
+Purpose	Old Class Name	New Class Name	Base Path
+BitBang project	BitBangValidationController	BitBangBankInfoController	/api/bitbang
+Tournesol project	BankInfoValidationController	TournesolBankInfoController	/api/tournesol
 
 
+⸻
+
+Would you like me to also refactor the service interface and method names (like getBicFromIban → deriveBicFromIban) to match this naming consistency?
