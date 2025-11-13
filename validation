@@ -1,7 +1,110 @@
-{
-  "HttpMessageNotWritableException": {
-    "message": "No converter for [class java.util.ImmutableCollections$Map1] with preset Content-Type 'null'"
-  }
+Good — this is a classic Spring 5.x “no converter” error, and it’s not actually about your validation failing — it’s about how Spring tries to serialize your error response.
+
+Let’s break it down clearly 👇
+
+⸻
+
+🔍 Root Cause
+
+You’re returning this line when validation fails:
+
+return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .body(Map.of("error", validationError));
+
+Here, Map.of(...) (introduced in Java 9) returns an immutable map of type
+java.util.ImmutableCollections$Map1.
+
+Spring 5.3.x (with Jackson <2.10 typically) sometimes fails to serialize immutable Java 9+ collection types if:
+	•	The Jackson version used by Spring is older, or
+	•	The response has no explicit Content-Type, and
+	•	The message converters fail to find a proper serializer.
+
+So you see:
+
+No converter for [class java.util.ImmutableCollections$Map1] with preset Content-Type 'null'
+
+
+⸻
+
+✅ Solution 1 — Replace Map.of() with a Regular HashMap
+
+Simply use a standard mutable map:
+
+Map<String, String> errorBody = new HashMap<>();
+errorBody.put("error", validationError);
+
+return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(errorBody);
+
+That will serialize correctly under Spring 5.3.x.
+
+⸻
+
+✅ Solution 2 — Use a Simple POJO for the Error Response
+
+A more maintainable way is to create an explicit error DTO:
+
+public class ErrorResponse {
+    private String error;
+
+    public ErrorResponse(String error) {
+        this.error = error;
+    }
+
+    public String getError() {
+        return error;
+    }
 }
 
-i have this message i cannot see the exact eason why its bad request
+Then in your controller:
+
+if (validationError != null) {
+    return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(new ErrorResponse(validationError));
+}
+
+This avoids Map.of() entirely, is clearer in OpenAPI/Swagger, and always serializes correctly.
+
+⸻
+
+✅ Solution 3 — (If You Must Keep Map.of)
+
+You can fix it by explicitly forcing JSON content type:
+
+return ResponseEntity
+        .status(HttpStatus.BAD_REQUEST)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(Map.of("error", validationError));
+
+However — Solution 1 or 2 is safer across older Spring/Jackson stacks.
+
+⸻
+
+🔎 TL;DR
+
+Problem	Cause	Fix
+HttpMessageNotWritableException	Spring 5.x can’t serialize Map.of()	Use HashMap or POJO
+Content-Type 'null'	ResponseEntity has no media type set	Add .contentType(MediaType.APPLICATION_JSON)
+You don’t see validation error	JSON serialization failed before response body was written	Fix the converter issue
+
+
+⸻
+
+✅ Best Practice (Recommended):
+
+if (validationError != null) {
+    return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(new ErrorResponse(validationError));
+}
+
+
+⸻
+
+Would you like me to show you how to wrap all errors (including exceptions) into this same JSON structure using a @ControllerAdvice error handler — so that everything, even runtime exceptions, consistently return { "error": "..." }?
