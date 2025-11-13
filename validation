@@ -1,0 +1,32 @@
+    @PostMapping(value = "/generate", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<byte[]> generate(@RequestBody SctDebitData data) throws Exception {
+        byte[] pdf = _sctDebitPdfWriter.generatePdf(data);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+
+      public class SctDebitData {
+
+    private Integer orderId;
+    private String txId;
+    private String executionDate;
+    private String endToEndId;
+    private String outName;
+    private String outAddress;
+    private String outIban;
+    private String supplierName;
+    private String supplierIban;
+    private String controlKey;
+    private BigDecimal amount;
+    private String label;
+
+        i want to make validation and send erro 400when one of this element are null or are nor comptible with their type without using @Valid annotation or @NotNullbecause im working with java 17 and spring version below: 
+        		<org.springframework.version>5.3.39</org.springframework.version>
+		<org.springframework.ws.version>2.4.0.RELEASE</org.springframework.ws.version>
+		<org.springframework.amqp.version>1.7.4.RELEASE</org.springframework.amqp.version>
