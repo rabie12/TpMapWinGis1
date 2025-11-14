@@ -1,198 +1,114 @@
-Excellent — you’ve got two controllers that are currently overlapping in structure and naming but serve two distinct projects:
-	•	One for BitBang,
-	•	One for Tournesol.
-
-Let’s do a clean, consistent refactor so that:
-	•	Each controller clearly represents its project.
-	•	Each has its own base path (/api/bitbang/... vs /api/tournesol/...).
-	•	Each uses coherent class names, tags, and documentation summaries.
-
-⸻
-
-✅ Refactored Version 1 — BitBang
-
-package eu.olkypay.bankInfo.web.bitbang;
-
-import eu.olkypay.bankInfo.dto.BankInfoValidationResponse;
-import eu.olkypay.bankInfo.service.BankInfoValidationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-@RestController
-@RequestMapping("/api/bitbang")
-@Tag(name = "BitBang Bank Info", description = "Bank Info Validation APIs for BitBang project")
-public class BitBangBankInfoController {
-
-    private final BankInfoValidationService bankInfoValidationService;
-
-    public BitBangBankInfoController(BankInfoValidationService bankInfoValidationService) {
-        this.bankInfoValidationService = bankInfoValidationService;
-    }
-
-    @Operation(summary = "Derive BIC from IBAN (BitBang)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC successfully derived"),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN format")
-    })
-    @PostMapping("/iban/{iban}/bic")
-    public ResponseEntity<BankInfoValidationResponse> deriveBicFromIban(@PathVariable String iban) {
-        BankInfoValidationResponse response = bankInfoValidationService.getBicFromIban(iban);
-        if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-}
-
-🔹 Changes Made
-	•	Renamed class → BitBangBankInfoController
-	•	Base path → /api/bitbang
-	•	Swagger tag → "BitBang Bank Info"
-	•	Endpoint path → /iban/{iban}/bic (RESTful and consistent)
-	•	Summary and responses renamed for clarity
-
-⸻
-
-✅ Refactored Version 2 — Tournesol
-
-package eu.olkypay.bankInfo.web.tournesol;
-
-import eu.olkypay.bankInfo.dto.BankInfoDTO;
-import eu.olkypay.bankInfo.dto.BankInfoValidationResponse;
-import eu.olkypay.bankInfo.dto.IbanSearchHistoryDTO;
-import eu.olkypay.bankInfo.service.BankInfoValidationService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.iban4j.IbanFormatException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
-
-@RestController
-@RequestMapping("/api/tournesol")
-@Tag(name = "Tournesol Bank Info", description = "Bank Info Validation APIs for Tournesol project")
-public class TournesolBankInfoController {
-
-    private final BankInfoValidationService bankInfoValidationService;
-
-    public TournesolBankInfoController(BankInfoValidationService bankInfoValidationService) {
-        this.bankInfoValidationService = bankInfoValidationService;
-    }
-
-    @Operation(summary = "Validate IBAN (Tournesol)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "IBAN validation successful",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = IbanSearchHistoryDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN format")
-    })
-    @PostMapping("/iban/{iban}/validate")
-    public ResponseEntity<?> validateIban(@PathVariable String iban) {
-        try {
-            Optional<IbanSearchHistoryDTO> result = bankInfoValidationService.validateIban(iban);
-            return result
-                    .map(ResponseEntity::ok)
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.BAD_REQUEST).build());
-        } catch (IbanFormatException | RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
-    }
-
-    @Operation(summary = "Find Bank by BIC (Tournesol)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Bank found",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = BankInfoDTO.class)))),
-            @ApiResponse(responseCode = "400", description = "Invalid BIC format")
-    })
-    @GetMapping("/bic/{bic}")
-    public ResponseEntity<BankInfoDTO> getBankInfoByBic(@PathVariable String bic) {
-        Optional<BankInfoDTO> response = bankInfoValidationService.findBankByBic(bic);
-        if (response.isPresent()) {
-            if ("INVALID_BIC".equalsIgnoreCase(response.get().getStatus())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response.get());
-            }
-            return ResponseEntity.ok(response.get());
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
-
-    @Operation(summary = "Validate BIC format (Tournesol)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC format validated",
-                    content = @Content(schema = @Schema(implementation = BankInfoValidationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid BIC format")
-    })
-    @PostMapping("/bic/{bic}/validate")
-    public ResponseEntity<BankInfoValidationResponse> validateBic(@PathVariable String bic) {
-        BankInfoValidationResponse response = bankInfoValidationService.validateBic(bic);
-        if ("INVALID_BIC".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Validate IBAN and BIC combination (Tournesol)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Validation successful",
-                    content = @Content(schema = @Schema(implementation = BankInfoValidationResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN/BIC or mismatch")
-    })
-    @PostMapping("/iban/{iban}/bic/{bic}/validate")
-    public ResponseEntity<BankInfoValidationResponse> validateIbanAndBic(
-            @PathVariable String iban,
-            @PathVariable String bic
-    ) {
-        BankInfoValidationResponse response = bankInfoValidationService.validateIbanAndBic(bic, iban);
-        if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())
-                || "INVALID_BIC".equalsIgnoreCase(response.getStatus())
-                || "BIC_MISMATCH".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "Derive BIC from IBAN (Tournesol)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "BIC successfully derived"),
-            @ApiResponse(responseCode = "400", description = "Invalid IBAN format")
-    })
-    @PostMapping("/iban/{iban}/bic")
-    public ResponseEntity<BankInfoValidationResponse> deriveBicFromIban(@PathVariable String iban) {
-        BankInfoValidationResponse response = bankInfoValidationService.getBicFromIban(iban);
-        if ("INVALID_IBAN".equalsIgnoreCase(response.getStatus())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-        return ResponseEntity.ok(response);
-    }
-}
-
-🔹 Changes Made
-	•	Renamed class → TournesolBankInfoController
-	•	Base path → /api/tournesol
-	•	Swagger tag → "Tournesol Bank Info"
-	•	All endpoint paths now follow consistent REST naming (/iban/{iban}/validate, /bic/{bic}/validate, etc.)
-	•	Cleaned exception handling and response consistency
-
-⸻
-
-✅ Final Naming Summary
-
-Purpose	Old Class Name	New Class Name	Base Path
-BitBang project	BitBangValidationController	BitBangBankInfoController	/api/bitbang
-Tournesol project	BankInfoValidationController	TournesolBankInfoController	/api/tournesol
-
-
-⸻
-
-Would you like me to also refactor the service interface and method names (like getBicFromIban → deriveBicFromIban) to match this naming consistency?
+pl.java]
+14 Nov 2025 15:52:16,147 13735582 INFO  [ajp-nio2-127.0.0.1-8010-exec-4] (PaymentsManager) - Analyze Payments for Order<1900>: Sequence=<1;ACCOUNT;1738|> [112 : PaymentsManager.java]
+14 Nov 2025 15:52:16,170 13735605 ERROR [ajp-nio2-127.0.0.1-8010-exec-4] (MediatorExecutionFrame) - Job [orderNotClearableJob] has failed [158 : MediatorExecutionFrame.java]
+javax.persistence.NoResultException: No entity found for query
+        at org.hibernate.query.internal.AbstractProducedQuery.getSingleResult(AbstractProducedQuery.java:1446) ~[hibernate-core-5.2.5.Final.jar:5.2.5.Final]
+        at org.hibernate.query.criteria.internal.compile.CriteriaQueryTypeQueryAdapter.getSingleResult(CriteriaQueryTypeQueryAdapter.java:107) ~[hibernate-core-5.2.5.Final.jar:5.2.5.Final]
+        at eu.olkypay.tournesol.datamodel.symwis.dao.OrderLineDao.findLastFromOrder(OrderLineDao.java:69) ~[tournesol-datamodel-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.order.debit.selection.payment.PaymentsManager.checkLastSequence(PaymentsManager.java:123) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.order.debit.selection.payment.PaymentsManager.analyzeOrderPayment(PaymentsManager.java:116) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.order.debit.selection.payment.PaymentsManager.analyzeOrderPayment(PaymentsManager.java:108) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.notclearable.OrderNotClearableEngine.processOrder(OrderNotClearableEngine.java:68) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.notclearable.OrderNotClearableEngine.run_aroundBody0(OrderNotClearableEngine.java:54) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.notclearable.OrderNotClearableEngine$AjcClosure1.run(OrderNotClearableEngine.java:1) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at org.springframework.transaction.aspectj.AbstractTransactionAspect.ajc$around$org_springframework_transaction_aspectj_AbstractTransactionAspect$1$2a73e96cproceed(AbstractTransactionAspect.aj:67) ~[spring-aspects-5.3.39.jar:5.3.39]
+        at org.springframework.transaction.aspectj.AbstractTransactionAspect$AbstractTransactionAspect$1.proceedWithInvocation(AbstractTransactionAspect.aj:73) ~[spring-aspects-5.3.39.jar:5.3.39]
+        at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:388) ~[spring-tx-5.3.39.jar:5.3.39]
+        at org.springframework.transaction.aspectj.AbstractTransactionAspect.ajc$around$org_springframework_transaction_aspectj_AbstractTransactionAspect$1$2a73e96c(AbstractTransactionAspect.aj:71) ~[spring-aspects-5.3.39.jar:5.3.39]
+        at eu.olkypay.tournesol.business.notclearable.OrderNotClearableEngine.run(OrderNotClearableEngine.java:50) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.notclearable.OrderNotClearableEngine.run(OrderNotClearableEngine.java:46) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.business.mediator.OrderNotClearableJob.doJob(OrderNotClearableJob.java:43) ~[tournesol-business-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.launchJob(MediatorExecutionFrame.java:153) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.launchGroup(MediatorExecutionFrame.java:194) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.launch(MediatorExecutionFrame.java:130) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.doRun(MediatorExecutionFrame.java:120) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.run(MediatorExecutionFrame.java:94) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.Mediator.execute(Mediator.java:181) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.rest.MediatorRestController.executeJob(MediatorRestController.java:37) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+        at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+        at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+        at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205) [spring-web-5.3.39.jar:5.3.39]
+        at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150) [spring-web-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:903) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:809) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909) [spring-webmvc-5.3.39.jar:5.3.39]
+        at javax.servlet.http.HttpServlet.service(HttpServlet.java:555) [servlet-api.jar:4.0.FR]
+        at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883) [spring-webmvc-5.3.39.jar:5.3.39]
+        at javax.servlet.http.HttpServlet.service(HttpServlet.java:623) [servlet-api.jar:4.0.FR]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:199) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) [tomcat-websocket.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:168) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at eu.olkypay.tournesol.api.web.ApiAuthFilter.doFilter(ApiAuthFilter.java:46) [tournesol-api-rest-1.9.10-SNAPSHOT.jar:?]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:168) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at eu.olkypay.framework.filter.RestServiceCallFilter.doFilter(RestServiceCallFilter.java:233) [tournesol-datamodel-1.9.10-SNAPSHOT.jar:?]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:168) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at org.apache.logging.log4j.web.Log4jServletFilter.doFilter(Log4jServletFilter.java:71) [log4j-web-2.7.jar:2.7]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:168) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:168) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) [catalina.jar:9.0.105]
+        at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130) [catalina.jar:9.0.105]
+        at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) [catalina.jar:9.0.105]
+        at org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:656) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) [catalina.jar:9.0.105]
+        at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:346) [catalina.jar:9.0.105]
+        at org.apache.coyote.ajp.AjpProcessor.service(AjpProcessor.java:424) [tomcat-coyote.jar:9.0.105]
+        at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) [tomcat-coyote.jar:9.0.105]
+        at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:935) [tomcat-coyote.jar:9.0.105]
+        at org.apache.tomcat.util.net.Nio2Endpoint$SocketProcessor.doRun(Nio2Endpoint.java:1734) [tomcat-coyote.jar:9.0.105]
+        at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) [tomcat-coyote.jar:9.0.105]
+        at org.apache.tomcat.util.net.AbstractEndpoint.processSocket(AbstractEndpoint.java:1335) [tomcat-coyote.jar:9.0.105]
+        at org.apache.tomcat.util.net.Nio2Endpoint$Nio2SocketWrapper$2.completed(Nio2Endpoint.java:645) [tomcat-coyote.jar:9.0.105]
+        at org.apache.tomcat.util.net.Nio2Endpoint$Nio2SocketWrapper$2.completed(Nio2Endpoint.java:621) [tomcat-coyote.jar:9.0.105]
+        at sun.nio.ch.Invoker.invokeUnchecked(Invoker.java:129) [?:?]
+        at sun.nio.ch.Invoker$2.run(Invoker.java:221) [?:?]
+        at sun.nio.ch.AsynchronousChannelGroupImpl$1.run(AsynchronousChannelGroupImpl.java:113) [?:?]
+        at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1189) [tomcat-util.jar:9.0.105]
+        at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:658) [tomcat-util.jar:9.0.105]
+        at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) [tomcat-util.jar:9.0.105]
+        at java.lang.Thread.run(Thread.java:842) [?:?]
+14 Nov 2025 15:52:16,214 13735649 ERROR [ajp-nio2-127.0.0.1-8010-exec-4] (MediatorExecutionFrame) - Error while executing: orderNotClearableJob [196 : MediatorExecutionFrame.java]
+eu.olkypay.tournesol.mediator.JobExecutionException: javax.persistence.NoResultException: No entity found for query
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.launchJob(MediatorExecutionFrame.java:175) ~[tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.launchGroup(MediatorExecutionFrame.java:194) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.launch(MediatorExecutionFrame.java:130) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.doRun(MediatorExecutionFrame.java:120) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.MediatorExecutionFrame.run(MediatorExecutionFrame.java:94) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.Mediator.execute(Mediator.java:181) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at eu.olkypay.tournesol.mediator.rest.MediatorRestController.executeJob(MediatorRestController.java:37) [tournesol-mediator-1.9.10-SNAPSHOT.jar:?]
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
+        at jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
+        at jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
+        at java.lang.reflect.Method.invoke(Method.java:568) ~[?:?]
+        at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205) [spring-web-5.3.39.jar:5.3.39]
+        at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150) [spring-web-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:903) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:809) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006) [spring-webmvc-5.3.39.jar:5.3.39]
+        at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909) [spring-webmvc-5.3.39.jar:5.3.39]
+        at javax.servlet.http.HttpServlet.service(HttpServlet.java:555) [servlet-api.jar:4.0.FR]
+        at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883) [spring-webmvc-5.3.39.jar:5.3.39]
+        at javax.servlet.http.HttpServlet.service(HttpServlet.java:623) [servlet-api.jar:4.0.FR]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:199) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) [tomcat-websocket.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:168) [catalina.jar:9.0.105]
+        at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:144) [catalina.jar:9.0.105]
+        at eu.olkypay.tournesol.api.web.ApiAuthFilter.doFilter(ApiAuthFilter.java:46) [tournesol-api-rest-1.9.10-SNAPSHOT.jar:?]
+        at org.apache.catalina.
