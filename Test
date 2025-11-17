@@ -1,55 +1,77 @@
-Great — that means your backend is fine, and the issue is entirely on Bruno.
+{
+  "status": "INTERNAL_SERVER_ERROR",
+  "message": "Required request body is missing: public org.springframework.http.ResponseEntity<eu.olkypay.bankInfo.dto.BicValidationResponse> eu.olkypay.bankInfo.web.BankInfoValidationController.validateIBANBIC(eu.olkypay.bankInfo.dto.IbanInfoUtilsDTO,java.lang.String,java.lang.String)",
+  "errorCode": "OLKY_INTERNAL_SERVER_ERROR",
+  "timestamp": "2025-11-17T14:37:45.543364052"
+}
 
-Bruno is sending the wrong Content-Type header:
-
-Content-Type: application/x-www-form-urlencoded;charset=UTF-8
-
-Your endpoint does not accept form-urlencoded, so DEV rejects it with:
-
-Content-Type ... is not supported
-
-Locally your app is more permissive, so it works.
-
-⸻
-
-✅ Fix Bruno in 5 seconds
-
-👉 Remove the Content-Type header
-
-OR
-
-👉 change it to application/json
-
-Your request does NOT send a body, so you do NOT need any Content-Type at all.
-
-⸻
-
-🔧 Steps in Bruno UI
-	1.	Open your request
-	2.	Go to Headers
-	3.	Delete this line:
-
-Content-Type: application/x-www-form-urlencoded
-
-	4.	Do NOT set a body
-	5.	Hit Send
-
-⸻
-
-🟢 After this, DEV will respond normally.
-
-⸻
-
-🚀 Why this works
-
-Spring Boot logic:
-	•	If no body → no need for Content-Type
-	•	If Content-Type = form-urlencoded → Spring expects form values
-	•	Your controller doesn’t accept that → throws HttpMediaTypeNotSupportedException
-	•	Your global handler catches it → returns 500 INTERNAL_SERVER_ERROR
-
-Bruno is the only client sending this wrong header → that’s why only Bruno fails.
-
-⸻
-
-If you want, I can show you how to configure your GlobalExceptionHandler to return a clean 415 Unsupported Media Type instead of 500.
+i jchange the content-type to application/json i have this error before there was no content-type on my bruno : 
+{
+  "info": {
+    "name": "BankInfo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "deriveBICFromIBAN",
+      "event": [],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{host}}/deriveBICFromIBAN/LU260025410089543900",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"iban\" : \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Validate BIC and IBAN",
+      "event": [],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{host}}/validate/SPKHDE2H/DE43250501800000198080"
+      }
+    },
+    {
+      "name": "Validate BIC",
+      "event": [],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{host}}/validate/bic/OPSPFR21VEO"
+      }
+    },
+    {
+      "name": "Get BankInfo By BIC",
+      "event": [],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{host}}/bic/OPSPFR21VEO"
+      }
+    },
+    {
+      "name": "Validate IBAN",
+      "event": [],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": "{{host}}/validate/DE43250501800000198080"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "host",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
