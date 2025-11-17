@@ -1,16 +1,55 @@
-.security.core.userdetails.User [Username=tournesol, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[OLKY_ADMIN]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=10.0.51.78, SessionId=null], Granted Authorities=[OLKY_ADMIN]]
-Nov 17 14:27:05 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:27:05.393+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-7] o.s.security.web.FilterChainProxy        : Secured POST /api/validate/SPKHDE2H/DE43250501800000198080
-Nov 17 14:31:01 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:01.744+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.security.web.FilterChainProxy        : Securing POST /api/validate/SPKHDE2H/DE43250501800000198080
-Nov 17 14:31:02 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:02.020+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
-Nov 17 14:31:02 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:02.020+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.s.w.a.www.BasicAuthenticationFilter  : Set SecurityContextHolder to UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=tournesol, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[OLKY_ADMIN]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=10.0.51.78, SessionId=null], Granted Authorities=[OLKY_ADMIN]]
-Nov 17 14:31:02 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:02.020+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.security.web.FilterChainProxy        : Secured POST /api/validate/SPKHDE2H/DE43250501800000198080
- i have this logs but on my bruno i have this :
+Great — that means your backend is fine, and the issue is entirely on Bruno.
 
-{
-  "status": "INTERNAL_SERVER_ERROR",
-  "message": "Content-Type 'application/x-www-form-urlencoded;charset=UTF-8' is not supported",
-  "errorCode": "OLKY_INTERNAL_SERVER_ERROR",
-  "timestamp": "2025-11-17T14:31:02.021788244"
-}
+Bruno is sending the wrong Content-Type header:
 
-locally it works
+Content-Type: application/x-www-form-urlencoded;charset=UTF-8
+
+Your endpoint does not accept form-urlencoded, so DEV rejects it with:
+
+Content-Type ... is not supported
+
+Locally your app is more permissive, so it works.
+
+⸻
+
+✅ Fix Bruno in 5 seconds
+
+👉 Remove the Content-Type header
+
+OR
+
+👉 change it to application/json
+
+Your request does NOT send a body, so you do NOT need any Content-Type at all.
+
+⸻
+
+🔧 Steps in Bruno UI
+	1.	Open your request
+	2.	Go to Headers
+	3.	Delete this line:
+
+Content-Type: application/x-www-form-urlencoded
+
+	4.	Do NOT set a body
+	5.	Hit Send
+
+⸻
+
+🟢 After this, DEV will respond normally.
+
+⸻
+
+🚀 Why this works
+
+Spring Boot logic:
+	•	If no body → no need for Content-Type
+	•	If Content-Type = form-urlencoded → Spring expects form values
+	•	Your controller doesn’t accept that → throws HttpMediaTypeNotSupportedException
+	•	Your global handler catches it → returns 500 INTERNAL_SERVER_ERROR
+
+Bruno is the only client sending this wrong header → that’s why only Bruno fails.
+
+⸻
+
+If you want, I can show you how to configure your GlobalExceptionHandler to return a clean 415 Unsupported Media Type instead of 500.
