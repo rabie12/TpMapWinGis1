@@ -1,146 +1,53 @@
-2025-11-17T15:44:57.937+01:00  WARN 13516 --- [bankInfo] [nio-9005-exec-5] .m.m.a.ExceptionHandlerExceptionResolver : Resolved [java.lang.RuntimeException: Error while validating IBAN : 401 Unauthorized from GET https://rest.sepatools.eu/validate_iban/LC14BOSL123456789012345678901234]
-    private Mono<IbanValidationResponse> callIbanValidationApi(String iban) {
-        String valditeIbanURL = "/validate_iban/{iban}";
-        log.info("Init Call Sepa URL");
-        log.info("http.proxyHost = {}", System.getProperty("http.proxyHost"));
-        log.info("http.proxyPort = {}", System.getProperty("http.proxyPort"));
-        log.info("https.proxyHost = {}", System.getProperty("https.proxyHost"));
-        log.info("https.proxyPort = {}", System.getProperty("https.proxyPort"));
-        log.info("http.nonProxyHosts = {}", System.getProperty("http.nonProxyHosts"));
-        return webClient.get().uri(valditeIbanURL, iban.trim())
-                .retrieve()
-                .bodyToMono(IbanValidationResponse.class)
-                .timeout(Duration.ofSeconds(10))
-                .onErrorResume(WebClientResponseException.class, ex -> {
-                    log.error("Exception during WebClient call: Status = {}, Body = {}, Headers = {}",
-                            ex.getStatusCode(), ex.getResponseBodyAsString(), ex.getHeaders());
-                    return Mono.error(new RuntimeException("Error while validating IBAN : " + ex.getMessage(), ex));
-                });
-    }
+A HTTP 401 Unauthorized error from the SEPA Tools API (e.g., at https://rest.sepatools.eu/validate_iban/{iban}) generally means the request was received but the credentials were not accepted. Here are possible causes + a checklist to debug:
 
+⸻
 
-    @Bean
-    public WebClient webClient(SpringConfigService configService) {
-        String sepaUrl = configService.getProperties("sepa.url");
-        String username = configService.getProperties("sepa.username");
-        String secret = configService.getProperties("sepa.secret");
-        log.info("SEPA_URL = {}", sepaUrl);
-        HttpClient httpClient = HttpClient.create().proxyWithSystemProperties()
-                .responseTimeout(Duration.ofSeconds(10))
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
-                )
-                .wiretap("reactor.netty.http.client.HttpClient", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
-        return WebClient.builder()
-                .baseUrl(sepaUrl)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .defaultHeaders(headers -> {
-                    headers.setBasicAuth(username,  secret);
-                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-                })
-                .build();
-    }
+✅ What to check
+	1.	Credentials
+	•	Confirm the username & password you’re passing to headers.setBasicAuth(username, secret) are correct, and belong to the correct environment (sandbox / production) as per SEPA Tools.
+	•	Make sure there are no extra spaces/newline characters when reading from your config.
+	•	Confirm the account hasn’t been disabled, expired, or locked.
+	2.	Endpoint vs. Credentials Scope
+	•	You noted there is a “dummy” endpoint (/validate_iban_dummy/...) which is free to call and may work with the same credentials. If you used credentials created for dummy usage but call the actual endpoint (/validate_iban/...), maybe access is restricted.
+	•	Check whether your subscription/plan allows calls to /validate_iban/ (versus dummy). The doc says the dummy endpoint is free; the real one may require a paid usage or specific account configuration.  ￼
+	•	Confirm you are calling the correct base URL and path as required by the docs (for example: https://rest.sepatools.eu/validate_iban/{iban}) and not accidentally hitting another domain or path.
+	3.	HTTP Request Setup
+	•	Using WebClient.get().uri(valditeIbanURL, iban.trim()): check the URL is resolved correctly (no typo: you show valditeIbanURL but docs say validate_iban).
+	•	Ensure the baseUrl passed into WebClient builder is correct (looks like from configService.getProperties("sepa.url")).
+	•	Confirm that BasicAuth header is indeed sent and not overridden by proxy or other header manipulations.
+	•	If behind a proxy (you log proxy settings), ensure the proxy is not dropping/altering the Authorization header.
+	4.	Usage of GET vs POST
+	•	According to docs, the validate_iban endpoint supports GET and POST.  ￼ You are using GET, which is valid—but if for your account only POST is allowed (e.g., for paid tier) you might get 401/403 instead of 405. Check the plan.
+	5.	Account / Plan Changes
+	•	It’s possible SEPA Tools changed their API access policy (e.g., disabled your credentials, changed plan limits, required IP whitelisting or additional header) without your immediate knowledge.
+	•	Contact their support to check “Is my account active?” and “Does my credential still have access to validate_iban (not only dummy)?”
+	6.	Logging and Replay
+	•	Your error log will show status = 401 and maybe response body/headers. Inspect ex.getResponseBodyAsString() and ex.getHeaders() (as you log) to see if there is a message like “invalid credentials”, “account not active”, “quota exceeded”.
+	•	Try a curl or Postman call outside of your WebClient code using the same credentials and endpoint to isolate code vs account issue.
 
+⸻
 
-the backend side : and the api that im calling :
-Validate IBANs: https://rest.sepatools.eu/validate_iban/{iban}
-Example:
-https://rest.sepatools.eu/validate_iban/IE92BOFI90001710027952
+🛠 Suggested next steps
+	•	Use Postman (or curl) to call:
 
-Purpose:
+curl -u username:secret "https://rest.sepatools.eu/validate_iban_dummy/AL90208110080000001039531801"
 
-Validates the given IBAN, including its contained domestic account number and bank code, insofar as possible.
-Adds information such as BIC code, bank name, bank address, bank URL.
-Helps prevent fraud by checking the IBAN against a list of publicly visible IBANs which can be found on the WWW (and might therefore be used by fraudsters instead of their own IBANs) and against a list of IBANs for which a fraud suspicion has been reported.
-Testing the call mechanism for free: for your first implementation steps, we recommend using the endpoint rest.sepatools.eu/validate_iban_dummy/AL90208110080000001039531801, which expects the same parameters, runs on the same servers, uses the same authentication mechanism, and returns the same data structure as validate_iban. However,
+That uses their dummy endpoint which should succeed (free). If this fails with 401, it’s almost certainly an account/credential issue.
 
-the endpoint validate_iban_dummy is free to call, i.e. your account balance remains unchanged,
-and this dummy endpoint always validates the same IBAN, no matter which IBAN you pass as an input parameter.
-There are some exceptions: for the IBANs DE27100777770209299700, DE11520513735120710131, DE11520513735120710132, and AT411100000237571500, the dummy endpoint returns the actual result. The purpose of these exceptions is to let you test scenarios such as an invalid IBAN and an IBAN found on the Web.
-Once you see that your implementation works, change the endpoint name from validate_iban_dummy to validate_iban.
+	•	Then try the real endpoint with your credentials but maybe a valid IBAN:
 
-Test Data: for testing your client implementation with different scenarios (valid IBAN, invalid IBAN, suspicious IBAN, etc.), you might want to use these test data (including test data for fraud prevention).
+curl -u username:secret "https://rest.sepatools.eu/validate_iban/IE92BOFI90001710027952"
 
-Authentication: Basic Authentication using the user name and password you defined when signing up on iban-bic.com.
+See if it returns 200 or 401.
 
-Supports GET and POST.
+	•	If standalone call works, compare the WebClient request to ensure exactly matching BasicAuth header, endpoint, method, path.
+	•	If standalone call fails, contact SEPA Tools and ask: “Are my credentials active for validate_iban (not only dummy) and is the account still valid?”
+	•	Also check if IP restrictions, usage quota or plan renewal caused access being revoked.
 
-Input
-Input Parameters:
+⸻
 
-iban the IBAN to be validated.
-Output: validation results
-The following output fields contain validation results:
+🚩 Summary
 
-iban: The IBAN that was checked.
-result: 'passed' or 'failed' - for a formally correct or incorrect IBAN
-return_code: a condensed numerical representation of the results of various checks. Not all checks are always carried out.
-Possible values:
-0 = all supported checks were done and passed.
-Otherwise, the sum of one or more of the following numbers:
-1 = a subaccount number was automatically appended.
-2 = Account number does not contain a checksum.
-4 = Checksum was not checked.
-8 = Bank code was not checked.
-32 = Warning: a subaccount number may need to be appended, but the necessity of this could not be automatically verified. Please verify manually.
-128 = Checksum error in account number.
-256 = Bankcode not found in directory.
-512 = IBAN has incorrect length.
-1024 = Bank code has incorrect length.
-2048 = The IBAN checksum is incorrect (3rd and 4th characters of the IBAN)
-4096 = Missing input data (for example, the country code).
-8192 = Country not yet supported.
-Interpretation: if the sum is
+The 401 error strongly suggests authentication / access rather than a bug in your client code (though typo in path/method could contribute). Since you mention “checked my credentials” already, likely possibilities are: the credentials are not valid for production REST endpoint (only dummy), or the account/plan changed and no longer authorizes the validate_iban endpoint. Using a direct curl/Postman call should clarify.
 
-< 32. Result can be assumed correct;
-32 ≤ sum ≤ 127. Result might be correct but should be verified;
-≥ 128. There may be a more serious error.
-= 65536. The return code is not set at all, which should not happen - please notify us of this error.
-checks: an array of the checks performed (can contain elements such as 'length', 'bank_code', 'account_number', 'iban_checksum').
-length_check:'passed' or 'failed' - shows if the IBAN is of the correct length for the given country.
-account_check: (not provided for all countries) 'passed' or 'failed'. Gives the result of the checksum validation of the account number. If the algorithm is unknown, or if no checksum exists, the result is empty or 'passed'.
-bank_code_check: (not provided for all countries) Directory lookup of domestic bank code was successful ('passed') or not ('failed').
-iban_checksum_check: 'passed' or 'failed'. Correctness of the 3rd and 4th characters of the IBAN, i.e. the IBAN checksum.
-account_validation_method: name of the validation algorithm for the domestic account number
-account_validation: (DE and CH only) An explanation of the account number validation (in German)
-iban_candidate: for Germany, the IBAN that would result from converting the domestic account number and bank code which are embedded in the given IBAN. There are some special IBAN rules which could make such a re-calculated IBAN different. For countries without such special IBAN rules, this field is left empty.
-IBANformat: A string describing the IBAN format for the given country, for example: 'DEkk BBBB BBBB CCCC CCCC CC'.
-formatcomment: Key to the IBANformat string, for example: 'B = sort code (BLZ), C = account No.'
-Output: account and bank information (BIC code, bank address, extracted account number etc.)
-The following output fields contain additional information about the validated IBAN, such as its BIC code and bank data:
-
-bic_candidates: an array of BICs that can be associated with the given domestic bank code. May be empty or may contain one or more elements. Each BIC element is itself a complex data type that has the attributes 'bic', 'wwwcount', 'sampleurl', and 'city'.
-Interpretation: If
-wwwcount > 0. The BIC was harvested from the web (and found on as many pages as indicated by 'wwwcount', for example on the page indicated by 'sampleurl').
-wwwcount = 0. The BIC comes from a national bank or the ECB.
-If 'city' is given, this also indicates that the BIC comes from a national bank or the ECB.
-Note: The given city does not necessarily reflect the location of the given branch - it can also be the location of the headquarters.
-
-all_bic_candidates: an array of BIC candidates which includes the BICs listed above, plus possible some more BIC codes which were excluded from the previous array based on some heuristics. Use this array for a somewhat softer check of the validity of a BIC code.
-country: the ISO country code (first two letters of the IBAN)
-bank_code: the domestic bank code, if it exists. Returns first 4 characters of the BIC for NL (where no domestic bank codes exist), or the BC-Number for Switzerland.
-bank_and_branch_code: the concatenated contents of the fields bank_code and branch_code plus a checksum for bank/branch code, if it exists. For example, for Hungary, this field will contain more information than the bank code and branch code fields together. For most other countries, however, this field contains just the contents of those two fields.
-bank: Bank name, if known.
-bank_address: Bank address, if known.
-bank_street: the street from the bank_address field.
-bank_city: the city from the bank_address field.
-bank_state: the state (if present) from the bank_address field.
-bank_postal_code: the postal code from the bank_address field.
-bank_url: URL of bank website, if known.
-branch: Branch name, if known.
-branch_code: Branch code, if known.
-in_scl_directory: if at least one BIC is returned (that is, if the array bic_candidates, which is mentioned above, contains at least one element), this field is set to 'yes' or 'no', depending on whether the first returned BIC is listed in the German Bundesbank's SCL directory. If no BIC is returned, this field is left blank.
-sct: if in_scl_directory is set to 'yes', this field is set to 'yes' if a SEPA Credit Transfer is supported for the first returned BIC. If no SCT is supported, the field is set to 'no'. If no BIC is returned, the field is left blank.
-sdd: if in_scl_directory is set to 'yes', this field is set to 'yes' if SEPA Direct Debit is supported for the first returned BIC. If no SDD is supported, the field is set to 'no'. If no BIC is returned, the field is left blank.
-cor1: if in_scl_directory is set to 'yes', this field is set to 'yes' if Core 1 Direct Debit is supported for the first returned BIC. If no Core 1 is supported, the field is set to 'no'.
-b2b: if in_scl_directory is set to 'yes', this field is set to 'yes' if SEPA Business to Business is supported for the first returned BIC. If no B2B is supported, the field is set to 'no'. If no BIC is returned, the field is left blank.
-scc: if in_scl_directory is set to 'yes', this field is set to 'yes' if SEPA Card Clearing is supported for the first returned BIC. If no SCC is supported, the field is set to 'no'.
-sct_inst: "yes" if instant SEPA Credit Transfer is supported, "no" if it is not supported, empty if we cannot find this information for the given IBAN (either because we were not able to determine a BIC or because the BIC is not in our SCT instant table).
-sct_inst_readiness_date: the date from which this IBAN supports instant credit transfers, or empty if we cannot find this information.
-account_number: Domestic account number.
-data_age: (not provided for all countries.) Age of BIC and other bank data. (undefined for data harvested from the web). Format: yyyymmdd.
-
-
-is there any changes on the api ive checked my credantials it should be correct
+If you like, I can check for any recent changes in SEPA Tools API policy (or check their API status) and we can refine the troubleshooting further. Would you like me to do that?
