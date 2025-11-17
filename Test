@@ -1,4 +1,16 @@
-[root@OLK-DEV-Back-01 bank-info]# ls
-bank-info.env  bank-info.jar  java.env  logs
+.security.core.userdetails.User [Username=tournesol, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[OLKY_ADMIN]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=10.0.51.78, SessionId=null], Granted Authorities=[OLKY_ADMIN]]
+Nov 17 14:27:05 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:27:05.393+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-7] o.s.security.web.FilterChainProxy        : Secured POST /api/validate/SPKHDE2H/DE43250501800000198080
+Nov 17 14:31:01 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:01.744+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.security.web.FilterChainProxy        : Securing POST /api/validate/SPKHDE2H/DE43250501800000198080
+Nov 17 14:31:02 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:02.020+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.s.a.dao.DaoAuthenticationProvider    : Authenticated user
+Nov 17 14:31:02 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:02.020+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.s.w.a.www.BasicAuthenticationFilter  : Set SecurityContextHolder to UsernamePasswordAuthenticationToken [Principal=org.springframework.security.core.userdetails.User [Username=tournesol, Password=[PROTECTED], Enabled=true, AccountNonExpired=true, CredentialsNonExpired=true, AccountNonLocked=true, Granted Authorities=[OLKY_ADMIN]], Credentials=[PROTECTED], Authenticated=true, Details=WebAuthenticationDetails [RemoteIpAddress=10.0.51.78, SessionId=null], Granted Authorities=[OLKY_ADMIN]]
+Nov 17 14:31:02 OLK-DEV-Back-01.olkypay.local java[2248982]: 2025-11-17T14:31:02.020+01:00 DEBUG 2248982 --- [bankInfo] [nio-9005-exec-8] o.s.security.web.FilterChainProxy        : Secured POST /api/validate/SPKHDE2H/DE43250501800000198080
+ i have this logs but on my bruno i have this :
 
-on my server i have this file logs is empty file i want to check log my bank-info on dev server
+{
+  "status": "INTERNAL_SERVER_ERROR",
+  "message": "Content-Type 'application/x-www-form-urlencoded;charset=UTF-8' is not supported",
+  "errorCode": "OLKY_INTERNAL_SERVER_ERROR",
+  "timestamp": "2025-11-17T14:31:02.021788244"
+}
+
+locally it works
