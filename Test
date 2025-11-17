@@ -1,1 +1,132 @@
-i want to add proxy and log them before caliing api to be sure that are well configured because when i try to call the same api from my browser it works, and it was working with the same implementation
+Here is a clean, reliable WebClient configuration that:
+
+✅ Enables proxy
+
+✅ Logs the proxy configuration BEFORE any API call
+
+✅ Uses the proxy explicitly (not just system properties)
+
+✅ Helps you verify if the proxy is actually being used
+
+Below is the improved version:
+
+⸻
+
+✅ WebClientConfig WITH PROXY + Logging
+
+@Configuration
+@Slf4j
+public class WebClientConfig {
+
+    @Bean
+    public WebClient webClient(SpringConfigService configService) {
+
+        String sepaUrl = configService.getProperties("sepa.url");
+        String username = configService.getProperties("sepa.username");
+        String secret = configService.getProperties("sepa.secret");
+
+        // Read proxy settings from system properties
+        String httpProxyHost = System.getProperty("http.proxyHost");
+        String httpProxyPort = System.getProperty("http.proxyPort");
+        String httpsProxyHost = System.getProperty("https.proxyHost");
+        String httpsProxyPort = System.getProperty("https.proxyPort");
+        String nonProxyHosts = System.getProperty("http.nonProxyHosts");
+
+        log.info("SEPA_URL = {}", sepaUrl);
+
+        // Log proxy configuration
+        log.info("===== PROXY CONFIGURATION =====");
+        log.info("http.proxyHost      = {}", httpProxyHost);
+        log.info("http.proxyPort      = {}", httpProxyPort);
+        log.info("https.proxyHost     = {}", httpsProxyHost);
+        log.info("https.proxyPort     = {}", httpsProxyPort);
+        log.info("http.nonProxyHosts  = {}", nonProxyHosts);
+        log.info("================================");
+
+        HttpClient httpClient = HttpClient.create()
+                .proxy(spec -> {
+                    if (httpsProxyHost != null && httpsProxyPort != null) {
+                        log.info("Applying HTTPS Proxy {}:{}", httpsProxyHost, httpsProxyPort);
+                        spec.type(ProxyProvider.Proxy.HTTP)
+                            .host(httpsProxyHost)
+                            .port(Integer.parseInt(httpsProxyPort));
+                    } else if (httpProxyHost != null && httpProxyPort != null) {
+                        log.info("Applying HTTP Proxy {}:{}", httpProxyHost, httpProxyPort);
+                        spec.type(ProxyProvider.Proxy.HTTP)
+                            .host(httpProxyHost)
+                            .port(Integer.parseInt(httpProxyPort));
+                    } else {
+                        log.warn("⚠ No proxy configured in system properties");
+                    }
+                })
+                .responseTimeout(Duration.ofSeconds(10))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
+                )
+                .wiretap("reactor.netty.http.client.HttpClient",
+                        LogLevel.DEBUG,
+                        AdvancedByteBufFormat.TEXTUAL);
+
+        return WebClient.builder()
+                .baseUrl(sepaUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .defaultHeaders(headers -> {
+                    headers.setBasicAuth(username, secret);
+                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+                })
+                .build();
+    }
+}
+
+
+⸻
+
+✅ What this version does
+
+✔ Logs proxy configuration at startup
+
+You will see something like:
+
+===== PROXY CONFIGURATION =====
+http.proxyHost      = myproxy.company.com
+http.proxyPort      = 8080
+https.proxyHost     = myproxy.company.com
+https.proxyPort     = 8080
+http.nonProxyHosts  = localhost|127.0.0.1
+================================
+Applying HTTPS Proxy myproxy.company.com:8080
+
+✔ Forces WebClient to use your proxy
+
+No more “silent fallback” — the proxy will be used only if host & port are found.
+
+✔ Helps diagnose why API works in browser but not backend
+
+Browsers have their own proxy config.
+Your Java app may not be using it unless http.proxyHost is set.
+
+⸻
+
+🔍 Why your browser works but backend doesn’t
+
+Browsers usually auto-detect proxies (PAC / WPAD).
+Java apps never auto-detect proxies.
+
+➡ Your backend probably lost proxy settings after a deploy or server change.
+
+With the above logging, you will immediately know:
+	•	Whether proxy vars are present
+	•	Whether they are applied
+	•	Whether WebClient connections are routed through the proxy
+
+⸻
+
+🚀 If you want, I can also:
+	•	Add detection for auth-protected proxy (username/password)
+	•	Add logging of effective WebClient request headers
+	•	Give you a version that reads proxy from your own Spring config instead of system properties
+	•	Add logging of outbound HTTP traffic
+
+Just tell me!
