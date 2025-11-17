@@ -1,15 +1,47 @@
-i used to have this :
+Here is exactly what you need:
+
+✅ Goal
+
+When IBAN is invalid → you want HTTP 400, with your standard ApiError format, e.g.:
 
 {
-  "status": "INTERNAL_SERVER_ERROR",
-  "message": "Invalid IBAN format: DE4325050180000019880",
-  "errorCode": "OLKY_INTERNAL_SERVER_ERROR",
+  "status": "BAD_REQUEST",
+  "message": "Invalid IBAN format: ...",
+  "errorCode": "OLKY_BAD_REQUEST",
   "timestamp": "2025-11-17T13:52:52.741061713"
 }
 
-and i have this but it return 500 can you retrun 400 with message
+
+⸻
+
+✅ FIX
+
+You simply need to add a handler for IbanFormatException BEFORE the generic Exception.class handler.
+
+Your ExceptionHandler(Exception.class) currently catches it → that’s why you get 500.
+
+⸻
+
+✅ Add this handler:
+
+@ExceptionHandler(IbanFormatException.class)
+public ResponseEntity<ApiError> handleIbanFormatException(IbanFormatException ex) {
+    ApiError apiError = new ApiError(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage(),
+            "OLKY_BAD_REQUEST"
+    );
+    return new ResponseEntity<>(apiError, apiError.getStatus());
+}
+
+
+⸻
+
+🛠 Full Updated ControllerAdvice
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
     @ExceptionHandler(OlkyException.class)
     public ResponseEntity<Map<String, String>> handleOlkyException(OlkyException e) {
         Map<String, String> errorResponse = new HashMap<>();
@@ -30,9 +62,45 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 
+    // ✅ THIS FIXES YOUR PROBLEM
+    @ExceptionHandler(IbanFormatException.class)
+    public ResponseEntity<ApiError> handleIbanFormatException(IbanFormatException ex) {
+        ApiError apiError = new ApiError(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                "OLKY_BAD_REQUEST"
+        );
+        return new ResponseEntity<>(apiError, apiError.getStatus());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneralException(Exception ex) {
-        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), "OLKY_INTERNAL_SERVER_ERROR");
+        ApiError apiError = new ApiError(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ex.getMessage(),
+                "OLKY_INTERNAL_SERVER_ERROR"
+        );
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 }
+
+
+⸻
+
+🎉 Result
+
+Invalid IBAN (bad format) now returns:
+
+HTTP 400 BAD REQUEST
+
+{
+  "status": "BAD_REQUEST",
+  "message": "Invalid IBAN format: DE123...",
+  "errorCode": "OLKY_BAD_REQUEST",
+  "timestamp": "2025-11-17T13:52:52.741061713"
+}
+
+
+⸻
+
+If you want, I can also help you define a cleaner ApiError class or unify all exception responses.
