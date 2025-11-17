@@ -1,53 +1,66 @@
-A HTTP 401 Unauthorized error from the SEPA Tools API (e.g., at https://rest.sepatools.eu/validate_iban/{iban}) generally means the request was received but the credentials were not accepted. Here are possible causes + a checklist to debug:
+package eu.olkypay.bankInfo.config;
 
-⸻
+import eu.olkypay.bankInfo.service.SpringConfigService;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.transport.logging.AdvancedByteBufFormat;
 
-✅ What to check
-	1.	Credentials
-	•	Confirm the username & password you’re passing to headers.setBasicAuth(username, secret) are correct, and belong to the correct environment (sandbox / production) as per SEPA Tools.
-	•	Make sure there are no extra spaces/newline characters when reading from your config.
-	•	Confirm the account hasn’t been disabled, expired, or locked.
-	2.	Endpoint vs. Credentials Scope
-	•	You noted there is a “dummy” endpoint (/validate_iban_dummy/...) which is free to call and may work with the same credentials. If you used credentials created for dummy usage but call the actual endpoint (/validate_iban/...), maybe access is restricted.
-	•	Check whether your subscription/plan allows calls to /validate_iban/ (versus dummy). The doc says the dummy endpoint is free; the real one may require a paid usage or specific account configuration.  ￼
-	•	Confirm you are calling the correct base URL and path as required by the docs (for example: https://rest.sepatools.eu/validate_iban/{iban}) and not accidentally hitting another domain or path.
-	3.	HTTP Request Setup
-	•	Using WebClient.get().uri(valditeIbanURL, iban.trim()): check the URL is resolved correctly (no typo: you show valditeIbanURL but docs say validate_iban).
-	•	Ensure the baseUrl passed into WebClient builder is correct (looks like from configService.getProperties("sepa.url")).
-	•	Confirm that BasicAuth header is indeed sent and not overridden by proxy or other header manipulations.
-	•	If behind a proxy (you log proxy settings), ensure the proxy is not dropping/altering the Authorization header.
-	4.	Usage of GET vs POST
-	•	According to docs, the validate_iban endpoint supports GET and POST.  ￼ You are using GET, which is valid—but if for your account only POST is allowed (e.g., for paid tier) you might get 401/403 instead of 405. Check the plan.
-	5.	Account / Plan Changes
-	•	It’s possible SEPA Tools changed their API access policy (e.g., disabled your credentials, changed plan limits, required IP whitelisting or additional header) without your immediate knowledge.
-	•	Contact their support to check “Is my account active?” and “Does my credential still have access to validate_iban (not only dummy)?”
-	6.	Logging and Replay
-	•	Your error log will show status = 401 and maybe response body/headers. Inspect ex.getResponseBodyAsString() and ex.getHeaders() (as you log) to see if there is a message like “invalid credentials”, “account not active”, “quota exceeded”.
-	•	Try a curl or Postman call outside of your WebClient code using the same credentials and endpoint to isolate code vs account issue.
+import java.time.Duration;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
-⸻
 
-🛠 Suggested next steps
-	•	Use Postman (or curl) to call:
+@Configuration
+@OpenAPIDefinition(
+        info = @Info(title = "API Documentation", version = "1.0"),
+        security = @SecurityRequirement(name = "basicAuth")
+)
+@SecurityScheme(
+        name = "basicAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "basic"
+)
+@Slf4j
+public class WebClientConfig {
 
-curl -u username:secret "https://rest.sepatools.eu/validate_iban_dummy/AL90208110080000001039531801"
+    @Bean
+    public WebClient webClient(SpringConfigService configService) {
+        String sepaUrl = configService.getProperties("sepa.url");
+        String username = configService.getProperties("sepa.username");
+        String secret = configService.getProperties("sepa.secret");
+        log.info("SEPA_URL = {}", sepaUrl);
+        HttpClient httpClient = HttpClient.create().proxyWithSystemProperties()
+                .responseTimeout(Duration.ofSeconds(10))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
+                )
+                .wiretap("reactor.netty.http.client.HttpClient", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
+        return WebClient.builder()
+                .baseUrl(sepaUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .defaultHeaders(headers -> {
+                    headers.setBasicAuth(username,  secret);
+                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+                })
+                .build();
+    }
 
-That uses their dummy endpoint which should succeed (free). If this fails with 401, it’s almost certainly an account/credential issue.
-
-	•	Then try the real endpoint with your credentials but maybe a valid IBAN:
-
-curl -u username:secret "https://rest.sepatools.eu/validate_iban/IE92BOFI90001710027952"
-
-See if it returns 200 or 401.
-
-	•	If standalone call works, compare the WebClient request to ensure exactly matching BasicAuth header, endpoint, method, path.
-	•	If standalone call fails, contact SEPA Tools and ask: “Are my credentials active for validate_iban (not only dummy) and is the account still valid?”
-	•	Also check if IP restrictions, usage quota or plan renewal caused access being revoked.
-
-⸻
-
-🚩 Summary
-
-The 401 error strongly suggests authentication / access rather than a bug in your client code (though typo in path/method could contribute). Since you mention “checked my credentials” already, likely possibilities are: the credentials are not valid for production REST endpoint (only dummy), or the account/plan changed and no longer authorizes the validate_iban endpoint. Using a direct curl/Postman call should clarify.
-
-If you like, I can check for any recent changes in SEPA Tools API policy (or check their API status) and we can refine the troubleshooting further. Would you like me to do that?
+}
+remove using proxy from this
