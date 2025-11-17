@@ -1,50 +1,75 @@
+To make invalid IBAN format errors return HTTP 400 instead of HTTP 500, you must handle IbanFormatException with a @ControllerAdvice (or equivalent exception handler).
 
-    public Optional<IbanSearchHistoryDTO> validateIban(String iban) {
-        String ibanFormatted = iban.replaceAll("\\s+", "");
-        Iban ibanValue = validateIbanFormat(ibanFormatted);
-        if (ibanValue == null) {
-            throw new IbanFormatException("Invalid IBAN format: " + iban);
-        }
-        List<BankAgency> agencies = bankAgencyRepo.findByBankCodeAndCountryIso2(
-                ibanValue.getBankCode(),
-                ibanValue.getCountryCode().name()
-        );
+Right now, your service method throws IbanFormatException, which is not caught, so Spring treats it as an unhandled exception → 500 Internal Server Error.
 
-        BankAgency bankAgency = agencies.isEmpty() ? null : agencies.get(0);
+Below is the correct way to ensure the response becomes:
 
-        if (bankAgency != null) {
-            log.info("IBAN found in database and is up-to-date.");
-            IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO();
-            dto.setIban(iban);
-            dto.setBankInfoDTO(bankInfoMapper.toDto(bankAgency.getBankInfo()));
-            dto.setBankAgencyDTO(bankAgencyMapper.toDTO(bankAgency));
-            dto.setResult("VALID");
-            return Optional.of(dto);
-        }
-        Optional<IbanSearchHistory> ibanSearchHistory = searchHistoryRepo.findByIban(ibanFormatted);
-        if (ibanSearchHistory.isPresent()) {
-            IbanSearchHistory existingRecord = ibanSearchHistory.get();
-            boolean isUpToDate = existingRecord.getUpdatedAt()
-                    .isAfter(LocalDateTime.now().minusDays(300));
-
-            if (isUpToDate) {
-                log.info("IBAN found in database and is up-to-date.");
-                return Optional.of(searchHistorymapper.toDTO(existingRecord));
-            }
-
-            log.info("IBAN found in database but outdated. Calling external API for an update.");
-            return updateFromExternalApi(ibanFormatted, existingRecord);
-        }
-
-        log.info("IBAN not found in database. Calling external API.");
-        return fetchFromExternalApi(ibanFormatted);
-    }
-when         if (ibanValue == null) {
-            throw new IbanFormatException("Invalid IBAN format: " + iban);
-        } return 400 with this error 
 {
   "IbanFormatException": {
     "message": "[25050180000019880] length is 17, expected BBAN length is: 18"
   }
 }
-because now it returns 500 woith this error
+
+with HTTP 400.
+
+⸻
+
+✅ Step 1 — Create an Exception Handler
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(IbanFormatException.class)
+    public ResponseEntity<Object> handleIbanFormatException(IbanFormatException ex) {
+
+        Map<String, Object> errorBody = new HashMap<>();
+        Map<String, String> details = new HashMap<>();
+
+        details.put("message", ex.getMessage());
+        errorBody.put("IbanFormatException", details);
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorBody);
+    }
+}
+
+✔ This ensures all thrown IbanFormatException return 400
+✔ Response body matches your required JSON structure
+
+⸻
+
+✅ Step 2 — Keep Your Service Code As-Is
+
+Your method can stay unchanged:
+
+if (ibanValue == null) {
+    throw new IbanFormatException("Invalid IBAN format: " + iban);
+}
+
+Spring will now route the exception to your handler.
+
+⸻
+
+❗ Important Note
+
+If your IbanFormatException is currently unchecked (extends RuntimeException) or checked — both will work. Just ensure it’s not annotated with @ResponseStatus, otherwise it overrides the handler.
+
+⸻
+
+👍 Final Result
+
+Invalid IBAN → throws exception → caught → client receives:
+
+HTTP 400 Bad Request
+
+{
+  "IbanFormatException": {
+    "message": "[25050180000019880] length is 17, expected BBAN length is: 18"
+  }
+}
+
+
+⸻
+
+If you want, I can also help you improve the error structure or integrate this with Spring Validation.
