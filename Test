@@ -1,75 +1,38 @@
-To make invalid IBAN format errors return HTTP 400 instead of HTTP 500, you must handle IbanFormatException with a @ControllerAdvice (or equivalent exception handler).
-
-Right now, your service method throws IbanFormatException, which is not caught, so Spring treats it as an unhandled exception → 500 Internal Server Error.
-
-Below is the correct way to ensure the response becomes:
+i used to have this :
 
 {
-  "IbanFormatException": {
-    "message": "[25050180000019880] length is 17, expected BBAN length is: 18"
-  }
+  "status": "INTERNAL_SERVER_ERROR",
+  "message": "Invalid IBAN format: DE4325050180000019880",
+  "errorCode": "OLKY_INTERNAL_SERVER_ERROR",
+  "timestamp": "2025-11-17T13:52:52.741061713"
 }
 
-with HTTP 400.
-
-⸻
-
-✅ Step 1 — Create an Exception Handler
-
-@RestControllerAdvice
+and i have this but it return 500 can you retrun 400 with message
+@ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(OlkyException.class)
+    public ResponseEntity<Map<String, String>> handleOlkyException(OlkyException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", e.getMessage());
+        errorResponse.put("code", e.getErrorCode());
+        return ResponseEntity.status(500).body(errorResponse);
+    }
 
-    @ExceptionHandler(IbanFormatException.class)
-    public ResponseEntity<Object> handleIbanFormatException(IbanFormatException ex) {
+    @ExceptionHandler(BankNotFoundException.class)
+    public ResponseEntity<ApiError> handleBankNotFoundException(BankNotFoundException ex) {
+        ApiError apiError = new ApiError(HttpStatus.NOT_FOUND, ex.getMessage(), ex.getErrorCode());
+        return new ResponseEntity<>(apiError, apiError.getStatus());
+    }
 
-        Map<String, Object> errorBody = new HashMap<>();
-        Map<String, String> details = new HashMap<>();
+    @ExceptionHandler(ExternalServiceException.class)
+    public ResponseEntity<ApiError> handleExternalServiceException(ExternalServiceException ex) {
+        ApiError apiError = new ApiError(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), ex.getErrorCode());
+        return new ResponseEntity<>(apiError, apiError.getStatus());
+    }
 
-        details.put("message", ex.getMessage());
-        errorBody.put("IbanFormatException", details);
-
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(errorBody);
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGeneralException(Exception ex) {
+        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), "OLKY_INTERNAL_SERVER_ERROR");
+        return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 }
-
-✔ This ensures all thrown IbanFormatException return 400
-✔ Response body matches your required JSON structure
-
-⸻
-
-✅ Step 2 — Keep Your Service Code As-Is
-
-Your method can stay unchanged:
-
-if (ibanValue == null) {
-    throw new IbanFormatException("Invalid IBAN format: " + iban);
-}
-
-Spring will now route the exception to your handler.
-
-⸻
-
-❗ Important Note
-
-If your IbanFormatException is currently unchecked (extends RuntimeException) or checked — both will work. Just ensure it’s not annotated with @ResponseStatus, otherwise it overrides the handler.
-
-⸻
-
-👍 Final Result
-
-Invalid IBAN → throws exception → caught → client receives:
-
-HTTP 400 Bad Request
-
-{
-  "IbanFormatException": {
-    "message": "[25050180000019880] length is 17, expected BBAN length is: 18"
-  }
-}
-
-
-⸻
-
-If you want, I can also help you improve the error structure or integrate this with Spring Validation.
