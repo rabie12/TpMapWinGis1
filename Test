@@ -1,1 +1,1 @@
-i want to add proxy and log them before caliing api to be sure that are well configured
+i want to add proxy and log them before caliing api to be sure that are well configured because when i try to call the same api from my browser it works, and it was working with the same implementation
