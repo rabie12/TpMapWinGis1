@@ -1,3 +1,33 @@
-lors d'un get bic from iban J'obtiens le BIC OPSPFR21VEO alors que sur internet ils parlent de OPSPFR21OLK
+Très bonne question. Oui — ce n’est pas nécessairement une erreur : il peut y avoir plusieurs BIC/SWIFT pour une même entité (banque), selon la succursale. Voici ce que j’ai trouvé, et des hypothèses + vérifications possibles.
 
-normal?
+⸻
+
+🔍 Ce que j’ai trouvé comme info sur les deux BIC
+	•	Le BIC OPSPFR21OLK est bien référencé pour OLKY Payment Service Provider.  ￼
+	•	Il existe également le BIC OPSPFR21VEO qui est une branche de la même banque (OLKY).  ￼
+	•	Selon bank-code.net, il y a plusieurs BICs pour OLKY : OLK, VEO, etc.  ￼
+
+⸻
+
+💡 Ce que ça signifie
+	•	Deux branches différentes : Le code OLK et VEO correspond probablement à deux agences ou branches différentes d’OLKY.
+	•	Ton service “deriveBICFromIBAN” renvoie peut-être un BIC de la branche VEO, car c’est ce que la base de données que tu utilises lui renvoie pour l’IBAN donné.
+	•	Sur Internet ou des sources tierces, il se peut que l’on mentionne OLK car c’est la “succursale principale” ou la plus “générale” utilisée pour certaines opérations.
+
+⸻
+
+✅ Est-ce “normal” / acceptable ?
+	•	Oui, c’est plausible et normal : avoir plusieurs BIC pour une même banque (selon les branches) est courant.
+	•	Tant que le BIC retourné par ton service est un BIC valide pour OLKY (et qu’il correspond bien à une de ses branches), ce n’est pas forcément une erreur.
+
+⸻
+
+🔧 Que vérifier pour être sûr
+	1.	Vérifie dans ta base de données (ou ton service) quelle source de BIC tu utilises pour “deriver” le BIC depuis l’IBAN.
+	2.	Compare avec des registres officiels (SWIFT, ou des répertoires bancaires) pour ton IBAN : est-ce que l’IBAN correspond à la branche VEO ou à OLK ?
+	3.	Regarde les documents d’OLKY : parfois les banques publient quels BICs sont associés à quelles succursales / quels IBANs.
+	4.	Teste un virement (en sandbox ou environnement de test) avec le BIC retourné : est-ce que le virement passe ? Si oui, alors le BIC est correct.
+
+⸻
+
+Si tu veux, je peux regarder les BICs officiels actuels pour OLKY (2025) et te dire quels codes sont valides — veux-tu que je fasse ça ?
