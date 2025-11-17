@@ -1,134 +1,21 @@
-Here’s a clear explanation of what is happening in your logs, why it fails, and how to fix it.
 
-⸻
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+              http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api/**").hasAuthority("OLKY_ADMIN")
+                        .anyRequest().permitAll()
+                )
+                .httpBasic(basic -> {})
+                .formLogin(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // Stateless session
 
-✅ What the Error Means
+        return http.build();
+    }
 
-Your job orderNotClearableJob fails because a JPA/Hibernate query inside:
-
-OrderLineDao.findLastFromOrder()
-
-throws:
-
-javax.persistence.NoResultException: No entity found for query
-
-This means:
-
-➡️ getSingleResult() was used but the query returned 0 rows.
-Hibernate therefore throws NoResultException, which propagates up your call stack and eventually causes the whole job to fail.
-
-⸻
-
-📍 Where the Failure Happens
-
-From your stacktrace:
-
-OrderLineDao.findLastFromOrder(OrderLineDao.java:69)
-PaymentsManager.checkLastSequence(PaymentsManager.java:123)
-PaymentsManager.analyzeOrderPayment(...)
-OrderNotClearableEngine.processOrder(...)
-
-So:
-	1.	The job is processing Order 1900
-	2.	It tries to determine the “last sequence” of OrderLines
-	3.	The DAO query finds no OrderLine, but the code assumes at least one exists
-
-⸻
-
-🎯 Most Likely Root Causes
-
-1. The order has no OrderLine entries yet
-
-A typical situation—an order exists but contains no lines.
-
-2. The query filtering is too strict
-
-Maybe filtering on status, type, or a date excludes all rows.
-
-3. Data inconsistency
-
-OrderLine deleted/failed to be created.
-
-4. A regression in DAO logic
-
-E.g., switching from getResultList() to getSingleResult() without a fallback.
-
-⸻
-
-🔧 How to Fix
-
-✅ Fix in DAO
-
-Modify the DAO method to avoid getSingleResult.
-
-✔️ Good version:
-
-public OrderLine findLastFromOrder(Long orderId) {
-    List<OrderLine> results = entityManager.createQuery(
-        "SELECT ol FROM OrderLine ol WHERE ol.order.id = :orderId ORDER BY ol.sequence DESC",
-        OrderLine.class)
-        .setParameter("orderId", orderId)
-        .setMaxResults(1)
-        .getResultList();
-
-    return results.isEmpty() ? null : results.get(0);
-}
-
-✔️ Even better (JPA 2.2+):
-
-return entityManager.createQuery(...).setParameter(...) 
-        .setMaxResults(1)
-        .getResultStream()
-        .findFirst()
-        .orElse(null);
-
-This never throws NoResultException.
-
-⸻
-
-🛡️ Fix in Business Layer
-
-In PaymentsManager.checkLastSequence:
-
-OrderLine last = orderLineDao.findLastFromOrder(orderId);
-if (last == null) {
-    // handle gracefully (log, skip, default sequence = 0, etc.)
-}
-
-Right now it probably assumes:
-
-last.getSequence();
-
-which causes NullPointerException unless the DAO throws an error first.
-
-⸻
-
-🧪 How to Confirm the Root Cause
-
-Run SQL manually:
-
-SELECT * FROM ORDER_LINE WHERE ORDER_ID = 1900;
-
-If you get 0 rows, that’s the reason.
-
-⸻
-
-🔍 Summary
-
-Issue	Explanation
-Error	NoResultException in DAO
-Cause	Query returned 0 rows but used getSingleResult()
-Fix	Replace with getResultList() or getResultStream() and handle empty case
-Impact	Job orderNotClearableJob fails completely
-
-
-⸻
-
-If you want, I can help:
-
-✅ rewrite your findLastFromOrder() method
-✅ inspect your criteria query
-✅ propose robust error-handling logic in PaymentsManager
-✅ analyze your database situation for Order 1900
-
-Just tell me!
+this root are not working : {{host}}/validate/SPKHDE2H/DE43250501800000198080
+but this one are working : {{host}}/deriveBICFromIBAN/LU260025410089543900
+value of host : http://localhost:9005/api
+can you tell me why 
