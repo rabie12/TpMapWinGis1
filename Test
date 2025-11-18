@@ -1,167 +1,59 @@
-Here is an improved, clean, and correct WebClient configuration that:
+    private Optional<IbanSearchHistoryDTO> fetchFromExternalApi(String ibanFormatted) {
+        IbanValidationResponse response = callIbanValidationApi(ibanFormatted).block();
+        if (response == null) {
+            log.error("Failed to retrieve data from the external API.");
+            return Optional.empty();
+        }
+        // Create or update BankInfo using its mapper
+        BankInfo bankInfo = bankInfoRepo.findByBic(response.getBicCandidates().getFirst().getBic()).orElse(null);
+        if (bankInfo == null) {
+            bankInfo = bankInfoMapper.toEntity(response);
+            bankInfo.setLocation(response.getCountry() != null ? Locale.of("",response.getCountry()).getDisplayCountry(): "");
+            bankInfoRepo.save(bankInfo);
+        } else if(bankInfo.getUpdatedAt().isAfter(LocalDateTime.now().minusDays(300))){
+            bankInfoMapper.updateEntityFromResponse(response, bankInfo);
+            bankInfoRepo.save(bankInfo);
+        }
+        BankAgency bankAgency = bankAgencyRepo
+                .findByBranchCodeAndBankCodeAndCountryIso2(response.getBranchCode(), response.getBankCode(), response.getCountry())
+                .orElse(null);
+        if (bankAgency == null) {
+            bankAgency = bankAgencyMapper.toEntity(response);
+            bankAgency.setBankInfo(bankInfo);
+            bankAgencyRepo.save(bankAgency);
+        } else {
+            bankAgencyMapper.updateEntityFromResponse(response, bankAgency);
+            bankAgencyRepo.save(bankAgency);
+        }
+        IbanSearchHistory entity = new IbanSearchHistory(ibanFormatted, response.getResult(), response.toString(),
+                LocalDateTime.now(), bankAgency);
+        searchHistoryRepo.save(entity);
+        return Optional.of(searchHistorymapper.toDTO(entity));
+    }
 
-✅ Automatically uses your Linux proxy
+IbanValidationResponse(iban=AT611904300234573201, result=failed, returnCode=256, checks=[length, bank_code, iban_checksum], lengthCheck=passed, accountCheck=, bankCodeCheck=failed, ibanChecksumCheck=passed, accountValidationMethod=, accountValidation=, ibanCandidate=, ibanFormat=ATkk BBBB BCCC CCCC CCCC, formatComment=B = bank code, C = account No., bicCandidates=[], allBicCandidates=[], country=AT, bankCode=19043, bankAndBranchCode=19043, bank=, bankAddress=, bankStreet=, bankCity=, bankState=, bankPostalCode=, bankUrl=, branch=, branchCode=, inSclDirectory=no, sct=, sdd=, cor1=no, b2b=, scc=, sctInst=, sctInstReadinessDate=, accountNumber=, dataAge=, ibanListed=, ibanWwwOccurrences=0, wwwSeenFrom=, wwwSeenUntil=, ibanUrl=, urlRank=0, urlCategory=, urlMinDepth=0, urlProminence=null, ibanReportedToExist=0, ibanLastReported=, ibanFirstSeen=, balance=46804)
 
-(using https_proxy, http_proxy, no_proxy)
+i have this case that i m not able to handle because the bic inside is empty should i search :
 
-✅ Correctly applies Basic Authentication
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class IbanSearchHistoryDTO {
 
-✅ Removes unnecessary code
+    private String iban;
+    private String result;
+    private BankInfoDTO bankInfoDTO;
+    private BankAgencyDTO bankAgencyDTO;
+    @JsonIgnore
+    private String responseDetails;
 
-✅ Logs proxy + credentials (masked) to help debugging
-
-✅ Matches what your curl test proved
-
-⸻
-
-✅ ✔ Final WebClientConfig class — ready to use
-
-package eu.olkypay.bankInfo.config;
-
-import eu.olkypay.bankInfo.service.SpringConfigService;
-import io.netty.channel.ChannelOption;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
-import reactor.netty.transport.logging.AdvancedByteBufFormat;
-
-import java.time.Duration;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-@Configuration
-@OpenAPIDefinition(
-        info = @Info(title = "API Documentation", version = "1.0"),
-        security = @SecurityRequirement(name = "basicAuth")
-)
-@SecurityScheme(
-        name = "basicAuth",
-        type = SecuritySchemeType.HTTP,
-        scheme = "basic"
-)
-@Slf4j
-public class WebClientConfig {
-
-    @Bean
-    public WebClient webClient(SpringConfigService configService) {
-
-        // Load SEPA config
-        String sepaUrl = configService.getProperties("sepa.url");
-        String username = configService.getProperties("sepa.username");
-        String secret = configService.getProperties("sepa.secret");
-
-        log.info("SEPA_URL = {}", sepaUrl);
-        log.info("SEPA Username = {}", username);
-        log.info("SEPA Secret = {}", secret != null ? "******" : "NULL");
-
-        // Proxy detection
-        String httpsProxy = System.getenv("https_proxy");
-        String httpProxy = System.getenv("http_proxy");
-        String noProxy = System.getenv("no_proxy");
-
-        log.info("===== PROXY FROM ENV =====");
-        log.info("https_proxy = {}", httpsProxy);
-        log.info("http_proxy  = {}", httpProxy);
-        log.info("no_proxy    = {}", noProxy);
-        log.info("==========================");
-
-        // Reactor Netty client that automatically respects env vars
-        HttpClient httpClient = HttpClient.create()
-                .proxyWithSystemProperties()        // VERY IMPORTANT
-                .responseTimeout(Duration.ofSeconds(10))
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
-                )
-                .wiretap("reactor.netty.http.client.HttpClient",
-                        LogLevel.DEBUG,
-                        AdvancedByteBufFormat.TEXTUAL);
-
-        return WebClient.builder()
-                .baseUrl(sepaUrl)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .defaultHeaders(headers -> {
-                    headers.setBasicAuth(username, secret);  // BASIC AUTH OK
-                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-                })
-                .build();
+    public IbanSearchHistoryDTO(String iban, String result, String responseDetails) {
+        this.iban = iban;
+        this.result = result;
+        this.responseDetails = responseDetails;
     }
 }
 
 
-⸻
 
-🔥 Why this configuration works perfectly in your environment
-
-✔ Uses proxy automatically
-
-Because your server requires:
-
-https_proxy=http://172.16.5.3:3128
-
-And this version uses:
-
-HttpClient.create().proxyWithSystemProperties()
-
-➡️ It tells Reactor Netty to read https_proxy, http_proxy, and no_proxy
-➡️ This exactly matches your curl behavior
-➡️ No manual parsing needed
-
-⸻
-
-✔ Basic Authentication is 100% correct
-
-These lines are sufficient:
-
-headers.setBasicAuth(username, secret);
-
-No need for Base64 manually.
-
-⸻
-
-✔ Debug logs show everything you need
-
-You will now instantly see in the logs:
-	•	SEPA URL
-	•	Username
-	•	Secret (masked)
-	•	https_proxy / http_proxy / no_proxy values
-	•	Wiretap HTTP logs (full request/response)
-
-This makes debugging easy.
-
-⸻
-
-👌 Final check
-
-Before running:
-
-You MUST make sure your environment has:
-
-export https_proxy=http://172.16.5.3:3128
-export http_proxy=http://172.16.5.3:3128
-export no_proxy="localhost,127.0.0.1,*.olkypay.local"
-
-
-⸻
-
-If you want, I can also provide a version that:
-
-🔹 Automatically extracts host/port from https_proxy
-🔹 Falls back to direct connection if proxy unavailable
-🔹 Uses separate WebClients per environment
-
-Just tell me.
+this is my search iban history should i manage this case before and handle that is not valid
