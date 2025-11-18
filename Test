@@ -13,3 +13,13 @@ Vinci	552 037 806  ￼
 Engie	542 107 651  ￼
 
 Si tu veux d’autres entreprises (start-ups, PME, etc.), je peux te donner leurs RCS aussi.
+
+
+
+{
+  "timeStamp": "2025-11-18T16:20:25.3931865",
+  "message": "200 OK from GET https://registre-national-entreprises.inpi.fr/api/companies/780129987, but response failed with cause: org.springframework.core.io.buffer.DataBufferLimitException: Exceeded limit on max bytes to buffer : 262144",
+  "httpStatus": 400
+}
+
+i have this issue after calling the external api is it related to the number request that i ve made in less than one hour
