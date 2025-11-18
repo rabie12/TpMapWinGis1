@@ -1,171 +1,23 @@
-Yes — you MUST handle this case before saving anything, because your API response clearly says:
+on this case the resul is not passed is failed as i see you still try to return valid value when its failed we should directly return value of :
 
-result = failed
-bicCandidates = []
-bankCodeCheck = failed
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class IbanSearchHistoryDTO {
 
-When:
-	•	result = failed
-	•	bicCandidates is empty
-	•	bank code is invalid
+    private String iban;
+    private String result;
+    private BankInfoDTO bankInfoDTO;
+    private BankAgencyDTO bankAgencyDTO;
+    @JsonIgnore
+    private String responseDetails;
 
-➡️ The IBAN is invalid or unknown.
-➡️ You should NOT try to map BankInfo or BankAgency.
-➡️ You should NOT access:
-
-response.getBicCandidates().getFirst()
-
-because the list is empty → throws an exception.
-
-⸻
-
-✅ What you must do
-
-Add a validation block at the beginning.
-
-✔ If response.result = "failed"
-
-✔ or no BIC candidates
-✔ or bankCodeCheck failed
-
-➡️ Return a history record without bank info
-➡️ Or return Optional.empty()
-
-⸻
-
-✅ Recommended logic
-
-Here is the correct and safe version:
-
-private Optional<IbanSearchHistoryDTO> fetchFromExternalApi(String ibanFormatted) {
-
-    IbanValidationResponse response = callIbanValidationApi(ibanFormatted).block();
-
-    if (response == null) {
-        log.error("Failed to retrieve data from the external API.");
-        return Optional.empty();
+    public IbanSearchHistoryDTO(String iban, String result, String responseDetails) {
+        this.iban = iban;
+        this.result = result;
+        this.responseDetails = responseDetails;
     }
-
-    // ⚠ 1. Validate response
-    if (!"passed".equalsIgnoreCase(response.getResult())
-            || response.getBicCandidates() == null
-            || response.getBicCandidates().isEmpty()) {
-
-        log.warn("Invalid IBAN or no BIC found for IBAN {}", ibanFormatted);
-
-        // Save history but WITHOUT bank info
-        IbanSearchHistory entity = new IbanSearchHistory(
-                ibanFormatted,
-                response.getResult(),
-                response.toString(),
-                LocalDateTime.now(),
-                null  // no bankAgency
-        );
-
-        searchHistoryRepo.save(entity);
-        return Optional.of(searchHistorymapper.toDTO(entity));
-    }
-
-    // ⚠ If we reach here → response is valid and has BIC
-    String bic = response.getBicCandidates().getFirst().getBic();
-
-    BankInfo bankInfo = bankInfoRepo.findByBic(bic).orElse(null);
-    if (bankInfo == null) {
-        bankInfo = bankInfoMapper.toEntity(response);
-        bankInfo.setLocation(response.getCountry() != null ?
-                Locale.of("", response.getCountry()).getDisplayCountry() : "");
-        bankInfoRepo.save(bankInfo);
-    } else if (bankInfo.getUpdatedAt().isBefore(LocalDateTime.now().minusDays(300))) {
-        bankInfoMapper.updateEntityFromResponse(response, bankInfo);
-        bankInfoRepo.save(bankInfo);
-    }
-
-    BankAgency bankAgency = bankAgencyRepo
-            .findByBranchCodeAndBankCodeAndCountryIso2(
-                    response.getBranchCode(),
-                    response.getBankCode(),
-                    response.getCountry()
-            ).orElse(null);
-
-    if (bankAgency == null) {
-        bankAgency = bankAgencyMapper.toEntity(response);
-        bankAgency.setBankInfo(bankInfo);
-        bankAgencyRepo.save(bankAgency);
-    } else {
-        bankAgencyMapper.updateEntityFromResponse(response, bankAgency);
-        bankAgencyRepo.save(bankAgency);
-    }
-
-    IbanSearchHistory entity = new IbanSearchHistory(
-            ibanFormatted,
-            response.getResult(),
-            response.toString(),
-            LocalDateTime.now(),
-            bankAgency
-    );
-
-    searchHistoryRepo.save(entity);
-    return Optional.of(searchHistorymapper.toDTO(entity));
 }
 
 
-⸻
-
-✔ What this fixes
-
-1. Prevents exceptions
-
-You no longer do:
-
-response.getBicCandidates().getFirst()
-
-when the list is empty.
-
-2. Still saves search history
-
-User sees that IBAN was checked, even if invalid.
-
-3. Avoids storing corrupted bank / branch data
-
-Invalid IBAN → bankCodeCheck is failed → do NOT create BankInfo.
-
-4. Your DTO works perfectly
-
-Because you pass:
-
-bankAgency = null
-bankInfo = null
-
-
-⸻
-
-📌 What your UI / API should return for this case
-
-Example:
-
-{
-  "iban": "AT611904300234573201",
-  "result": "failed",
-  "bankInfoDTO": null,
-  "bankAgencyDTO": null
-}
-
-This is correct behavior.
-
-⸻
-
-✔ Conclusion
-
-➡️ YES, you must handle this case.
-➡️ IBAN is invalid → no BIC → no bank info → save simple history only.
-➡️ Your code must check this before doing any mapping.
-
-⸻
-
-If you want, I can also give you:
-
-✔ UI-friendly error message
-✔ A validator utility class
-✔ Custom exceptions for invalid IBANs
-
-Just ask!
+with invalid_iban as result
