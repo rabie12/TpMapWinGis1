@@ -1,142 +1,65 @@
-Here is a clear explanation of what is happening, plus two solutions:
-✔️ Option A: Make your Spring WebClient work with a proxy
-✔️ Option B: Make it work without a proxy
-
-And I’ll also explain how to check the browser proxy configuration.
-
-⸻
-
-✅ 1. Why your proxy is NULL?
-
-Your logs show:
-
-http.proxyHost      = null
-http.proxyPort      = null
-https.proxyHost     = null
-https.proxyPort     = null
-
-This means your Linux server does NOT have any system proxy configured, so your WebClient will not use any proxy.
-
-👉 Your browser working does NOT mean your server has a proxy.
-Browsers often use their own internal proxy settings (Firefox, Chrome, etc.), while Java uses system properties.
-
-⸻
-
-⚡ 2. OPTION A — Configure a proxy for Java (Spring WebClient)
-
-If your environment requires a proxy, you must set JVM system properties, not browser settings.
-
-✅ 2.1. Pass proxy settings at startup
-
-Run your Spring Boot app with:
-
-java \
--Dhttp.proxyHost=YOUR_PROXY_HOST \
--Dhttp.proxyPort=YOUR_PROXY_PORT \
--Dhttps.proxyHost=YOUR_PROXY_HOST \
--Dhttps.proxyPort=YOUR_PROXY_PORT \
--jar your-app.jar
-
-Example:
-
-java \
--Dhttp.proxyHost=proxy.mycompany.local \
--Dhttp.proxyPort=8080 \
--Dhttps.proxyHost=proxy.mycompany.local \
--Dhttps.proxyPort=8080 \
--jar bankInfo.jar
-
-OR in application.properties (Spring Boot 3+ automatically maps to system properties):
-
-systemProp.http.proxyHost=proxy.mycompany.local
-systemProp.http.proxyPort=8080
-systemProp.https.proxyHost=proxy.mycompany.local
-systemProp.https.proxyPort=8080
-
-
-⸻
-
-⚡ 3. OPTION B — Use WebClient WITHOUT PROXY
-
-If your server has direct internet access, simply disable proxy configuration:
-
-Change:
-
-.proxy(spec -> {
-    if (...) { ... }
-    else { log.warn("No proxy configured in system properties"); }
-})
-
-Replace with:
-
-// REMOVE proxy block entirely:
-HttpClient httpClient = HttpClient.create()
-        .responseTimeout(Duration.ofSeconds(10))
-        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-        .doOnConnected(conn ->
-                conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
-        )
-        .wiretap("reactor.netty.http.client.HttpClient",
-                LogLevel.DEBUG,
-                AdvancedByteBufFormat.TEXTUAL);
-
-Then WebClient will connect directly.
-
-⸻
-
-📌 4. How to check your browser proxy configuration
-
-Google Chrome / Chromium
-
-Go to:
-
-chrome://settings/system
-
-Check if:
-	•	“Use system proxy” is enabled
-	•	or manual proxy settings exist
-
-Firefox
-
-Go to:
-
-about:preferences#general
-
-Then “Network Settings”.
-
-⚠️ Your browser may use a proxy even if your Linux server does NOT.
-
-⸻
-
-🔍 5. How to test directly from server
-
-Test without proxy
-
-curl https://rest.sepatools.eu
-
-If it works → your WebClient should work without proxy.
-
-Test with proxy (replace host & port)
-
-curl -x http://proxy.mycompany.local:8080 https://rest.sepatools.eu
-
-If this works only with proxy → you must configure proxy in JVM.
-
-⸻
-
-👍 Summary
-
-Situation	What to do
-Browser works, Java does not	Browser uses proxy → configure JVM proxy
-Linux server can access internet directly	Remove proxy configuration in WebClient
-You are unsure	Test using curl
-
-
-⸻
-
-If you want, you can paste the result of:
-
-curl -v https://rest.sepatools.eu
-
-and I can tell you whether you need proxy or not.
+* Rebuilt URL to: https://rest.sepatools.eu/
+* Uses proxy env variable no_proxy == 'localhost,olkypay.local,172.16.0.0/16,192.168.0.0/16,10.0.0.0/16'
+* Uses proxy env variable https_proxy == 'http://172.16.5.3:3128'
+*   Trying 172.16.5.3...
+* TCP_NODELAY set
+* Connected to 172.16.5.3 (172.16.5.3) port 3128 (#0)
+* allocate connect buffer!
+* Establish HTTP proxy tunnel to rest.sepatools.eu:443
+> CONNECT rest.sepatools.eu:443 HTTP/1.1
+> Host: rest.sepatools.eu:443
+> User-Agent: curl/7.61.1
+> Proxy-Connection: Keep-Alive
+>
+< HTTP/1.1 200 Connection established
+<
+* Proxy replied 200 to CONNECT request
+* CONNECT phase completed!
+* ALPN, offering h2
+* ALPN, offering http/1.1
+* successfully set certificate verify locations:
+*   CAfile: /etc/pki/tls/certs/ca-bundle.crt
+  CApath: none
+* TLSv1.3 (OUT), TLS handshake, Client hello (1):
+* CONNECT phase completed!
+* CONNECT phase completed!
+* TLSv1.3 (IN), TLS handshake, Server hello (2):
+* TLSv1.3 (IN), TLS handshake, [no content] (0):
+* TLSv1.3 (IN), TLS handshake, Encrypted Extensions (8):
+* TLSv1.3 (IN), TLS handshake, [no content] (0):
+* TLSv1.3 (IN), TLS handshake, Certificate (11):
+* TLSv1.3 (IN), TLS handshake, [no content] (0):
+* TLSv1.3 (IN), TLS handshake, CERT verify (15):
+* TLSv1.3 (IN), TLS handshake, [no content] (0):
+* TLSv1.3 (IN), TLS handshake, Finished (20):
+* TLSv1.3 (OUT), TLS change cipher, Change cipher spec (1):
+* TLSv1.3 (OUT), TLS handshake, [no content] (0):
+* TLSv1.3 (OUT), TLS handshake, Finished (20):
+* SSL connection using TLSv1.3 / TLS_AES_256_GCM_SHA384
+* ALPN, server did not agree to a protocol
+* Server certificate:
+*  subject: CN=*.sepatools.eu
+*  start date: Nov  1 16:23:09 2025 GMT
+*  expire date: Jan 30 16:23:08 2026 GMT
+*  subjectAltName: host "rest.sepatools.eu" matched cert's "*.sepatools.eu"
+*  issuer: C=US; O=Let's Encrypt; CN=R13
+*  SSL certificate verify ok.
+* TLSv1.3 (OUT), TLS app data, [no content] (0):
+> GET / HTTP/1.1
+> Host: rest.sepatools.eu
+> User-Agent: curl/7.61.1
+> Accept: */*
+>
+* TLSv1.3 (IN), TLS handshake, [no content] (0):
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+* TLSv1.3 (IN), TLS handshake, [no content] (0):
+* TLSv1.3 (IN), TLS handshake, Newsession Ticket (4):
+* TLSv1.3 (IN), TLS app data, [no content] (0):
+< HTTP/1.1 401 Unauthorized
+< Server: nginx
+< Date: Tue, 18 Nov 2025 08:51:43 GMT
+< Content-Type: text/html; charset=UTF-8
+< Content-Length: 0
+< WWW-Authenticate: Basic realm="IBAN-BIC.com API rest.sepatools.eu"
+<
+* Connection #0 to host 172.16.5.3 left intact
