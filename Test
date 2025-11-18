@@ -1,112 +1,15 @@
-You’re right — when the external API marks the IBAN check as failed you should immediately return a history DTO with result = "invalid_iban" (and not try to create or update BankInfo / BankAgency).
-Below is a safe, compact implementation of fetchFromExternalApi that does exactly that.
+Voici 10 grandes entreprises françaises et leur numéro d’immatriculation (SIREN / RCS) :
 
-private Optional<IbanSearchHistoryDTO> fetchFromExternalApi(String ibanFormatted) {
-    IbanValidationResponse response = callIbanValidationApi(ibanFormatted).block();
+Entreprise	Numéro RCS (SIREN)
+Orange	380 129 866  ￼
+LVMH	775 670 417  ￼
+Danone	552 032 534  ￼
+Schneider Electric	421 106 709  ￼
+TotalEnergies	542 051 180  ￼
+Renault	780 129 987  ￼
+L’Oréal	632 012 100  ￼
+Sanofi	552 074 051  ￼
+Vinci	552 037 806  ￼
+Engie	542 107 651  ￼
 
-    if (response == null) {
-        log.error("Failed to retrieve data from the external API for IBAN {}", ibanFormatted);
-        return Optional.empty();
-    }
-
-    // If the external API did NOT pass the validation -> return immediately with invalid_iban
-    // (avoid any mapping / persistence of BankInfo or BankAgency)
-    if (!"passed".equalsIgnoreCase(response.getResult())) {
-        log.warn("IBAN validation failed for {} (external result = {}). Saving history as invalid_iban.",
-                ibanFormatted, response.getResult());
-
-        IbanSearchHistory entity = new IbanSearchHistory(
-                ibanFormatted,
-                "invalid_iban",           // force the result you want returned
-                response.toString(),
-                LocalDateTime.now(),
-                null                      // no bankAgency for invalid IBAN
-        );
-
-        searchHistoryRepo.save(entity);
-
-        // Build DTO that matches your DTO constructor
-        IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO(
-                ibanFormatted,
-                "invalid_iban",
-                response.toString()
-        );
-
-        return Optional.of(dto);
-    }
-
-    // --- If we reach here, response.result == "passed" -> proceed normally but safely ---
-    // Make sure bicCandidates exists and is not empty before using it
-    if (response.getBicCandidates() == null || response.getBicCandidates().isEmpty()
-            || response.getBicCandidates().getFirst() == null
-            || response.getBicCandidates().getFirst().getBic() == null) {
-        log.warn("No BIC candidates returned for IBAN {} even though result=passed. Treating as invalid.", ibanFormatted);
-
-        IbanSearchHistory entity = new IbanSearchHistory(
-                ibanFormatted,
-                "invalid_iban",
-                response.toString(),
-                LocalDateTime.now(),
-                null
-        );
-        searchHistoryRepo.save(entity);
-        IbanSearchHistoryDTO dto = new IbanSearchHistoryDTO(ibanFormatted, "invalid_iban", response.toString());
-        return Optional.of(dto);
-    }
-
-    String bic = response.getBicCandidates().getFirst().getBic();
-
-    // BankInfo
-    BankInfo bankInfo = bankInfoRepo.findByBic(bic).orElse(null);
-    if (bankInfo == null) {
-        bankInfo = bankInfoMapper.toEntity(response);
-        bankInfo.setLocation(response.getCountry() != null ?
-                Locale.of("", response.getCountry()).getDisplayCountry() : "");
-        bankInfoRepo.save(bankInfo);
-    } else if (bankInfo.getUpdatedAt().isBefore(LocalDateTime.now().minusDays(300))) {
-        bankInfoMapper.updateEntityFromResponse(response, bankInfo);
-        bankInfoRepo.save(bankInfo);
-    }
-
-    // BankAgency
-    BankAgency bankAgency = bankAgencyRepo
-            .findByBranchCodeAndBankCodeAndCountryIso2(response.getBranchCode(), response.getBankCode(), response.getCountry())
-            .orElse(null);
-
-    if (bankAgency == null) {
-        bankAgency = bankAgencyMapper.toEntity(response);
-        bankAgency.setBankInfo(bankInfo);
-        bankAgencyRepo.save(bankAgency);
-    } else {
-        bankAgencyMapper.updateEntityFromResponse(response, bankAgency);
-        bankAgencyRepo.save(bankAgency);
-    }
-
-    IbanSearchHistory entity = new IbanSearchHistory(
-            ibanFormatted,
-            response.getResult(),
-            response.toString(),
-            LocalDateTime.now(),
-            bankAgency
-    );
-    searchHistoryRepo.save(entity);
-
-    // Map to DTO (use your existing mapper so DTOs are filled consistently)
-    return Optional.of(searchHistorymapper.toDTO(entity));
-}
-
-Key points implemented
-	•	If response == null → return Optional.empty() (log error).
-	•	If response.getResult() is not "passed" → immediately save a history row with result = "invalid_iban" and return a DTO with bankInfoDTO and bankAgencyDTO absent (constructor used).
-	•	If result is "passed" but bicCandidates is missing/empty → treat as invalid and return invalid_iban.
-	•	Only when result is passed and a BIC exists do we create/update BankInfo / BankAgency and save a full history.
-	•	No calls to getFirst() or .getBic() without null/empty checks, avoiding NPEs.
-
-Suggested small improvements (optional)
-	•	Use constants or an enum for result values ("passed", "invalid_iban") to avoid typos.
-	•	Consider a small IbanValidationStatus enum so you can return machine-friendly statuses.
-	•	If you want to display the external result as-is plus your normalized value, add another field (e.g. externalResult) to the DTO.
-
-If you want, I can:
-	•	Convert "invalid_iban" into a constant/enum and show the minimal changes; or
-	•	Provide unit tests for the three main paths (null response, failed response, passed + no bic, passed + bic).
+Si tu veux d’autres entreprises (start-ups, PME, etc.), je peux te donner leurs RCS aussi.
