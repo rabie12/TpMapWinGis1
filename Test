@@ -1,1 +1,120 @@
-is it possible to show only tomcat or java with top command in dev server under linux
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : SEPA_URL = https://rest.sepatools.eu
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : ===== PROXY CONFIGURATION =====
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : http.proxyHost      = null
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : http.proxyPort      = null
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : https.proxyHost     = null
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : https.proxyPort     = null
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : http.nonProxyHosts  = null
+2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : ================================
+2025-11-18T09:11:08.172+01:00  WARN 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : No proxy configured in system properties
+2025-11-18T09:11:08.301+01:00  INFO 16796 --- [bankInfo] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-18T09:11:09.106+01:00  INFO 16796 --- [bankInfo] [  restartedMain] o.s.s.p.JdbcUserDetailsManager           : No authentication manager set. Reauthentication of users when changing passwords will not be performed.
+2025-11-18T09:11:09.208+01:00  WARN 16796 --- [bankInfo] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+
+
+my proxy is null should i configure it somwhere because when i try directly from browser this my webclient config : 
+package eu.olkypay.bankInfo.config;
+
+import eu.olkypay.bankInfo.service.SpringConfigService;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.transport.ProxyProvider;
+import reactor.netty.transport.logging.AdvancedByteBufFormat;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+
+@Configuration
+@OpenAPIDefinition(
+        info = @Info(title = "API Documentation", version = "1.0"),
+        security = @SecurityRequirement(name = "basicAuth")
+)
+@SecurityScheme(
+        name = "basicAuth",
+        type = SecuritySchemeType.HTTP,
+        scheme = "basic"
+)
+@Slf4j
+public class WebClientConfig {
+
+    @Bean
+    public WebClient webClient(SpringConfigService configService) {
+
+        String sepaUrl = configService.getProperties("sepa.url");
+        String username = configService.getProperties("sepa.username");
+        String secret = configService.getProperties("sepa.secret");
+
+        // Read proxy settings from system properties
+        String httpProxyHost = System.getProperty("http.proxyHost");
+        String httpProxyPort = System.getProperty("http.proxyPort");
+        String httpsProxyHost = System.getProperty("https.proxyHost");
+        String httpsProxyPort = System.getProperty("https.proxyPort");
+        String nonProxyHosts = System.getProperty("http.nonProxyHosts");
+
+        log.info("SEPA_URL = {}", sepaUrl);
+
+        // Log proxy configuration
+        log.info("===== PROXY CONFIGURATION =====");
+        log.info("http.proxyHost      = {}", httpProxyHost);
+        log.info("http.proxyPort      = {}", httpProxyPort);
+        log.info("https.proxyHost     = {}", httpsProxyHost);
+        log.info("https.proxyPort     = {}", httpsProxyPort);
+        log.info("http.nonProxyHosts  = {}", nonProxyHosts);
+        log.info("================================");
+
+        HttpClient httpClient = HttpClient.create()
+                .proxy(spec -> {
+                    if (httpsProxyHost != null && httpsProxyPort != null) {
+                        log.info("Applying HTTPS Proxy {}:{}", httpsProxyHost, httpsProxyPort);
+                        spec.type(ProxyProvider.Proxy.HTTP)
+                                .host(httpsProxyHost)
+                                .port(Integer.parseInt(httpsProxyPort));
+                    } else if (httpProxyHost != null && httpProxyPort != null) {
+                        log.info("Applying HTTP Proxy {}:{}", httpProxyHost, httpProxyPort);
+                        spec.type(ProxyProvider.Proxy.HTTP)
+                                .host(httpProxyHost)
+                                .port(Integer.parseInt(httpProxyPort));
+                    } else {
+                        log.warn("No proxy configured in system properties");
+                    }
+                })
+                .responseTimeout(Duration.ofSeconds(10))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                .doOnConnected(conn ->
+                        conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
+                                .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
+                )
+                .wiretap("reactor.netty.http.client.HttpClient",
+                        LogLevel.DEBUG,
+                        AdvancedByteBufFormat.TEXTUAL);
+
+        return WebClient.builder()
+                .baseUrl(sepaUrl)
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .defaultHeaders(headers -> {
+                    headers.setBasicAuth(username, secret);
+                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+                })
+                .build();
+    }
+
+}
+
+Is it possible to to give how the configure  the proxy of my browser to make it work or give two oprtion with and and without proxy to test
