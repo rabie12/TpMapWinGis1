@@ -1,120 +1,142 @@
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : SEPA_URL = https://rest.sepatools.eu
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : ===== PROXY CONFIGURATION =====
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : http.proxyHost      = null
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : http.proxyPort      = null
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : https.proxyHost     = null
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : https.proxyPort     = null
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : http.nonProxyHosts  = null
-2025-11-18T09:11:08.070+01:00  INFO 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : ================================
-2025-11-18T09:11:08.172+01:00  WARN 16796 --- [bankInfo] [  restartedMain] e.o.bankInfo.config.WebClientConfig      : No proxy configured in system properties
-2025-11-18T09:11:08.301+01:00  INFO 16796 --- [bankInfo] [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2025-11-18T09:11:09.106+01:00  INFO 16796 --- [bankInfo] [  restartedMain] o.s.s.p.JdbcUserDetailsManager           : No authentication manager set. Reauthentication of users when changing passwords will not be performed.
-2025-11-18T09:11:09.208+01:00  WARN 16796 --- [bankInfo] [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+Here is a clear explanation of what is happening, plus two solutions:
+✔️ Option A: Make your Spring WebClient work with a proxy
+✔️ Option B: Make it work without a proxy
+
+And I’ll also explain how to check the browser proxy configuration.
+
+⸻
+
+✅ 1. Why your proxy is NULL?
+
+Your logs show:
+
+http.proxyHost      = null
+http.proxyPort      = null
+https.proxyHost     = null
+https.proxyPort     = null
+
+This means your Linux server does NOT have any system proxy configured, so your WebClient will not use any proxy.
+
+👉 Your browser working does NOT mean your server has a proxy.
+Browsers often use their own internal proxy settings (Firefox, Chrome, etc.), while Java uses system properties.
+
+⸻
+
+⚡ 2. OPTION A — Configure a proxy for Java (Spring WebClient)
+
+If your environment requires a proxy, you must set JVM system properties, not browser settings.
+
+✅ 2.1. Pass proxy settings at startup
+
+Run your Spring Boot app with:
+
+java \
+-Dhttp.proxyHost=YOUR_PROXY_HOST \
+-Dhttp.proxyPort=YOUR_PROXY_PORT \
+-Dhttps.proxyHost=YOUR_PROXY_HOST \
+-Dhttps.proxyPort=YOUR_PROXY_PORT \
+-jar your-app.jar
+
+Example:
+
+java \
+-Dhttp.proxyHost=proxy.mycompany.local \
+-Dhttp.proxyPort=8080 \
+-Dhttps.proxyHost=proxy.mycompany.local \
+-Dhttps.proxyPort=8080 \
+-jar bankInfo.jar
+
+OR in application.properties (Spring Boot 3+ automatically maps to system properties):
+
+systemProp.http.proxyHost=proxy.mycompany.local
+systemProp.http.proxyPort=8080
+systemProp.https.proxyHost=proxy.mycompany.local
+systemProp.https.proxyPort=8080
 
 
-my proxy is null should i configure it somwhere because when i try directly from browser this my webclient config : 
-package eu.olkypay.bankInfo.config;
+⸻
 
-import eu.olkypay.bankInfo.service.SpringConfigService;
-import io.netty.channel.ChannelOption;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
-import reactor.netty.transport.ProxyProvider;
-import reactor.netty.transport.logging.AdvancedByteBufFormat;
+⚡ 3. OPTION B — Use WebClient WITHOUT PROXY
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
+If your server has direct internet access, simply disable proxy configuration:
+
+Change:
+
+.proxy(spec -> {
+    if (...) { ... }
+    else { log.warn("No proxy configured in system properties"); }
+})
+
+Replace with:
+
+// REMOVE proxy block entirely:
+HttpClient httpClient = HttpClient.create()
+        .responseTimeout(Duration.ofSeconds(10))
+        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+        .doOnConnected(conn ->
+                conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
+        )
+        .wiretap("reactor.netty.http.client.HttpClient",
+                LogLevel.DEBUG,
+                AdvancedByteBufFormat.TEXTUAL);
+
+Then WebClient will connect directly.
+
+⸻
+
+📌 4. How to check your browser proxy configuration
+
+Google Chrome / Chromium
+
+Go to:
+
+chrome://settings/system
+
+Check if:
+	•	“Use system proxy” is enabled
+	•	or manual proxy settings exist
+
+Firefox
+
+Go to:
+
+about:preferences#general
+
+Then “Network Settings”.
+
+⚠️ Your browser may use a proxy even if your Linux server does NOT.
+
+⸻
+
+🔍 5. How to test directly from server
+
+Test without proxy
+
+curl https://rest.sepatools.eu
+
+If it works → your WebClient should work without proxy.
+
+Test with proxy (replace host & port)
+
+curl -x http://proxy.mycompany.local:8080 https://rest.sepatools.eu
+
+If this works only with proxy → you must configure proxy in JVM.
+
+⸻
+
+👍 Summary
+
+Situation	What to do
+Browser works, Java does not	Browser uses proxy → configure JVM proxy
+Linux server can access internet directly	Remove proxy configuration in WebClient
+You are unsure	Test using curl
 
 
-@Configuration
-@OpenAPIDefinition(
-        info = @Info(title = "API Documentation", version = "1.0"),
-        security = @SecurityRequirement(name = "basicAuth")
-)
-@SecurityScheme(
-        name = "basicAuth",
-        type = SecuritySchemeType.HTTP,
-        scheme = "basic"
-)
-@Slf4j
-public class WebClientConfig {
+⸻
 
-    @Bean
-    public WebClient webClient(SpringConfigService configService) {
+If you want, you can paste the result of:
 
-        String sepaUrl = configService.getProperties("sepa.url");
-        String username = configService.getProperties("sepa.username");
-        String secret = configService.getProperties("sepa.secret");
+curl -v https://rest.sepatools.eu
 
-        // Read proxy settings from system properties
-        String httpProxyHost = System.getProperty("http.proxyHost");
-        String httpProxyPort = System.getProperty("http.proxyPort");
-        String httpsProxyHost = System.getProperty("https.proxyHost");
-        String httpsProxyPort = System.getProperty("https.proxyPort");
-        String nonProxyHosts = System.getProperty("http.nonProxyHosts");
-
-        log.info("SEPA_URL = {}", sepaUrl);
-
-        // Log proxy configuration
-        log.info("===== PROXY CONFIGURATION =====");
-        log.info("http.proxyHost      = {}", httpProxyHost);
-        log.info("http.proxyPort      = {}", httpProxyPort);
-        log.info("https.proxyHost     = {}", httpsProxyHost);
-        log.info("https.proxyPort     = {}", httpsProxyPort);
-        log.info("http.nonProxyHosts  = {}", nonProxyHosts);
-        log.info("================================");
-
-        HttpClient httpClient = HttpClient.create()
-                .proxy(spec -> {
-                    if (httpsProxyHost != null && httpsProxyPort != null) {
-                        log.info("Applying HTTPS Proxy {}:{}", httpsProxyHost, httpsProxyPort);
-                        spec.type(ProxyProvider.Proxy.HTTP)
-                                .host(httpsProxyHost)
-                                .port(Integer.parseInt(httpsProxyPort));
-                    } else if (httpProxyHost != null && httpProxyPort != null) {
-                        log.info("Applying HTTP Proxy {}:{}", httpProxyHost, httpProxyPort);
-                        spec.type(ProxyProvider.Proxy.HTTP)
-                                .host(httpProxyHost)
-                                .port(Integer.parseInt(httpProxyPort));
-                    } else {
-                        log.warn("No proxy configured in system properties");
-                    }
-                })
-                .responseTimeout(Duration.ofSeconds(10))
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(10, TimeUnit.SECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS))
-                )
-                .wiretap("reactor.netty.http.client.HttpClient",
-                        LogLevel.DEBUG,
-                        AdvancedByteBufFormat.TEXTUAL);
-
-        return WebClient.builder()
-                .baseUrl(sepaUrl)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .defaultHeaders(headers -> {
-                    headers.setBasicAuth(username, secret);
-                    headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-                })
-                .build();
-    }
-
-}
-
-Is it possible to to give how the configure  the proxy of my browser to make it work or give two oprtion with and and without proxy to test
+and I can tell you whether you need proxy or not.
