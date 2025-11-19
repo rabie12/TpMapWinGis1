@@ -1,3 +1,48 @@
+package eu.olkypay.business_registry.dto.company;
+
+import eu.olkypay.business_registry.dto.AlertDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class CompanyDTO {
+    private String identifier;
+    private String rcs;
+    private String legalName;
+    private String legalForm;
+    private String status;
+    private Long capital;
+    private String activityCode;
+    private LocalDate registrationDate;
+    private String registrationCountry;
+    private AddressDTO address;
+    private List<RepresentativeDTO> representatives = new ArrayList<>();
+    private List<BeneficialOwnerDTO> beneficialOwners = new ArrayList<>();
+    private List<CompanyDTO> secondaryOffices = new ArrayList<>();
+    private CompanyDTO principalOffice;
+    private String legalEntityIdentifier;
+    private String intracommunityVATNumber;
+    private List<DocumentDTO> documents = new ArrayList<>();
+    private List<AlertDTO> alerts = new ArrayList<>();
+
+
+    public CompanyDTO(String identifier, String legalName, String intracommunityVATNumber) {
+        this.identifier = identifier;
+        this.legalName = legalName;
+        this.intracommunityVATNumber = intracommunityVATNumber;
+    }
+
+    public CompanyDTO(String identifier) {
+        this.identifier = identifier;
+    }
+}
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
