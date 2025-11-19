@@ -1,24 +1,3 @@
-    @Override
-    public CompanyDTO getData(Connector connector, String siren) {
-        WebClient webClient = createWebClient(connector);
-        ResponseEntity<PreRootDTO> companyData = webClient.get()
-                .uri("/companies/{siren}", siren)
-                .retrieve()
-                .toEntity(PreRootDTO.class)
-                .block();
-        if (companyData.getStatusCode().is4xxClientError() || companyData.getStatusCode().is5xxServerError()) {
-            log.warn(" Url  \"{}/companies/{} \" returns {} ", connector.getApiUrl(), siren, companyData.getStatusCode());
-            return new CompanyDTO();
-        }
-
-        ResponseEntity<AttachmentsDTO> attachments = webClient.get()
-                .uri("/companies/{siren}/attachments", siren)
-                .retrieve()
-                .toEntity(AttachmentsDTO.class)
-                .block();
-        if (attachments.getStatusCode().is4xxClientError() || attachments.getStatusCode().is5xxServerError()) {
-            log.warn(" Url  \"{}/companies/{}/attachments \" returns {} ", connector.getApiUrl(), siren, attachments.getStatusCode());
-        }
-        return findInformationCompany(companyData.getBody(), attachments.getBody());
-    }
-this is my webclient config to call the api maybe its due to to size of what api return 
+spring:
+  codec:
+    max-in-memory-size: 5MB
