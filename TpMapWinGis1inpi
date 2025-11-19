@@ -1,1 +1,11 @@
-java.lang.NumberFormatException: For input string: "Société par actions simplifiée"
+        for (RepresentativeDTO representativeDTO : company.getRepresentatives()) {
+            if (representativeDTO.getLegalEntity() != null) {
+                if (representativeDTO.getLegalEntity().getLegalForm() != null) {
+                    Optional<LegalFormINPIMatching> legalFormINPIMatchingRepresentatives = legalFormINPIMatchingRepository.findById(Integer.valueOf(representativeDTO.getLegalEntity().getLegalForm()));
+                    representativeDTO.getLegalEntity().setLegalForm(legalFormINPIMatchingRepresentatives.get().getLabel());
+                }
+            }
+        }
+
+
+                    Optional<LegalFormINPIMatching> legalFormINPIMatchingRepresentatives = legalFormINPIMatchingRepository.findById(Integer.valueOf(representativeDTO.getLegalEntity().getLegalForm())); c'est dans cet ligne que ça casse
