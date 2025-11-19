@@ -1,4 +1,1 @@
-
-J’aurais besoin des droits d’accès au projet Olky-Register sur Redmine.
-Pourriez-vous également réaffecter le ticket #55892 vers ce projet ?
-Il est actuellement dans Demande IT, mais nous n’avons plus les permissions nécessaires pour y accéder.
+java.lang.NumberFormatException: For input string: "Société par actions simplifiée"
