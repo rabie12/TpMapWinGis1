@@ -1,75 +1,8 @@
-Merci pour le détail. Je vois exactement pourquoi tu as l’erreur MapStruct.
+new CompanyDTO(data.getRelationships().getPerson().getData().getId())
 
-Le problème vient de ta classe CompanyDTO. Même si tu as :
+        CompanyDTO companyDTO = new CompanyDTO("793115320", "OLKY PAYMENT SERVICE PROVIDER S.A", "FR89793115320");
+        LegalEntity company = new LegalEntity();
+        CompanyDTO expectedCompany = new CompanyDTO("793115320", "OLKY PAYMENT SERVICE PROVIDER S.A", "FR89793115320");
+        LegalEntity expectedLegalEntity = new LegalEntity("793115320", "OLKY PAYMENT SERVICE PROVIDER S.A", "FR89793115320");
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-
-Tu ajoutes ensuite deux constructeurs personnalisés :
-
-public CompanyDTO(String identifier, String legalName, String intracommunityVATNumber) { ... }
-public CompanyDTO(String identifier) { ... }
-
-MapStruct voit donc plusieurs constructeurs possibles et ne sait pas lequel utiliser → l’erreur :
-
-Ambiguous constructors found...
-
-
-⸻
-
-✅ Solution simple avec Lombok
-
-Tu peux utiliser l’annotation @Builder et/ou @NoArgsConstructor(force = true) pour que MapStruct sache toujours quel constructeur utiliser.
-
-Voici une version propre :
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
-@Data
-@Builder
-@NoArgsConstructor(force = true) // force à initialiser toutes les propriétés pour MapStruct
-@AllArgsConstructor
-public class CompanyDTO {
-    private String identifier;
-    private String rcs;
-    private String legalName;
-    private String legalForm;
-    private String status;
-    private Long capital;
-    private String activityCode;
-    private LocalDate registrationDate;
-    private String registrationCountry;
-    private AddressDTO address;
-    private List<RepresentativeDTO> representatives = new ArrayList<>();
-    private List<BeneficialOwnerDTO> beneficialOwners = new ArrayList<>();
-    private List<CompanyDTO> secondaryOffices = new ArrayList<>();
-    private CompanyDTO principalOffice;
-    private String legalEntityIdentifier;
-    private String intracommunityVATNumber;
-    private List<DocumentDTO> documents = new ArrayList<>();
-    private List<AlertDTO> alerts = new ArrayList<>();
-}
-
-✅ Explications :
-	1.	@NoArgsConstructor(force = true)
-	•	Crée un constructeur sans arguments que MapStruct peut utiliser.
-	•	force = true initialise tous les champs à des valeurs par défaut, même final (utile si tu ajoutes des champs final plus tard).
-	2.	Supprimer les constructeurs personnalisés
-	•	Tu n’as plus besoin de public CompanyDTO(String identifier) ou autre.
-	•	Pour créer des objets rapidement dans ton code, utilise CompanyDTO.builder().identifier("xxx").build().
-	3.	MapStruct n’a plus d’ambiguïté
-	•	Il utilisera le constructeur sans arguments et remplira les champs via setters ou builder.
-
-⸻
-
-Si tu veux, je peux te réécrire ton DTO avec le builder et les listes initialisées, prêt pour MapStruct et usage dans tout ton projet.
-
-Veux‑tu que je fasse ça ?
+peux tu replace with builder way
