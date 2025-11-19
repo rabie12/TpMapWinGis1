@@ -1,13 +1,16 @@
-
-    private WebClient createWebClient(Connector connector) {
-        String token = connector.getApiToken().getToken();
-        return WebClient.builder()
-                .defaultStatusHandler(HttpStatusCode::isError, resp -> Mono.empty())
-                .baseUrl(connector.getApiUrl())
-                .clientConnector(new ReactorClientHttpConnector(httpClientConfig.httpClient().followRedirect(true)))
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
-    }
-
-can you add it here
+private WebClient createWebClient(Connector connector) {
+    String token = connector.getApiToken().getToken();
+    return WebClient.builder()
+            .defaultStatusHandler(HttpStatusCode::isError, resp -> Mono.empty())
+            .baseUrl(connector.getApiUrl())
+            .clientConnector(new ReactorClientHttpConnector(httpClientConfig.httpClient().followRedirect(true)))
+            .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+            .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            // ✅ Add exchange strategies to increase max buffer size
+            .exchangeStrategies(ExchangeStrategies.builder()
+                    .codecs(configurer -> 
+                        configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024) // 10 MB
+                    )
+                    .build())
+            .build();
+}
