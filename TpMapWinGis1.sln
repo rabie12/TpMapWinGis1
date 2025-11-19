@@ -1,95 +1,21 @@
-Oui 👍 je vois exactement ce que tu veux dire — tu fais référence au service de validation d’IBAN (avec IbanFormatException, BankInfoValidationResponse, etc.) et tu veux expliquer pourquoi on ne peut pas modifier ce service pour qu’il retourne un HTTP 400 au lieu de 200, car cela casserait potentiellement d’autres intégrations existantes.
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
-Voici comment tu peux expliquer proprement la situation et justifier ta proposition (tout en reprenant ton contexte technique du code ci-dessus 👇).
+	<context:component-scan base-package="eu.olkypay.tournesol.mediator" resource-pattern="*.class"/>
 
-⸻
+	<bean name="mediatorTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
+		<property name="threadNamePrefix" value="mediator-" />
+		<property name="daemon" value="true"/>
+		<property name="poolSize" value="5"/>
+	</bean>
 
-🧠 Contexte
-
-Le service de validation d’IBAN (validateIban) est aujourd’hui exposé à plusieurs systèmes (internes et externes).
-Historiquement, il renvoie toujours un HTTP 200 OK, même lorsque l’IBAN est invalide, avec une réponse de type :
-
-{
-  "iban": "123ABC",
-  "status": "INVALID_IBAN",
-  "message": "Invalid IBAN format"
-}
-
-D’un point de vue des bonnes pratiques HTTP, il serait plus juste de retourner un HTTP 400 (Bad Request) dans ce cas, car la requête contient une donnée invalide.
-
-Cependant, ce changement pose un risque majeur de compatibilité.
-
-⸻
-
-⚠️ Pourquoi on ne peut pas changer 200 → 400 sur le service existant
-	1.	Le contrat actuel est déjà utilisé par de nombreux systèmes
-Plusieurs applications, batchs ou API consomment ce service et attendent systématiquement un code 200, même pour un IBAN invalide.
-→ Ces clients se basent uniquement sur le contenu du JSON (status = INVALID_IBAN) pour savoir si l’appel est valide ou non.
-	2.	Changer le code HTTP casserait ces intégrations
-Si on renvoie soudainement 400, certains clients :
-	•	n’analyseront plus la réponse JSON (puisqu’ils la traiteront comme une erreur),
-	•	pourraient lever des exceptions non gérées,
-	•	ou interrompre des processus métiers critiques.
-Ce serait un break-in contractuel difficile à anticiper.
-	3.	On ne connaît pas l’ensemble des consommateurs
-Il n’existe pas d’inventaire complet des systèmes qui appellent ce service.
-→ Impossible de garantir qu’aucun d’eux ne sera impacté.
-	4.	Une correction “techniquement juste” pourrait avoir un impact fonctionnel grave
-Même si le code 400 est sémantiquement correct, le risque d’instabilité est trop élevé en production.
-
-⸻
-
-✅ Proposition : nouvelle version / nouveaux endpoints conformes HTTP
-
-Plutôt que de casser le service existant, on peut :
-	1.	Garder l’endpoint actuel tel quel
-	•	Continuer à renvoyer 200 OK (comportement stable pour tous les systèmes existants).
-	•	Aucun impact, aucun risque de régression.
-	2.	Créer un nouvel endpoint “propre”
-Par exemple :
-
-POST /api/v2/iban/validate
-
-	•	Ce nouvel endpoint renverra 400 pour les IBAN invalides (avec la structure JSON déjà définie dans ton exemple).
-	•	Il respectera les bonnes pratiques HTTP et REST.
-
-	3.	Encourager progressivement la migration
-	•	Les nouveaux systèmes (ou ceux qui évoluent) pourront utiliser cette nouvelle version.
-	•	Une documentation OpenAPI (Swagger) claire indiquera les statuts possibles (200, 400, 500).
-	•	Une fois tous les clients migrés, on pourra envisager de déprécier la v1.
-
-⸻
-
-🧩 Exemple comparatif
-
-Cas d’usage	Endpoint actuel (/v1)	Nouveau endpoint (/v2)
-IBAN valide	HTTP 200 + "status": "VALID"	HTTP 200 + "status": "VALID"
-IBAN invalide	HTTP 200 + "status": "INVALID_IBAN"	HTTP 400 + "status": "INVALID_IBAN"
-Erreur interne	HTTP 200 ou 500 selon contexte	HTTP 500 + "error": "..."
+</beans>
 
 
-⸻
-
-🧱 Avantages de cette approche
-	•	🔒 Pas de rupture pour les systèmes existants.
-	•	✅ Respect des standards HTTP pour les nouveaux consommateurs.
-	•	⚙️ Migration progressive et contrôlée.
-	•	🧾 Documentation claire et versioning propre (/v2).
-	•	🕵️‍♂️ Visibilité sur l’adoption via monitoring des appels par endpoint.
-
-⸻
-
-🗣️ Formulation possible à dire ou écrire dans un ticket / réunion
-
-Le service actuel est exposé à plusieurs systèmes et renvoie actuellement toujours un HTTP 200, même en cas d’erreur fonctionnelle.
-
-Modifier ce comportement pour renvoyer un 400 “correct” serait risqué, car cela casserait potentiellement les intégrations existantes (nous n’avons pas la liste complète des consommateurs).
-
-Pour éviter tout break-in, je propose d’introduire un nouvel endpoint pour les nouveaux systèmes qui respecte les standards HTTP (400 en cas de donnée invalide, 200 sinon).
-
-Cela permettra de migrer progressivement sans impacter la production actuelle.
-
-⸻
-
-Souhaites-tu que je t’écrive aussi la version @ControllerAdvice (pour gérer proprement le IbanFormatException et les erreurs globalement) — tout en gardant ton idée de compatibilité via deux endpoints (/v1 et /v2) ?
-Je peux te générer la version prête à copier-coller.
+thi is the configuration of mediatorTaskScheduler
