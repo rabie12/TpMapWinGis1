@@ -1,0 +1,5 @@
+{
+  "timeStamp": "2025-11-19T13:15:03.742873563",
+  "message": "200 OK from GET https://registre-national-entreprises.inpi.fr/api/companies/380129866, but response failed with cause: org.springframework.core.io.buffer.DataBufferLimitException: Exceeded limit on max bytes to buffer : 262144",
+  "httpStatus": 400
+}
