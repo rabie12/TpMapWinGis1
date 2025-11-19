@@ -21,3 +21,4 @@
         }
         return findInformationCompany(companyData.getBody(), attachments.getBody());
     }
+this is my webclient config to call the api maybe its due to to size of what api return 
