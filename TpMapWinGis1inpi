@@ -1,37 +1,91 @@
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:73:13
-java: cannot find symbol
-  symbol: method getDocuments()
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:74:17
-java: cannot find symbol
-  symbol:   method setLegalEntityParent(eu.olkypay.business_registry.model.company.LegalEntity)
-  location: variable document of type eu.olkypay.business_registry.model.company.Document
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:78:13
-java: cannot find symbol
-  symbol: method getAlerts()
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:79:14
-java: cannot find symbol
-  symbol:   method setLegalEntity(eu.olkypay.business_registry.model.company.LegalEntity)
-  location: variable alert of type eu.olkypay.business_registry.model.Alert
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:82:13
-java: cannot find symbol
-  symbol: method getRepresentatives()
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:83:23
-java: cannot find symbol
-  symbol:   method setLegalEntityParent(eu.olkypay.business_registry.model.company.LegalEntity)
-  location: variable representative of type eu.olkypay.business_registry.model.company.Representative
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:86:13
-java: cannot find symbol
-  symbol: method getSecondaryOffices()
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:87:20
-java: cannot find symbol
-  symbol:   method setParentCompany(eu.olkypay.business_registry.model.company.LegalEntity)
-  location: variable legalEntity of type eu.olkypay.business_registry.model.company.LegalEntity
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:90:13
-java: cannot find symbol
-  symbol: method getBeneficialOwners()
-C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\model\company\LegalEntity.java:91:24
-java: cannot find symbol
-  symbol:   method setLegalEntityParent(eu.olkypay.business_registry.model.company.LegalEntity)
-  location: variable beneficialOwner of type eu.olkypay.business_registry.model.company.BeneficialOwner
+Yes — 100% this is a Lombok problem, not a MapStruct problem and not a Java problem.
 
-now i have this i have impression that i dont have lombook correctly configured on my ide
+Your errors all say:
+
+cannot find symbol: getDocuments()
+cannot find symbol: getAlerts()
+cannot find symbol: getRepresentatives()
+cannot find symbol: getSecondaryOffices()
+cannot find symbol: getBeneficialOwners()
+
+➜ These are all Lombok-generated getters, which means your IDE is not generating Lombok methods.
+
+⸻
+
+✅ Why this happens
+
+Your pom.xml is correct — Lombok is included:
+
+<dependency>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok</artifactId>
+    <optional>true</optional>
+</dependency>
+
+But IntelliJ finally needs a plugin + annotation processing enabled.
+
+When Lombok is not processed, your model classes contain no getters, so MapStruct and your own code cannot find them → compiler errors.
+
+⸻
+
+✅ Fix Lombok in IntelliJ (VERY IMPORTANT)
+
+✔️ Step 1: Enable Annotation Processing
+
+Go to:
+
+File → Settings → Build, Execution, Deployment → Compiler → Annotation Processors
+
+Enable:
+
+✔️ “Enable annotation processing”
+✔️ “Obtain processors from classpath”
+
+⸻
+
+✔️ Step 2: Install Lombok Plugin
+
+Go to:
+
+File → Settings → Plugins → Marketplace
+
+Search → “Lombok”
+
+Install + Restart IDE
+
+⸻
+
+✔️ Step 3: Rebuild your project
+
+mvn clean install
+
+or inside IntelliJ:
+
+Build → Rebuild Project
+
+
+⸻
+
+🔥 After fixing Lombok, all getters/setters will appear
+
+Your classes like:
+
+@Data
+public class LegalEntity { ... }
+
+will correctly generate:
+	•	getDocuments()
+	•	getAlerts()
+	•	getRepresentatives()
+	•	getBeneficialOwners()
+	•	getSecondaryOffices()
+	•	setLegalEntityParent()
+	•	setParentCompany()
+
+And the errors will disappear.
+
+⸻
+
+If you want, send me your LegalEntity class
+
+I can confirm exactly which Lombok annotations you need.
