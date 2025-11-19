@@ -1,5 +1,23 @@
-{
-  "timeStamp": "2025-11-19T13:15:03.742873563",
-  "message": "200 OK from GET https://registre-national-entreprises.inpi.fr/api/companies/380129866, but response failed with cause: org.springframework.core.io.buffer.DataBufferLimitException: Exceeded limit on max bytes to buffer : 262144",
-  "httpStatus": 400
-}
+    @Override
+    public CompanyDTO getData(Connector connector, String siren) {
+        WebClient webClient = createWebClient(connector);
+        ResponseEntity<PreRootDTO> companyData = webClient.get()
+                .uri("/companies/{siren}", siren)
+                .retrieve()
+                .toEntity(PreRootDTO.class)
+                .block();
+        if (companyData.getStatusCode().is4xxClientError() || companyData.getStatusCode().is5xxServerError()) {
+            log.warn(" Url  \"{}/companies/{} \" returns {} ", connector.getApiUrl(), siren, companyData.getStatusCode());
+            return new CompanyDTO();
+        }
+
+        ResponseEntity<AttachmentsDTO> attachments = webClient.get()
+                .uri("/companies/{siren}/attachments", siren)
+                .retrieve()
+                .toEntity(AttachmentsDTO.class)
+                .block();
+        if (attachments.getStatusCode().is4xxClientError() || attachments.getStatusCode().is5xxServerError()) {
+            log.warn(" Url  \"{}/companies/{}/attachments \" returns {} ", connector.getApiUrl(), siren, attachments.getStatusCode());
+        }
+        return findInformationCompany(companyData.getBody(), attachments.getBody());
+    }
