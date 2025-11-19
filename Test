@@ -1,25 +1,259 @@
-Voici 10 grandes entreprises françaises et leur numéro d’immatriculation (SIREN / RCS) :
+package eu.olkypay.tournesol.mediator;
 
-Entreprise	Numéro RCS (SIREN)
-Orange	380 129 866  ￼
-LVMH	775 670 417  ￼
-Danone	552 032 534  ￼
-Schneider Electric	421 106 709  ￼
-TotalEnergies	542 051 180  ￼
-Renault	780 129 987  ￼
-L’Oréal	632 012 100  ￼
-Sanofi	552 074 051  ￼
-Vinci	552 037 806  ￼
-Engie	542 107 651  ￼
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
-Si tu veux d’autres entreprises (start-ups, PME, etc.), je peux te donner leurs RCS aussi.
+import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
+import eu.olkypay.framework.spring.ApplicationContextObjectSupport;
+import eu.olkypay.framework.util.Strings;
+import eu.olkypay.framework.util.ToStringBuilder;
+import eu.olkypay.framework.util.Uids;
+import eu.olkypay.tournesol.api.BusinessDayApiService;
+import eu.olkypay.tournesol.datamodel.bb.bom.MediatorConfiguration;
+import eu.olkypay.tournesol.datamodel.bb.bom.MediatorEntity;
+import eu.olkypay.tournesol.datamodel.bb.bom.MediatorExecution;
+import eu.olkypay.tournesol.datamodel.bb.service.MediatorExecutionService;
+import eu.olkypay.mail.service.Mailer;
 
-{
-  "timeStamp": "2025-11-18T16:20:25.3931865",
-  "message": "200 OK from GET https://registre-national-entreprises.inpi.fr/api/companies/780129987, but response failed with cause: org.springframework.core.io.buffer.DataBufferLimitException: Exceeded limit on max bytes to buffer : 262144",
-  "httpStatus": 400
+/**
+ * @author <a href="mailto:j.militello@olky.eu">Jacques Militello</a>
+ */
+@Component(MediatorExecutionFrame.BEAN_NAME)
+@Scope("prototype")
+final class MediatorExecutionFrame extends ApplicationContextObjectSupport implements Runnable {
+
+	/**
+	 * SLF4j Logger.
+	 */
+	private static final Logger LOGGER = LoggerFactory.getLogger(MediatorExecutionFrame.class);
+
+	/**
+	 * Spring bean name.
+	 */
+	public static final String BEAN_NAME = "mediatorExecutionFrame";
+
+	private final Mediator _mediator;
+
+	private final MediatorEntity _mediatorEntity;
+
+	private final MediatorConfiguration _configuration;
+
+	private final Object _jobs;
+
+	@Resource(name = MediatorExecutionService.BEAN_NAME)
+	private MediatorExecutionService _mediatorExecutionService;
+
+	@Resource(name = BusinessDayApiService.BEAN_NAME)
+	private BusinessDayApiService businessDayService;
+	
+	@Resource(name = Mailer.BEAN_NAME)
+    private Mailer _mailer;
+	
+	@Value("#{configurationProperties.get('mediator_job')}")
+    private Map<String, String> _properties;
+	
+	public static final String TO_PROPERTY = "error_mail";
+	public static final String DEFAULT_FROM = "no-reply@olky.eu";
+
+	MediatorExecutionFrame(Mediator mediator, MediatorEntity mediatorEntity, MediatorConfiguration configuration, Object jobs) {
+		_mediatorEntity = mediatorEntity;
+		_configuration = configuration;
+		_mediator = mediator;
+		_jobs = jobs;
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public void run() {
+		run(false);
+	}
+
+	public void run(boolean manual) {
+		if ((_configuration.getOnDayOff() == null && businessDayService.isHoliday(LocalDate.now())) || (_configuration.getOnDayOff() != null
+				&& _configuration.getOnDayOff() == false && businessDayService.isHoliday(LocalDate.now()))) {
+			LOGGER.info("Cannot launch configuration({}) because today is day off", _configuration.getId());
+			return;
+		}
+		if (!_mediator.isProcessTypeAvailable(_configuration.getProcessType())) {
+
+			LOGGER.info("Cannot launch configuration({}) because process type {} locked", _configuration.getId(),
+					_configuration.getProcessType());
+			return;
+		}
+		_mediator.lockProcessType(_configuration.getProcessType());
+		try {
+			doRun(manual);
+		} finally {
+			_mediator.freeProcessType(_configuration.getProcessType());
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private void doRun(boolean manual) {
+
+		final byte[] uid = Uids.generate();
+
+		LOGGER.info("Mediator uid [{}]", Strings.valueOf(uid));
+		
+		try {
+			Mediator.push(uid);
+			/*
+			 * Init context and set parameters
+			 */
+			MediatorContext context;
+			if (_configuration.getContextBean() == null) {
+				context = getApplicationContext().getBean(MapMediatorContext.BEAN_NAME, MediatorContext.class);
+			} else {
+				context = getApplicationContext().getBean(_configuration.getContextBean(), MediatorContext.class);
+			}
+			launch(_jobs, context, uid, manual);
+		} finally {
+			Mediator.remove();
+		}
+
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void launch(Object obj, MediatorContext mediatorContext, byte[] uid, boolean manual) {
+		if (obj instanceof List) {
+			launchGroup((List) obj, mediatorContext, uid, manual);
+		} else if (obj instanceof JobCallWrapper) {
+			try {
+				launchJob((JobCallWrapper) obj, mediatorContext, uid, manual);
+			} catch (JobExecutionException cause) {
+				LOGGER.error("Failed to excecute Job", cause);
+			}
+		}
+	}
+
+	private void launchJob(JobCallWrapper jcw, MediatorContext mediatorContext, byte[] uid, boolean manual) throws JobExecutionException {
+		LOGGER.info("Launch job [{}] for configuration({})", jcw.getBeanName(), _configuration.getId());
+
+		MediatorExecution me = new MediatorExecution();
+		me.setStartDate(LocalDateTime.now());
+		me.setConfiguration(_configuration);
+		me.setLocalBean(jcw.getBeanName());
+		me.setMediatorEntity(_mediatorEntity);
+		me.setStatus(1);
+		me.setManual(manual);
+		me.setTxUid(uid);
+		try {
+			MediatorJob mediatorJob = (MediatorJob) getApplicationContext().getBean(jcw.getBeanName());
+			mediatorJob.doJob(mediatorContext, jcw.getParams());
+			LOGGER.info("Job [{}] finished.", jcw.getBeanName());
+		} catch (Exception ex) {
+			me.setException(translateException(ex));
+			me.setStatus(2);
+			LOGGER.error("Job [{}] has failed", jcw.getBeanName(), ex);
+			
+			// envoyer email jobfailed :
+			String from = DEFAULT_FROM;
+			String to = _properties.get(TO_PROPERTY);
+	        if (to == null) {
+	            LOGGER.error("No property \"#{mediator_job['error_mail']}\", cannot send error mail mail");
+	        } else {
+	            try {
+	            	String subject = "Erreur execution job " + jcw.getBeanName();
+	            	//String body = "Message : " + ex.getMessage();
+	                _mailer.sendReport(from, to.split(";"), subject, ex.toString(), null);
+	            } catch (Exception e) {
+	                LOGGER.error("Cannot send error mail : ", e);
+	            }
+	        }
+			
+			throw new JobExecutionException(ex);
+		} finally {
+			me.setEndDate(LocalDateTime.now());
+			if (mediatorContext.logStatus()) {
+				try {
+					me.setMessage(mediatorContext.logMessage());
+					_mediatorExecutionService.save(me);
+				} catch (Exception cause) {
+					LOGGER.error("Failed to save [" + me + "]", cause);
+				}
+			}
+		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	private void launchGroup(List list, MediatorContext mediatorContext, byte[] uid, boolean manual) {
+		for (int i = 0, n = list.size(); i < n; i++) {
+			if (list.get(i) instanceof JobCallWrapper) {
+				try {
+					launchJob((JobCallWrapper) list.get(i), mediatorContext, uid, manual);
+				} catch (JobExecutionException e) {
+					LOGGER.error("Error while executing: {}", ((JobCallWrapper) list.get(i)).getBeanName(), e);
+					break;
+				}
+			} else if (list.get(i) instanceof List) {
+				launchGroup((List) list.get(i), mediatorContext, uid, manual);
+			}
+		}
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this, false).append("configuration", _configuration).append("entity", _mediatorEntity).getString();
+	}
+
+	private static String translateException(Exception ex) {
+		return ex.getMessage(); // TODO
+	}
+
 }
 
-i have this issue after calling the external api is it related to the number request that i ve made in less than one hour
+
+i have this meidator configuration :
+
+1	ORDRES	1	TOURNESOL	0 0 2 ? * MON-FRI	Selection des ordres + PACS + send via BB PACS.003	{{#orderManager('STANDARD', 'false'),#pacsGeneratorJob('STANDARD', 'false')},#cpJob(),#orderNotClearableJob(),#solrIndexationJob()}		0	1
+4	INTEGRATION	1	TOURNESOL	0 30 3 ? * MON-FRI	Intégration des impayés (PACS.002 & PACS.004 venant de BB)	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	0
+7	LETTRAGE	1	TOURNESOL	0 30 4 ? * MON-FRI	Lettrage des ordres	{#batchLettrageJob()}		0	1
+10	INTEGRATION	1	TOURNESOL	0 30 8 ? * MON-FRI	Intégration des impayés (PACS.002 & PACS.004 venant de BB)	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	0
+13	INTEGRATION	1	TOURNESOL	0 30 15 ? * MON-FRI	Intégration des impayés (PACS.002 & PACS.004 venant de BB)	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	0
+16	ORDRES	1	TOURNESOL	0 0 10 ? * MON-FRI	Selection des ordres + PACS + send via BB PACS.003	{{#orderManager('STANDARD', 'false'),#pacsGeneratorJob('STANDARD', 'false')},#cpJob(),#orderNotClearableJob(),#solrIndexationJob()}		0	1
+17	INTEGRATION	1	TOURNESOL	0 30 11 ? * MON-FRI	Intégration des impayés (PACS.002 & PACS.004 venant de BB)	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob(),#solrIndexationJob(),#okFileCreatorJob (),#cpJob()} 		0	0
+18	PAYZEN_SEND_REQUEST_FILE	2	TOURNESOL	0 0 6/12 ? * MON-FRI	Création et upload du fichier de requête Payzen	{#payzenRequestJob()}		0	1
+19	PAYZEN_PROCESS_RESPONSE_FILE	2	TOURNESOL	0 0 9/15 ? * MON-FRI	Téléchargement et traitement du fichier de réponse Payzen	{#payzenResponseProcessJob()}		0	1
+25	INTEGRATION	1	TOURNESOL	0 30 17 ? * MON-FRI	Intégration des impayés (PACS.002 & PACS.004 venant de BB)	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	0
+28	ORDRES	1	TOURNESOL	0 10 17 ? * MON-FRI	Selection des ordres + PACS + send via BB PACS.003	{{#orderManager('STANDARD', 'true'),#pacsGeneratorJob('STANDARD', 'true')},#cpJob(),#orderNotClearableJob(),#solrIndexationJob()}		0	1
+31	INTEGRATION	1	TOURNESOL	0 30 18 ? * MON-FRI	Intégration des impayés (PACS.002 & PACS.004 venant de BB)	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	0
+34	ORDRES	1	TOURNESOL	0 0 20 ? * MON-FRI	Selection des ordres + PACS + send via BB PACS.003	{{#orderManager('STANDARD', 'true'),#pacsGeneratorJob('STANDARD', 'true')},#cpJob(),#orderNotClearableJob(),#solrIndexationJob()}		0	1
+42	SWIFT_WS_IMPORT	3	TOURNESOL	0 30 5 ? * MON-FRI	Téléchargement du fichier IBAN V3+ et traitement du dit fichier	{#ibanV3PlusDailyJob()}		0	1
+45	STATEMENTS_OF_BANK_ACCOUNT	10	TOURNESOL	0 15 0 ? * TUE-SAT	Génération des relevés de compte des suppliers	{#statementOfBankAccountJob(),#statementFileGenerationJob(),#cpJob()}		0	1
+46	SWIFT_WS_IMPORT	2	TOURNESOL	0 0 8 1-7 * SUN	Téléchargement du fichier IBAN V3+ FUll et Structure et  et traitement des fichiers	{#ibanV3PlusMonthlyJob()}		0	1
+47	STATEMENTS_OF_BANK_ACCOUNT_MONTH	10	TOURNESOL	0 30 2 1-7 * TUE-SAT	Génération des relevés de compte mensuels des suppliers	{#sobamJob(),#sobamFileGenerationJob()}		1	1
+53	SCT_ORDRES	3	TOURNESOL	0 30 10 ? * MON-FRI	Selection des ordres SCT + PACS + send via BB PACS.008	{#sctJob(),#solrIndexationJob(),#okFileCreatorJob (),#cpJob(),#reportMailJob()}		0	0
+60	MILOU EXTRACTION	1	TOURNESOL	0 * * ? * MON-FRI	MILOU EXTRACTION	{#milouIntegratorJob()}		0	0
+83	PACS003 IN  	1	TOURNESOL	0 15 5 ? * MON-FRI	Traitement pacs003 entrants	{#pacs003TransactionProcessorJob(),#okFileCreatorJob(),#cpJob(),#reportMailJob()}		0	1
+84	Export_Carte 	1	TOURNESOL	0 00 17 ? * MON-FRI	Export Cartes	{#expiredCardJob()}		0	1
+92	SCT_ORDRES	3	TOURNESOL	0 30 16 ? * MON-FRI	Selection des ordres SCT + PACS + send via BB PACS.008 	{#sctJob(),#solrIndexationJob(),#okFileCreatorJob (),#cpJob(),#reportMailJob()}		0	0
+93	SWIFT_MANUAL_DELTA_IMPORT	2	TOURNESOL	0 0 18 1-7 * SUN	Traitements des fichiers locaux IBANPLUS V3 DELTA	{#ibanV3PlusDeltaBackupJob()}		0	0
+94	MARKETPLACE_TRANSACTION	3	TOURNESOL	0 30 5 1 * * 	Traitements des transaction marketplace	{#marketplaceTransactionJob()}		1	0
+95	MARKETPLACE_TRANSACTION_DAILY	3	TOURNESOL	0 30 09 ? * *	Traitements des transaction marketplace daily	{#marketplaceTransactionDailyJob()} 		1	0
+101	SUPPLIER_BACK_OFFICE_GROUP	2	TOURNESOL	0 30 22 ? * *	Recuperation groupe back office	{#supplierGroupJob(false)}		0	1
+102	ALL_SUPPLIER_BACK_OFFICE_GROUP	2	TOURNESOL	0 45 22 1 * *	Recuperation groupe back office	{#supplierGroupJob(true)}		0	0
+103	CHECK_AUTO_ORDER	2	TOURNESOL	0 45 09 ? * MON-FRI	Email liste auto orders	{#checkAutoOrderJob()}		0	1
+104	CHECK_AUTO_ORDER	2	TOURNESOL	0 45 15 ? * MON-FRI	Email liste auto orders	{#checkAutoOrderJob()}		0	1
+105	UPDATE_RULEBOOK	2	TOURNESOL	10 30 3 ? * SUN	Update pacs rulebook	{#updateRuleBookJob()}		0	1
+109	INTEGRATION	1	TOURNESOL	0 0 * ? * MON-FRI	Intégration des PACS	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	0
+110	SCT_ORDRES	3	TOURNESOL	0 15 * ? * MON-FRI	Selection des ordres SCT + PACS + send via BB PACS.008	{#sctJob(),#solrIndexationJob(),#okFileCreatorJob (),#cpJob(),#reportMailJob()}		0	0
+111	INTEGRATION	1	TOURNESOL	0 0 5-9 ? * MON-FRI	Intégration des PACS	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	1
+112	INTEGRATION	1	TOURNESOL	0 0 11-23 ? * MON-FRI	Intégration des PACS	{#pacsIntegratorContextInitializerJob(),#cpJob(),#pacsIntegratorJob()}		0	1
+113	SCT_ORDRES	3	TOURNESOL	0 15 5-9 ? * MON-FRI	Selection des ordres SCT + PACS + send via BB PACS.008	{#sctJob(),#solrIndexationJob(),#okFileCreatorJob (),#cpJob(),#reportMailJob()}		0	1
+114	SCT_ORDRES	3	TOURNESOL	0 15 11-23 ? * MON-FRI	Selection des ordres SCT + PACS + send via BB PACS.008	{#sctJob(),#solrIndexationJob(),#okFileCreatorJob (),#cpJob(),#reportMailJob()}		0	1
+
+
+
+i want you to give me to cut it, i have the same app twice, on my dev server one in java 17 the second is java 8, and i want to cut off  one of them because they run this job twice and my lastest app have cpu issu because theuy run the job on the samti time and i want you to summurize this job of webbanking and give me their utility
