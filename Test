@@ -229,3 +229,85 @@ If it’s a legacy app, it’s safer.
 ✔ Analyze CPU usage based on your logs
 
 Just tell me.
+Here is the cleanest and safest way to disable ALL mediator jobs on the Java 8 instance only, without touching the Java 17 instance.
+
+⸻
+
+✅ 1. Open the Java 8 application configuration
+
+Locate:
+
+application.properties
+
+or
+
+application-dev.properties
+
+(depending on your environment setup)
+
+⸻
+
+✅ 2. Add this line to disable all mediator jobs
+
+Just add:
+
+mediator.enabled=false
+
+If your app does not explicitly use this property, then add the Spring scheduler disable:
+
+spring.task.scheduling.enabled=false
+
+⚠️ With these two lines, the Java 8 instance will start normally, but no job will run.
+
+⸻
+
+✅ 3. Optional: disable only MediatorExecutionFrame
+
+If you want to be 100% sure, you can override the bean in the Java 8 environment:
+
+In your Java 8 application-dev.xml or config class:
+
+@Bean(name = "mediatorExecutionFrame")
+public MediatorExecutionFrame disabledMediatorExecutionFrame() {
+    return null;
+}
+
+But the properties approach is enough.
+
+⸻
+
+⚠️ Very important
+
+Do NOT disable jobs inside the database table, because both apps share the same DB, and you want Java 17 to continue running the jobs normally.
+
+So we disable only the Java 8 scheduler, not the DB config.
+
+⸻
+
+✅ 4. After restarting Java 8, verify
+
+Check logs:
+
+INFO ... Scheduler disabled because mediator.enabled=false
+
+or
+no log entries like:
+
+Launching job [...]
+Mediator uid [...]
+
+
+⸻
+
+🎉 Done!
+
+Your Java 8 instance now stops executing all WebBanking jobs while your Java 17 instance continues normally.
+
+⸻
+
+If you want, I can:
+	•	Show you how to validate which instance still runs the jobs
+	•	Provide a health check or unlock mechanism
+	•	Help you migrate all Java 8 jobs to Java 17
+
+Just tell me!
