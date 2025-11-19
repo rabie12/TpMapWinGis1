@@ -9,3 +9,10 @@
 
 
                     Optional<LegalFormINPIMatching> legalFormINPIMatchingRepresentatives = legalFormINPIMatchingRepository.findById(Integer.valueOf(representativeDTO.getLegalEntity().getLegalForm())); c'est dans cet ligne que ça casse
+
+
+RepresentativeDTO(role=PRESIDENT_DE_SAS, naturalPerson=null, legalEntity=CompanyDTO(identifier=882723562, rcs=882723562, legalName=ZOLDYCK, legalForm=Société par actions simplifiée, status=null, capital=null, activityCode=null, registrationDate=null, registrationCountry=FRANCE, address=AddressDTO(addressLine1=26 rue Dagorno, addressLine2=null, addressLine3=null, zipCode=75012, city=Paris, country=FRANCE), representatives=[], beneficialOwners=[], secondaryOffices=[], principalOffice=null, legalEntityIdentifier=null, intracommunityVATNumber=null, documents=[], alerts=[]))
+
+
+
+c'est  la value du representativeDTO je fais de la maintenance voili le contenu de la table ou on fait la recherche
