@@ -1,73 +1,381 @@
-Absolutely — since you want to replace these explicit constructors with the builder pattern, here’s how you can rewrite your code using CompanyDTO.builder() instead of new CompanyDTO(...).
+C:\Users\RHABACHI\IdeaProjects\business-registry\src\main\java\eu\olkypay\business_registry\mapper\CompanyMapper.java:18:16
+java: Ambiguous constructors found for creating eu.olkypay.business_registry.dto.company.CompanyDTO: CompanyDTO(java.lang.String, java.lang.String, java.lang.String), CompanyDTO(java.lang.String). Either declare parameterless constructor or annotate the default constructor with an annotation named @Default.
 
-⸻
 
-Assuming CompanyDTO has Lombok’s @Builder:
+package eu.olkypay.business_registry.mapper;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class CompanyDTO {
-    private String identifier;
-    private String legalName;
-    private String intracommunityVATNumber;
-    // other fields...
+import eu.olkypay.business_registry.dto.AlertDTO;
+import eu.olkypay.business_registry.dto.company.*;
+import eu.olkypay.business_registry.model.Alert;
+import eu.olkypay.business_registry.model.company.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.NullValueCheckStrategy;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+@Mapper(componentModel = "spring", nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS)
+public interface CompanyMapper {
+
+    CompanyDTO legalEntityToCompanyDTO(LegalEntity legalEntity);
+
+    LegalEntity companyDTOToLegalEntity(CompanyDTO companyDTO);
+
+    default LegalEntity companyDtoToCompany(LegalEntity company, CompanyDTO companyDTO) {
+
+        if (company.getIdentifier() == null && companyDTO.getIdentifier() != null) {
+            company.setIdentifier(companyDTO.getIdentifier());
+        }
+        if (company.getRcs() == null && companyDTO.getRcs() != null) {
+            company.setRcs(companyDTO.getRcs());
+        }
+        if (company.getStatus() == null && companyDTO.getStatus() != null) {
+            company.setStatus(companyDTO.getStatus());
+        }
+        if (company.getLegalName() == null && companyDTO.getLegalName() != null) {
+            company.setLegalName(companyDTO.getLegalName());
+        }
+        if (company.getLegalForm() == null && companyDTO.getLegalForm() != null) {
+            company.setLegalForm(companyDTO.getLegalForm());
+        }
+        if (company.getCapital() == null && companyDTO.getCapital() != null) {
+            company.setCapital(companyDTO.getCapital());
+        }
+        if (company.getActivityCode() == null && companyDTO.getActivityCode() != null) {
+            company.setActivityCode(companyDTO.getActivityCode());
+        }
+        if (company.getRegistrationDate() == null && companyDTO.getRegistrationDate() != null) {
+            company.setRegistrationDate(companyDTO.getRegistrationDate());
+        }
+        if (company.getRegistrationCountry() == null && companyDTO.getRegistrationCountry() != null) {
+            company.setRegistrationCountry(companyDTO.getRegistrationCountry());
+        }
+        if (company.getLegalEntityIdentifier() == null && companyDTO.getLegalEntityIdentifier() != null) {
+            company.setLegalEntityIdentifier(companyDTO.getLegalEntityIdentifier());
+        }
+        if (company.getIntracommunityVATNumber() == null && companyDTO.getIntracommunityVATNumber() != null) {
+            company.setIntracommunityVATNumber(companyDTO.getIntracommunityVATNumber());
+        }
+        if (company.getAddress() == null && companyDTO.getAddress() != null) {
+            company.setAddress(addressDtoToAdress(companyDTO.getAddress()));
+        }
+        if ((company.getRepresentatives() == null || company.getRepresentatives().isEmpty()) && companyDTO.getRepresentatives() != null) {
+            for (RepresentativeDTO representativeDTO : companyDTO.getRepresentatives()) {
+                company.addRepresentative(representativeDtoToRepresentative(representativeDTO));
+            }
+        }
+        if ((company.getBeneficialOwners() == null || company.getBeneficialOwners().isEmpty()) && companyDTO.getBeneficialOwners() != null) {
+            for (BeneficialOwnerDTO beneficialOwnerDTO : companyDTO.getBeneficialOwners()) {
+                company.addBeneficialOwner(beneficialOwnerDtoToBeneficialOwner(beneficialOwnerDTO));
+            }
+        }
+        if ((company.getSecondaryOffices() == null || company.getSecondaryOffices().isEmpty()) && companyDTO.getSecondaryOffices() != null) {
+            for (CompanyDTO companyDto : companyDTO.getSecondaryOffices()) {
+                company.addSecondaryOffice(companyDTOToLegalEntity(companyDto));
+            }
+        }
+        if (companyDTO.getDocuments() != null) {
+            for (DocumentDTO documentDTO : companyDTO.getDocuments()) {
+                company.addDocument(documentDtoToDocument(documentDTO));
+            }
+        }
+        if (companyDTO.getAlerts() != null) {
+            for (AlertDTO alertDTO : companyDTO.getAlerts()) {
+                company.addAlert(alertDTOToAlert(alertDTO));
+            }
+        }
+        return company;
+    }
+
+    default Address addressDtoToAdress(AddressDTO addressDTO) {
+        Address address = new Address();
+        if (Objects.equals(addressDTO.getAddressLine1(), "")) {
+            address.setAddressLine1(null);
+        }
+        else {
+            address.setAddressLine1(addressDTO.getAddressLine1());
+        }
+        address.setAddressLine2(addressDTO.getAddressLine2());
+        address.setAddressLine3(addressDTO.getAddressLine3());
+        address.setCountry(addressDTO.getCountry());
+        address.setCity(addressDTO.getCity());
+        address.setZipCode(addressDTO.getZipCode());
+        return address;
+    }
+
+    default Representative representativeDtoToRepresentative(RepresentativeDTO representativeDTO) {
+        Representative representative = new Representative();
+        if (representativeDTO.getRole() != null) {
+            representative.setRole(representativeDTO.getRole());
+            if (representativeDTO.getNaturalPerson() != null) {
+                representative.setNaturalPerson(naturalPersonDtoToNaturalPerson(representativeDTO.getNaturalPerson()));
+            }
+            else if (representativeDTO.getLegalEntity() != null) {
+                representative.setLegalEntity(companyDTOToLegalEntity(representativeDTO.getLegalEntity()));
+            }
+        }
+        return representative;
+    }
+
+    default Document documentDtoToDocument(DocumentDTO documentDTO) {
+        Document document = new Document();
+        document.setIdentifier(documentDTO.getIdentifier());
+        document.setType(documentDTO.getType());
+        document.setName(documentDTO.getName());
+        document.setCreationDate(documentDTO.getCreationDate());
+        document.setUpdatedDate(documentDTO.getUpdatedDate());
+        document.setDetails(documentDTO.getDetails());
+        return document;
+    }
+
+    default Alert alertDTOToAlert(AlertDTO alertDTO) {
+        Alert alert = new Alert();
+        alert.setId(alertDTO.getId());
+        alert.setOrigin(alertDTO.getOrigin());
+        alert.setType(alertDTO.getType());
+        alert.setContent(alertDTO.getContent());
+        alert.setCreatedAt(alertDTO.getCreatedAt());
+        return alert;
+    }
+
+    default BeneficialOwner beneficialOwnerDtoToBeneficialOwner(BeneficialOwnerDTO beneficialOwnerDTO) {
+        BeneficialOwner beneficialOwner = new BeneficialOwner();
+        beneficialOwner.setPercentageOfOwnership(beneficialOwnerDTO.getPercentageOfOwnership());
+        beneficialOwner.setNatureOfOwnership(beneficialOwnerDTO.getNatureOfOwnership());
+        if (beneficialOwnerDTO.getNaturalPerson() != null) {
+            beneficialOwner.setNaturalPerson(naturalPersonDtoToNaturalPerson(beneficialOwnerDTO.getNaturalPerson()));
+        }
+        if (beneficialOwnerDTO.getLegalEntity() != null) {
+            beneficialOwner.setLegalEntity(companyDTOToLegalEntity(beneficialOwnerDTO.getLegalEntity()));
+        }
+        beneficialOwner.setStartDate(beneficialOwnerDTO.getStartDate());
+        beneficialOwner.setEndDate(beneficialOwnerDTO.getEndDate());
+        return beneficialOwner;
+    }
+
+    default NaturalPerson naturalPersonDtoToNaturalPerson(NaturalPersonDTO naturalPersonDTO) {
+        NaturalPerson naturalPerson = new NaturalPerson();
+        naturalPerson.setFirstName(naturalPersonDTO.getFirstName());
+        naturalPerson.setLastName(naturalPersonDTO.getLastName());
+        naturalPerson.setMaidenName(naturalPersonDTO.getMaidenName());
+        naturalPerson.setBirthDate(naturalPersonDTO.getBirthDate());
+        naturalPerson.setBirthCity(naturalPersonDTO.getBirthCity());
+        naturalPerson.setBirthCountry(naturalPersonDTO.getBirthCountry());
+        naturalPerson.setNationality(naturalPersonDTO.getNationality());
+        if (naturalPersonDTO.getAddress() != null) {
+            naturalPerson.setAddress(addressDtoToAdress(naturalPersonDTO.getAddress()));
+        }
+        return naturalPerson;
+    }
+
 }
 
+package eu.olkypay.business_registry.dto.company;
 
-⸻
+import eu.olkypay.business_registry.dto.AlertDTO;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-Original code:
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
-new CompanyDTO(data.getRelationships().getPerson().getData().getId());
-
-CompanyDTO companyDTO = new CompanyDTO("793115320", "OLKY PAYMENT SERVICE PROVIDER S.A", "FR89793115320");
-LegalEntity company = new LegalEntity();
-CompanyDTO expectedCompany = new CompanyDTO("793115320", "OLKY PAYMENT SERVICE PROVIDER S.A", "FR89793115320");
-LegalEntity expectedLegalEntity = new LegalEntity("793115320", "OLKY PAYMENT SERVICE PROVIDER S.A", "FR89793115320");
-
-
-⸻
-
-Rewritten with builder:
-
-// Single identifier
-CompanyDTO singleIdCompanyDTO = CompanyDTO.builder()
-        .identifier(data.getRelationships().getPerson().getData().getId())
-        .build();
-
-// Full company info
-CompanyDTO companyDTO = CompanyDTO.builder()
-        .identifier("793115320")
-        .legalName("OLKY PAYMENT SERVICE PROVIDER S.A")
-        .intracommunityVATNumber("FR89793115320")
-        .build();
-
-// Expected company for tests
-CompanyDTO expectedCompany = CompanyDTO.builder()
-        .identifier("793115320")
-        .legalName("OLKY PAYMENT SERVICE PROVIDER S.A")
-        .intracommunityVATNumber("FR89793115320")
-        .build();
-
-// LegalEntity examples (if you also want builder for that)
-LegalEntity expectedLegalEntity = LegalEntity.builder()
-        .identifier("793115320")
-        .legalName("OLKY PAYMENT SERVICE PROVIDER S.A")
-        .intracommunityVATNumber("FR89793115320")
-        .build();
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class CompanyDTO {
+    private String identifier;
+    private String rcs;
+    private String legalName;
+    private String legalForm;
+    private String status;
+    private Long capital;
+    private String activityCode;
+    private LocalDate registrationDate;
+    private String registrationCountry;
+    private AddressDTO address;
+    private List<RepresentativeDTO> representatives = new ArrayList<>();
+    private List<BeneficialOwnerDTO> beneficialOwners = new ArrayList<>();
+    private List<CompanyDTO> secondaryOffices = new ArrayList<>();
+    private CompanyDTO principalOffice;
+    private String legalEntityIdentifier;
+    private String intracommunityVATNumber;
+    private List<DocumentDTO> documents = new ArrayList<>();
+    private List<AlertDTO> alerts = new ArrayList<>();
 
 
-⸻
+    public CompanyDTO(String identifier, String legalName, String intracommunityVATNumber) {
+        this.identifier = identifier;
+        this.legalName = legalName;
+        this.intracommunityVATNumber = intracommunityVATNumber;
+    }
 
-✅ Benefits:
-	1.	No more ambiguous constructors → MapStruct works without errors.
-	2.	More readable for objects with multiple fields.
-	3.	You can selectively set only the fields you need.
+    public CompanyDTO(String identifier) {
+        this.identifier = identifier;
+    }
+}
+normally it was working before
 
-⸻
+this is ly pom
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.3</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
 
-If you want, I can rewrite all your CompanyDTO usage in getData() with the builder style, fully replacing all the old constructor calls.
+    <groupId>eu.olkypay</groupId>
+    <artifactId>business-registry</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>business-registry</name>
+    <description>Business Registry</description>
+    <packaging>jar</packaging>
 
-Do you want me to do that?
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>olky-local-releases</name>
+            <url>${env.JFROG_PLATFORM_REPO}/artifactory/libs-release-local</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>olky-local-snapshots</name>
+            <url>${env.JFROG_PLATFORM_REPO}/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <properties>
+        <java.version>21</java.version>
+        <org.mapstruct.version>1.6.3</org.mapstruct.version>
+        <project.build.finalName>business-registry</project.build.finalName>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${org.mapstruct.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>2.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.12.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>7.1.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.8.8</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${org.mapstruct.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
+
+
