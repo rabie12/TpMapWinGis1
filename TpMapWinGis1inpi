@@ -1,3 +1,33 @@
+Yes — you can absolutely make it cleaner by injecting the max buffer size from your properties, instead of hardcoding 10 * 1024 * 1024. This way, you can configure it without touching the code.
+
+Here’s how to do it:
+
+⸻
+
+1️⃣ Add a property
+
+application.properties
+
+webclient.max-in-memory-size=10485760  # 10 MB in bytes
+
+Or in application.yml:
+
+webclient:
+  max-in-memory-size: 10485760  # 10 MB
+
+
+⸻
+
+2️⃣ Inject it in your class
+
+@Value("${webclient.max-in-memory-size}")
+private int maxInMemorySize;
+
+
+⸻
+
+3️⃣ Use it in createWebClient()
+
 private WebClient createWebClient(Connector connector) {
     String token = connector.getApiToken().getToken();
     return WebClient.builder()
@@ -6,11 +36,24 @@ private WebClient createWebClient(Connector connector) {
             .clientConnector(new ReactorClientHttpConnector(httpClientConfig.httpClient().followRedirect(true)))
             .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token)
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            // ✅ Add exchange strategies to increase max buffer size
             .exchangeStrategies(ExchangeStrategies.builder()
                     .codecs(configurer -> 
-                        configurer.defaultCodecs().maxInMemorySize(10 * 1024 * 1024) // 10 MB
+                        configurer.defaultCodecs().maxInMemorySize(maxInMemorySize)
                     )
                     .build())
             .build();
 }
+
+
+⸻
+
+✅ Benefits of this approach:
+	•	You can easily change the buffer size per environment (dev, staging, prod) without touching Java code.
+	•	Cleaner, no hardcoded numbers.
+	•	Still guarantees no DataBufferLimitException for large responses.
+
+⸻
+
+If you want, I can show a version that also converts a human-readable size like “10MB” in properties instead of raw bytes, which makes it even cleaner for non-developers.
+
+Do you want me to do that?
