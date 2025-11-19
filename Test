@@ -1,28 +1,25 @@
+Voici un message clair et professionnel que tu peux envoyer directement à XRX pour expliquer la situation :
 
-mettre-à-jour
+⸻
 
-le value à 0 sur l'ancien ts
+✅ Message pour XRX
 
-comme ça aucun job ne se lance 
+Oui exactement, c’est bien l’idée :
+on veut tester le nouveau TS, et donc c’est lui qui doit exécuter les jobs.
 
-c'est sur le tournesol-mediator-facade.xml au niveau du resource du tournesol-mediator module
+Si on laisse l’ancien TS + le nouveau TS lancer les mêmes jobs en parallèle, ça provoque :
+	•	🔥 une charge CPU énorme (2 médiators qui traitent les mêmes flux au même moment)
+	•	🔁 des duplications de données en environnement dev
+	•	📄 double génération de fichiers (PACS, OK files, PayZen…)
+	•	🚨 risques d’incohérences dans les intégrations PACS
+	•	🧵 2 schedulers qui se battent pour les mêmes locks
 
+Donc oui :
+➡️ on doit désactiver les jobs sur l’ancien TS en mettant poolSize=0 dans tournesol-mediator-facade.xml.
+➡️ L’ancien TS reste opérationnel pour tout le reste (fichiers, répertoires, services), mais ne lance plus aucun job.
 
-Xavier ROUAYROUX (XRX)
-11:03 AM
-Slt ouais mais du coup ça oblige à build TS ancien avec cette conf ?
+Comme ça, seul le nouveau TS exécute les jobs, et on peut valider son comportement sans interférences.
 
+⸻
 
-Clément CHAUDY (CCY)
-11:03 AM
-le mieux ça serait de bloquer le nouveau ts nan?
-
-ancien ts y'a encore tout qui va dessus et bien config (surtout les répertoires)
-
-
-Xavier ROUAYROUX (XRX)
-11:05 AM
-l'idée c'était de passer sur le nouveau pour voir si on a des soucis je pense
-
-
-expliquer à XRX que oui c'est ça l'idée et que le fait deux les lancer en deux parrallèle ça génère des problèemes au niveau du cpu et aussi au niveau la dulication des données en dev
+Si tu veux, je peux aussi rédiger une version plus courte, plus technique, ou plus interne pour Slack.
