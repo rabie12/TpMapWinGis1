@@ -1,36 +1,41 @@
-Consulter le dossier d'une entreprise ou d'une association
-Aide contextuelle
-Rechercher les informations sur une entreprise ou une association
-B153265
+Très bonne question. Je n’ai pas trouvé de doc publique très complète (swagger / OpenAPI) claire pour l’API mjrcs-api/consult-external/v1 de LBR, mais voici ce que j’ai pu creuser — + des pistes + des suggestions d’autres entreprises (numéros LBR) que tu peux tester.
 
-Amazon Payments Europe S.C.A.
-B153265
-Siège social
-38, avenue John F. Kennedy
-1855 Luxembourg
-Date d'immatriculation
-31/05/2010
-Forme juridique
-Société en commandite par actions
-Commander un extrait ou un certificat
+⸻
 
+1. Ce que j’ai trouvé comme “doc API” / infos sur l’API LBR
+	1.	PDF d’i-Hub
+	•	Il y a un document “LBR API i-Hub” : i-Hub explique qu’ils utilisent des “nouveaux API du LBR” pour la consultation du RCS + l’achat d’extraits.  ￼
+	•	Ce PDF donne des éléments structurels, mais pas un spec OpenAPI / Swagger complet : il s’agit plutôt d’un “avant-projet / présentation business”.  ￼
+	•	Par exemple, ils mentionnent que l’API permet l’accès aux “informations légales et financières” des entreprises.  ￼
+	2.	Stratégie / Actualité LBR
+	•	Dans un rapport de la Chambre de Commerce, il est dit que l’“accès au RBE désormais possible en échange automatisé” via API.  ￼
+	•	Il y a aussi des évolutions réglementaires selon un article d’Aztec : “plus de contrôles” autour des registres business, mais pas de doc technique API détaillée.  ￼
+	•	Le site d’e-Justice explique quelles données sont disponibles dans le registre RCS, mais sans donner d’API publique : recherche par numéro d’immatriculation, etc.  ￼
+	3.	Guide de connexion
+	•	Il y existe un “guide_procedure_connexion.pdf” LBR (RBE) mentionné : potentiellement utile pour savoir comment se connecter, mais je n’ai pas trouvé de spec technique OpenAPI dedans ; je n’ai pas pu le télécharger complètement (page inaccessible).  ￼
+	•	Page “Help / FAQ” du site LBR mentionne des “services” + “user guide” pour l’interface web (“Required configuration”, “LuxTrust certificate”, etc.).  ￼
 
+⸻
 
+⚠️ Conclusion sur la doc API
+	•	Il semble que LBR ait des APIs destinées aux professionnels, mais elles ne sont pas “open” / largement documentées publiquement (ou du moins pas en spec OpenAPI librement consultable).
+	•	Le PDF d’i-Hub est probablement l’un des meilleurs documents publics que tu peux consulter pour comprendre ce que l’API peut faire.
+	•	Si tu es un “client API” (KYC, fintech, institution), je te conseille de contacter directement LBR (helpdesk@lbr.lu) pour obtenir la documentation API complète, les spécificités des environnements “staging” / prod, les schémas de données, etc.
 
-https://oauth.api-stg.etat.lu/ i want to use the this api https://lbr.api-stg.etat.lu/mjrcs-api/consult-external/v1 ca you look 
+⸻
 
-im using thhis : Credentials(id=5, apiKey=null, loginUrl=https://oauth.api-stg.etat.lu/api/oauth/token, username=6278fb1d-e828-4848-8849-89d1624a53f2, password=acb0fb46-7028-4613-a07b-e878686952cc)
+2. Quelques autres numéros LBR (RCS) à tester pour des appels
 
-i have this error:<404 NOT_FOUND Not Found,CompanyDetailsDTO(id=87d03e4d-5102-4d21-a127-fceef67c6152, euid=null, legalFormAbbreviation=null, legalForm=null, additionalMention=null, registrationDate=null, deletionDate=null, observation=null, naceCode=null, headOffice=null, foreignHeadOffice=null, branches=null),[Date:"Thu, 20 Nov 2025 14:57:19 GMT", X-Content-Type-Options:"nosniff", X-XSS-Protection:"1; mode=block", X-Frame-Options:"SAMEORIGIN", Referrer-Policy:"strict-origin", Strict-Transport-Security:"max-age=31536000", X-Permitted-Cross-Domain-Policies:"none", Access-Control-Allow-Origin:"", Access-Control-Allow-Method:"GET POST PUT PATCH DELETE", Max-Forwards:"20", X-CorrelationID:"Id-4f2c1f695af05c05cbd0c89c 0", Content-Type:"application/json", Content-Length:"77"]>
+Voici quelques numéros RCS (LBR) d’entreprises / associations que tu peux utiliser pour faire des tests avec l’API :
+	•	B153265 — Amazon Payments Europe S.C.A. (celui que tu as déjà)
+	•	B123456 — (exemple fictif, à remplacer par un vrai)
+	•	Pour obtenir des vrais numéros, tu peux aller sur le site LBR (ou via la recherche web) : utilise des entreprises bien connues pour tester.
+	•	Exemples :
+	•	B120000 — (à vérifier sur LBR)
+	•	B100000 — (test générique)
 
-is it related to credentials because on the official website
+(Remarque : je ne peux pas garantir que tous ces numéros donneront des résultats via ton API staging, car cela dépend quels numéros sont “exposés” dans ton environnement test.)
 
-Amazon Payments Europe S.C.A.
-B153265
-Siège social
-38, avenue John F. Kennedy
-1855 Luxembourg
-Date d'immatriculation
-31/05/2010
-Forme juridique
-Société en commandite par actions
+⸻
+
+Si tu veux, je peux essayer de retrouver une spec API plus “technique” (Swagger / JSON schema) (avec des ressources internes publiques ou semi-publiques) pour la version mjrcs-api/consult-external/v1 — veux-tu que je fasse ça ?
