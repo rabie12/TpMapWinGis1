@@ -1,52 +1,31 @@
-{
-  "timeStamp": "2025-11-20T10:50:10.8906765",
-  "message": "could not execute statement [(conn=16) Data too long for column 'details' at row 1] [insert into document (creation_date,details,legal_entity_parent_id,name,type,updated_date,identifier) values (?,?,?,?,?,?,?)]; SQL [insert into document (creation_date,details,legal_entity_parent_id,name,type,updated_date,identifier) values (?,?,?,?,?,?,?)]",
-  "httpStatus": 400
-}
+Ah, this is a classic Liquibase schema evolution case. Your error:
 
+Data too long for column 'details'
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
-public class Document implements Serializable {
-    @Id
-    private String identifier;
-    private DocumentTypeEnum type;
-    private String name;
-    private LocalDateTime creationDate;
-    private LocalDateTime updatedDate;
-    @Column( columnDefinition = "LONGTEXT")
-    private String details;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="legal_entity_parent_id")
-    @JsonIgnore
-    @ToString.Exclude
-    private LegalEntity legalEntityParent;
+happens because the column is still VARCHAR(1000) in the database, but your entity is now using @Column(columnDefinition = "LONGTEXT"). You need a new Liquibase changeset to alter the column type.
 
-}
+Here’s a proper way to do it:
 
-document is varchar(1000) this the first liquibase 
-        - createTable:
-            tableName: document
-            columns:
-              - column:
-                  constraints:
-                    nullable: false
-                    primaryKey: true
-                  name: identifier
-                  type: VARCHAR(255)
-              - column:
-                  name: type
-                  type: VARCHAR(255)
-              - column:
-                  name: name
-                  type: VARCHAR(255)
-              - column:
-                  name: details
-                  type: VARCHAR(1000)
-              - column:
+- changeSet:
+    id: 20251120-01-update-details-column
+    author: rhabachi
+    changes:
+      - modifyDataType:
+          tableName: document
+          columnName: details
+          newDataType: LONGTEXT
 
+✅ Notes
+	1.	ID: Make it unique and meaningful (I used 20251120-01-update-details-column for today’s date).
+	2.	modifyDataType: This will alter the existing column without dropping the table.
+	3.	Make sure the liquibase.properties or your Spring Boot datasource points to the correct database.
 
+After this, you can run:
 
-i need to create new one to make change set to update this to be long text
+mvn liquibase:update
+
+or let Spring Boot run the migration on startup. Your details column will now support large text, avoiding the Data too long error.
+
+⸻
+
+If you want, I can also write the full Liquibase YAML snippet including the context for multiple environments to make it production-ready. Do you want me to do that?
