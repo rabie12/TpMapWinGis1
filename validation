@@ -1,7 +1,9 @@
-{
-  "timeStamp": "2025-11-20T13:40:50.728329585",
-  "message": "Company B245890 not found",
-  "httpStatus": 400
-}
+Bonne question. Il est difficile de trouver des numéros RCS (LBR) “réels” fiables et publics systématiquement via des sources gratuites, car certaines bases ne donnent pas l’ID RCS dans leurs API publiques. Mais voici quelques exemples d’entreprises luxembourgeoises bien connues avec leurs numéros RCS / LBR :
+	•	Amazon EU S.à r.l. — RCS : B101818  ￼
+	•	SES S.A. — RCS : B 81 267  ￼
+	•	Banque Internationale à Luxembourg (BIL) — RCS : B-6 307  ￼
+	•	Amazon Payments Europe S.C.A — RCS : B153265  ￼
 
-i aave this msg for fictifs company can you give me reel one to test
+Tu peux utiliser ces numéros pour tester ton API, mais attention : selon l’API LBR que tu utilises, certains endpoints peuvent ne pas donner toutes les données pour des grandes entreprises (ou peuvent être restreints).
+
+Si tu veux, je peux essayer de générer une liste de ~50 entreprises luxembourgeoises réelles (avec RCS) à partir de données publiques (via des sources accessibles), pour tes tests. Veux-tu que je fasse ça ?
