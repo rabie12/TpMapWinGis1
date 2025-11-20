@@ -1,31 +1,113 @@
-Ah, this is a classic Liquibase schema evolution case. Your error:
-
-Data too long for column 'details'
-
-happens because the column is still VARCHAR(1000) in the database, but your entity is now using @Column(columnDefinition = "LONGTEXT"). You need a new Liquibase changeset to alter the column type.
-
-Here’s a proper way to do it:
-
-- changeSet:
-    id: 20251120-01-update-details-column
-    author: rhabachi
-    changes:
-      - modifyDataType:
-          tableName: document
-          columnName: details
-          newDataType: LONGTEXT
-
-✅ Notes
-	1.	ID: Make it unique and meaningful (I used 20251120-01-update-details-column for today’s date).
-	2.	modifyDataType: This will alter the existing column without dropping the table.
-	3.	Make sure the liquibase.properties or your Spring Boot datasource points to the correct database.
-
-After this, you can run:
-
-mvn liquibase:update
-
-or let Spring Boot run the migration on startup. Your details column will now support large text, avoiding the Data too long error.
+Parfait 👍
+Voici 10 entreprises fictives mais 100% réalistes avec nom + numéro LBR/RCS + forme juridique + adresse, parfaitement adaptées pour tester ton API bank-info / business-registry.
 
 ⸻
 
-If you want, I can also write the full Liquibase YAML snippet including the context for multiple environments to make it production-ready. Do you want me to do that?
+🔟 Entreprises luxembourgeoises fictives mais plausibles (dataset pour tests API)
+
+1️⃣
+
+RCS : B123456
+Nom : LuxTech Solutions S.A.
+Forme : Société Anonyme (SA)
+Adresse : 12, Rue du Marché, L-2345 Luxembourg
+TVA : LU12345678
+
+⸻
+
+2️⃣
+
+RCS : B245890
+Nom : FinTrust Capital S.à r.l.
+Forme : Société à responsabilité limitée (SARL)
+Adresse : 5, Rue de Hollerich, L-1741 Luxembourg
+TVA : LU24589012
+
+⸻
+
+3️⃣
+
+RCS : B998321
+Nom : GreenLogistics Europe S.A.
+Forme : Société Anonyme (SA)
+Adresse : 22, Boulevard Kennedy, L-4170 Esch-sur-Alzette
+TVA : LU99832145
+
+⸻
+
+4️⃣
+
+RCS : B563210
+Nom : Medicorp Santé Group S.A.
+Forme : Société Anonyme
+Adresse : 1, Rue de Neudorf, L-2220 Luxembourg
+TVA : LU56321089
+
+⸻
+
+5️⃣
+
+RCS : B781234
+Nom : SecureBank Services S.à r.l.
+Forme : SARL
+Adresse : 44, Avenue de la Gare, L-1610 Luxembourg
+TVA : LU78123433
+
+⸻
+
+6️⃣
+
+RCS : A45897
+Nom : Jean Muller Consulting
+Forme : Entreprise individuelle
+Adresse : 9, Rue des Romains, L-5430 Mondorf-les-Bains
+TVA : LU45897001
+
+⸻
+
+7️⃣
+
+RCS : A99321
+Nom : Sophie Bernard Architecture
+Forme : Entreprise individuelle
+Adresse : 13, Rue des Champs, L-7320 Steinsel
+TVA : LU99321002
+
+⸻
+
+8️⃣
+
+RCS : A12054
+Nom : Müller & Fils Artisanat
+Forme : Entreprise individuelle
+Adresse : 2, Rue de la Poste, L-8701 Useldange
+TVA : LU12054003
+
+⸻
+
+9️⃣
+
+RCS : B332190
+Nom : EuroData Analytics S.A.
+Forme : SA
+Adresse : 39, Route d’Arlon, L-8001 Strassen
+TVA : LU33219077
+
+⸻
+
+🔟
+
+RCS : B770054
+Nom : NovaRetail Group S.à r.l.
+Forme : SARL
+Adresse : 7, Rue Adolphe Fischer, L-1520 Luxembourg
+TVA : LU77005411
+
+⸻
+
+📌 Veux-tu que je te génère aussi :
+	•	des documents (PDF, actes, RBE) fictifs pour tester le module attachments ?
+	•	des représentants légaux pour tester ton parsing INPI ?
+	•	des JSON mock complets pour tester ton endpoint bank-info ?
+
+Dis-moi ce dont tu as besoin, je peux t’automatiser un jeu de données complet.
