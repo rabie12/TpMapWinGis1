@@ -1,9 +1,36 @@
-Bonne question. Il est difficile de trouver des numéros RCS (LBR) “réels” fiables et publics systématiquement via des sources gratuites, car certaines bases ne donnent pas l’ID RCS dans leurs API publiques. Mais voici quelques exemples d’entreprises luxembourgeoises bien connues avec leurs numéros RCS / LBR :
-	•	Amazon EU S.à r.l. — RCS : B101818  ￼
-	•	SES S.A. — RCS : B 81 267  ￼
-	•	Banque Internationale à Luxembourg (BIL) — RCS : B-6 307  ￼
-	•	Amazon Payments Europe S.C.A — RCS : B153265  ￼
+Consulter le dossier d'une entreprise ou d'une association
+Aide contextuelle
+Rechercher les informations sur une entreprise ou une association
+B153265
 
-Tu peux utiliser ces numéros pour tester ton API, mais attention : selon l’API LBR que tu utilises, certains endpoints peuvent ne pas donner toutes les données pour des grandes entreprises (ou peuvent être restreints).
+Amazon Payments Europe S.C.A.
+B153265
+Siège social
+38, avenue John F. Kennedy
+1855 Luxembourg
+Date d'immatriculation
+31/05/2010
+Forme juridique
+Société en commandite par actions
+Commander un extrait ou un certificat
 
-Si tu veux, je peux essayer de générer une liste de ~50 entreprises luxembourgeoises réelles (avec RCS) à partir de données publiques (via des sources accessibles), pour tes tests. Veux-tu que je fasse ça ?
+
+
+
+https://oauth.api-stg.etat.lu/ i want to use the this api https://lbr.api-stg.etat.lu/mjrcs-api/consult-external/v1 ca you look 
+
+im using thhis : Credentials(id=5, apiKey=null, loginUrl=https://oauth.api-stg.etat.lu/api/oauth/token, username=6278fb1d-e828-4848-8849-89d1624a53f2, password=acb0fb46-7028-4613-a07b-e878686952cc)
+
+i have this error:<404 NOT_FOUND Not Found,CompanyDetailsDTO(id=87d03e4d-5102-4d21-a127-fceef67c6152, euid=null, legalFormAbbreviation=null, legalForm=null, additionalMention=null, registrationDate=null, deletionDate=null, observation=null, naceCode=null, headOffice=null, foreignHeadOffice=null, branches=null),[Date:"Thu, 20 Nov 2025 14:57:19 GMT", X-Content-Type-Options:"nosniff", X-XSS-Protection:"1; mode=block", X-Frame-Options:"SAMEORIGIN", Referrer-Policy:"strict-origin", Strict-Transport-Security:"max-age=31536000", X-Permitted-Cross-Domain-Policies:"none", Access-Control-Allow-Origin:"", Access-Control-Allow-Method:"GET POST PUT PATCH DELETE", Max-Forwards:"20", X-CorrelationID:"Id-4f2c1f695af05c05cbd0c89c 0", Content-Type:"application/json", Content-Length:"77"]>
+
+is it related to credentials because on the official website
+
+Amazon Payments Europe S.C.A.
+B153265
+Siège social
+38, avenue John F. Kennedy
+1855 Luxembourg
+Date d'immatriculation
+31/05/2010
+Forme juridique
+Société en commandite par actions
