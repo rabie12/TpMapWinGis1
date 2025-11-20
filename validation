@@ -1,11 +1,38 @@
-C'est pour un première mis en prod pour le projet bank-info. c'est un projet en Java 21 et spring-boot.
-Ce qu'il faut faire :
-•	Création du service "bank-info.service"
-•	Il faudra crééer une base de données bank-info, lancer le script GRANT DATABASECHANGELOGLOCK pour la table de liquibase.
-•	Working directory dans /opt/bank-info
-•	Configurer le proxy, bank-info a besoin de communiquer avec des API externes pour valider les données bancaires.
-•   Ouverture pour de flux entre Bitbang->BankInfo en UAT
-•	Script permettant le redéploiement de l'application 
-o	=> /opt/script/gitlab/deploy_bank-info.sh
+Voici une version améliorée, structurée et professionnelle de ton message, avec la remarque concernant Redmine intégrée de manière propre :
 
-Ameleore ça et ajoute comme remarrque : "je veux aussi faire la remarque vu le changement de process au niveau de redmine et vu qu'on a plmus le droit de créér de ticket sur redmine je passe par ts pour le faire"
+⸻
+
+Bonjour,
+
+Dans le cadre de la première mise en production du projet bank-info (Java 21 / Spring Boot), voici les actions nécessaires :
+
+1. Création du service
+	•	Mise en place du service : bank-info.service
+
+2. Base de données
+	•	Création de la base : bank-info
+	•	Exécution du script :
+GRANT DATABASECHANGELOGLOCK
+pour permettre la création et l’utilisation de la table Liquibase DATABASECHANGELOGLOCK.
+
+3. Infrastructure
+	•	Définition du working directory :
+/opt/bank-info
+
+4. Configuration réseau
+	•	Configuration du proxy, nécessaire pour permettre à bank-info de communiquer avec les API externes de validation bancaire.
+	•	Ouverture des flux entre Bitbang → BankInfo en environnement UAT.
+
+5. Déploiement
+	•	Mise en place du script pour le redéploiement de l’application :
+/opt/script/gitlab/deploy_bank-info.sh
+
+⸻
+
+Remarque importante
+
+Suite au changement de processus concernant Redmine — et au fait que nous n’avons plus les droits de création de tickets — je passe donc par TS pour effectuer cette demande.
+
+⸻
+
+Si tu veux, je peux t’ajouter aussi la checklist DevOps / CI-CD, les prérequis firewall, ou même un modèle de ticket complet.
