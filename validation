@@ -1,103 +1,52 @@
-Great — this makes the situation much clearer.
-
-Your representative object is:
-
-RepresentativeDTO(
-  role=DIRECTEUR_GENERAL,
-  naturalPerson=...,
-  legalEntity=null
-)
-
-➡️ So for this representative, legalEntity is NULL.
-
-But your code does:
-
-if (representativeDTO.getLegalEntity() != null) {
-    if (representativeDTO.getLegalEntity().getLegalForm() != null) {
-        Optional<LegalFormINPIMatching> legalFormINPIMatchingRepresentatives =
-            legalFormINPIMatchingRepository.findById(
-                Integer.valueOf(representativeDTO.getLegalEntity().getLegalForm())
-            );
-        representativeDTO.getLegalEntity().setLegalForm(legalFormINPIMatchingRepresentatives.get().getLabel());
-    }
+{
+  "timeStamp": "2025-11-20T10:50:10.8906765",
+  "message": "could not execute statement [(conn=16) Data too long for column 'details' at row 1] [insert into document (creation_date,details,legal_entity_parent_id,name,type,updated_date,identifier) values (?,?,?,?,?,?,?)]; SQL [insert into document (creation_date,details,legal_entity_parent_id,name,type,updated_date,identifier) values (?,?,?,?,?,?,?)]",
+  "httpStatus": 400
 }
 
-In your case:
 
-representativeDTO.getLegalEntity() = null
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+public class Document implements Serializable {
+    @Id
+    private String identifier;
+    private DocumentTypeEnum type;
+    private String name;
+    private LocalDateTime creationDate;
+    private LocalDateTime updatedDate;
+    @Column( columnDefinition = "LONGTEXT")
+    private String details;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="legal_entity_parent_id")
+    @JsonIgnore
+    @ToString.Exclude
+    private LegalEntity legalEntityParent;
 
-So the inner block is not executed → OK.
-
-So why did you get the NumberFormatException earlier?
-
-👉 Because the failing representative was NOT this one.
-
-You are printing the representative that works (the natural person).
-But at least ONE representative in the list is a legal entity, and THAT one has:
-
-legalEntity.getLegalForm() = "Société par actions simplifiée"
-
-Which is why your code crashed.
-
-⸻
-
-🔍 Conclusion
-	•	This representative (Arthur-Léo) is not the problem.
-	•	Another representative in your list has a non-null legalEntity with a textual legalForm.
-	•	That textual legalForm is causing the NumberFormatException.
-
-⸻
-
-✅ What to do next?
-
-Add a debug log before parsing so you can identify the faulty representative:
-
-for (RepresentativeDTO representativeDTO : company.getRepresentatives()) {
-    if (representativeDTO.getLegalEntity() != null) {
-        String legalForm = representativeDTO.getLegalEntity().getLegalForm();
-        log.info("Legal form received for representative: {}", legalForm);
-
-        if (legalForm != null && !legalForm.matches("\\d+")) {
-            log.error("Unexpected legal form (not numeric): {}", legalForm);
-        }
-
-        // existing code...
-    }
 }
 
-This will show you exactly which representative has the bad value.
+document is varchar(1000) this the first liquibase 
+        - createTable:
+            tableName: document
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                  name: identifier
+                  type: VARCHAR(255)
+              - column:
+                  name: type
+                  type: VARCHAR(255)
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: details
+                  type: VARCHAR(1000)
+              - column:
 
-⸻
 
-📌 Final Fix Recommendation
 
-Replace:
-
-Integer.valueOf(...)
-
-With robust logic:
-
-String legalForm = representativeDTO.getLegalEntity().getLegalForm();
-
-if (legalForm != null && legalForm.matches("\\d+")) {
-    // lookup by ID
-    legalFormINPIMatchingRepository.findById(Integer.valueOf(legalForm))
-        .ifPresent(match -> representativeDTO.getLegalEntity().setLegalForm(match.getLabel()));
-} else {
-    // lookup by label (if your DB supports it)
-    legalFormINPIMatchingRepository.findByLabel(legalForm)
-        .ifPresent(match -> representativeDTO.getLegalEntity().setLegalForm(match.getLabel()));
-}
-
-➡️ This avoids failures and makes the process stable.
-
-⸻
-
-If you want, I can:
-
-✔ create a clean helper method
-✔ update your mapper
-✔ validate incoming INPI response
-✔ guide you to write a unit test
-
-Just tell me!
+i need to create new one to make change set to update this to be long text
