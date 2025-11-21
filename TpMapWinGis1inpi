@@ -1,8 +1,158 @@
-Method threw 'org.hibernate.LazyInitializationException' exception. Cannot evaluate eu.olkypay.tournesol.datamodel.symwis.bom.Client_$$_jvst1be_1c.toString()
+Voici la cause exacte et pourquoi cela arrive uniquement avec /generate, alors que /orderId marche.
+
+⸻
+
+❗ Cause : LazyInitializationException = Session Hibernate fermée
+
+L’erreur :
+
+org.hibernate.LazyInitializationException: could not initialize proxy - no Session
+
+sur :
+
+String clientName = client.getFullName();
+
+signifie :
+
+👉 L’objet client est un proxy Hibernate lazy
+👉 Il n’est plus attaché à une session ouverte
+👉 Donc Hibernate refuse de charger les champs lazy, dont fullName.
+
+⸻
+
+❓ Pourquoi ça marche dans /GET {orderId} mais PAS dans /POST /generate ?
+
+Parce que :
+
+✔ /GET {orderId} appelle directement le service _orderPaymentSvc.findByPrimaryKey(orderPaymentId) dans un contexte transactionnel natif de ton service
+
+Dans la plupart des cas, ton service est annoté avec :
+
+@Transactional(readOnly = true)
+public OrderPayment findByPrimaryKey(...)
+
+donc Hibernate garde la session ouverte → lazy OK.
+
+⸻
+
+❌ Mais dans /POST /generate tu appelles generatePdf(data) SANS transaction ouverte
+
+Regarde ton flow :
+
+@PostMapping → controller
+    → generatePdf(data)   ❌ pas de @Transactional
+         → getContent(orderPaymentId)
+              → orderPayment.getClient()  → Lazy
+
+➜ La session Hibernate est FERMÉE quand client.getFullName() est accédée.
+
+Résultat : LazyInitializationException.
+
+⸻
+
+🔥 Pourquoi orderPayment n’est pas complètement initialisé ?
+
+Parce que JPA renvoie un proxy :
+	•	OrderPayment est chargé
+	•	OrderPayment.client est annoté @ManyToOne(fetch = LAZY)
+	•	Le controller n’est pas transactionnel
+	•	Donc l’accès à client.getFullName() explose
+
+⸻
+
+🧠 Pourquoi ça ne casse pas dans l’autre API ?
+
+Parce que /GET {orderId} utilise probablement ce service dans une chaîne déjà transactionnelle, typiquement :
+	•	Le service qui génère le PDF peut être lui-même @Transactional
+	•	Ou l’appel du GET se fait dans une transaction ouverte avant l’appel à getContent
+
+➡️ Tu n’es pas dans le même contexte transactionnel entre les deux APIs.
+
+⸻
+
+✅ Solutions possibles (classées par propreté)
+
+⸻
+
+✅ Solution 1 : Mettre @Transactional sur les méthodes du service SCT
+
+@Transactional
+public byte[] generatePdf(SctDebitData data) {
+    ...
+}
+
+OU mieux :
+
+@Transactional(readOnly = true)
+private SctDebitPdfContent getContent(int orderPaymentId) {
+    ...
+}
+
+👉 La plus propre
+👉 Traite toutes les lazy-loading sans toucher au modèle
+👉 Même logique que le GET
+
+⸻
+
+✅ Solution 2 : Forcer Hibernate à charger les relations dans les services OrderPayment
+
+ex :
+
+@EntityGraph(attributePaths = {"client", "client.address", "client.supplier"})
+OrderPayment findByPrimaryKey(int id);
+
+ou :
+
+Hibernate.initialize(orderPayment.getClient());
+
+👉 Marche, mais intrusif.
+
+⸻
+
+❌ Solution 3 (à éviter) : mettre fetch = EAGER
+
+Non, ne touche jamais au fetch, ça fait exploser les perfs.
+
+⸻
+
+🎯 La solution recommandée : Ajouter @Transactional dans ton writer-service
+
+Car ton PDF generator DOIT tourner avec la session Hibernate ouverte.
+
+Donc :
+
+@Service
+public class SctDebitPdfWriter {
+
+    @Transactional(readOnly = true)
+    public byte[] generatePdf(SctDebitData data) throws Exception {
+        // la validation DB arrive ici, session ouverte
+        String mismatch = validateInputMatchesDb(data);
+
+        ...
+    }
+
+    @Transactional(readOnly = true)
+    public SctDebitPdfContent getContent(int orderPaymentId) {
+        ...
+    }
+}
 
 
-        String clientName = client.getFullName();
+⸻
 
+⭐ Résultat :
+	•	Plus de LazyInitializationException
+	•	Les deux APIs fonctionnent pareil
+	•	Toutes les relations client, address, supplier, etc. sont correctement chargées
+	•	Tu n’as RIEN à changer dans ton modèle
 
+⸻
 
-issue in this line it works with the other api but not this one can you analyse why because it's not normal we re using the same way of callign getContent why it shoud be the case for /generate api
+Si tu veux je peux :
+
+✔ Ajouter l’annotation exactement au bon endroit dans ton vrai fichier
+✔ Te générer une version optimisée avec un seul @Transactional enveloppant
+✔ Vérifier toutes les relations potentiellement lazy
+
+Souhaites-tu que je t’ajuste directement le code complet ?
