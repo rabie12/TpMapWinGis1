@@ -1,79 +1,119 @@
-package eu.olkypay.tournesol.data.export.pdf.sct;
+Ah ! Parfait, merci pour le code de SctDebitPdfContent. 💡
 
-import java.util.HashMap;
-import java.util.Map;
+Ça explique pourquoi tu avais des erreurs de getter : cette classe n’a pas de getters individuels pour chaque champ, elle stocke tout dans un Map<String, String> fields. Donc les méthodes comme getSupplierName() ou getOutName() n’existent pas.
 
-public class SctDebitPdfContent {
+Tu dois donc utiliser getField(KEY) pour lire les valeurs.
 
-    public static final String SUPPLIER_IBAN = "SUPPLIER_IBAN";
-    public static final String SUPPLIER_NAME = "SUPPLIER_NAME";
+⸻
 
-    public static final String OUT_IBAN = "OUT_IBAN";
-    public static final String OUT_NAME = "OUT_NAME";
-    public static final String OUT_ADDRESS = "OUT_ADDRESS";
+✅ Comment adapter ta méthode de comparaison
 
-    public static final String AMOUNT = "AMOUNT";
-    public static final String EXECUTION_DATE = "EXECUTION_DATE";
-    public static final String LABEL = "LABEL";
+Au lieu de :
 
-    public static final String CONTROL_KEY = "CONTROL_KEY";
-    
-    // new fields EndToEndId and TxId (https://support.olky.eu/issues/5673) :
-    public static final String END_TO_END_ID = "END_TO_END_ID";
-    public static final String TX_ID = "TX_ID";
+if (!Objects.equals(in.getSupplierName(), db.getSupplierName()))
 
-    private Map<String, String> fields;
+Tu fais :
 
-    public SctDebitPdfContent() {
-        fields = new HashMap<>();
-    }
-    
-    public void setEndToEndId(String endToEndId) {
-    	fields.put(END_TO_END_ID, endToEndId);
-    }
-    
-    public void setTxId(String txId) {
-    	fields.put(TX_ID, txId);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_NAME), 
+                    db.getField(SctDebitPdfContent.SUPPLIER_NAME)))
+    return "supplierName mismatch";
 
-    public void setSupplierIban(String supplierIban) {
-        fields.put(SUPPLIER_IBAN, supplierIban);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_IBAN), 
+                    db.getField(SctDebitPdfContent.SUPPLIER_IBAN)))
+    return "supplierIban mismatch";
 
-    public void setSupplierName(String supplierName) {
-        fields.put(SUPPLIER_NAME, supplierName);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_NAME), 
+                    db.getField(SctDebitPdfContent.OUT_NAME)))
+    return "outName mismatch";
 
-    public void setOutIban(String outIban) {
-        fields.put(OUT_IBAN, outIban);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_IBAN), 
+                    db.getField(SctDebitPdfContent.OUT_IBAN)))
+    return "outIban mismatch";
 
-    public void setOutName(String outName) {
-        fields.put(OUT_NAME, outName);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_ADDRESS), 
+                    db.getField(SctDebitPdfContent.OUT_ADDRESS)))
+    return "outAddress mismatch";
 
-    public void setOutAddress(String outAddress) {
-        fields.put(OUT_ADDRESS, outAddress);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), 
+                    db.getField(SctDebitPdfContent.AMOUNT)))
+    return "amount mismatch";
 
-    public void setAmount(String amount) {
-        fields.put(AMOUNT, amount);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.EXECUTION_DATE), 
+                    db.getField(SctDebitPdfContent.EXECUTION_DATE)))
+    return "executionDate mismatch";
 
-    public void setExecutionDate(String executionDate) {
-        fields.put(EXECUTION_DATE, executionDate);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.LABEL), 
+                    db.getField(SctDebitPdfContent.LABEL)))
+    return "label mismatch";
 
-    public void setLabel(String label) {
-        fields.put(LABEL, label);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.END_TO_END_ID), 
+                    db.getField(SctDebitPdfContent.END_TO_END_ID)))
+    return "endToEndId mismatch";
 
-    public void setControlKey(String key) {
-        fields.put(CONTROL_KEY, key);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.TX_ID), 
+                    db.getField(SctDebitPdfContent.TX_ID)))
+    return "txId mismatch";
 
-    public String getField(String key) {
-        return fields.get(key);
-    }
+if (!Objects.equals(in.getField(SctDebitPdfContent.CONTROL_KEY), 
+                    db.getField(SctDebitPdfContent.CONTROL_KEY)))
+    return "controlKey mismatch";
+
+
+⸻
+
+✅ Version complète de la validation
+
+private String validateInputMatchesDb(SctDebitData input) {
+
+    SctDebitPdfContent db = getContent(input.getOrderId());
+    SctDebitPdfContent in = mapToContent(input);
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_NAME), db.getField(SctDebitPdfContent.SUPPLIER_NAME)))
+        return "supplierName mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_IBAN), db.getField(SctDebitPdfContent.SUPPLIER_IBAN)))
+        return "supplierIban mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_NAME), db.getField(SctDebitPdfContent.OUT_NAME)))
+        return "outName mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_IBAN), db.getField(SctDebitPdfContent.OUT_IBAN)))
+        return "outIban mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_ADDRESS), db.getField(SctDebitPdfContent.OUT_ADDRESS)))
+        return "outAddress mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), db.getField(SctDebitPdfContent.AMOUNT)))
+        return "amount mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.EXECUTION_DATE), db.getField(SctDebitPdfContent.EXECUTION_DATE)))
+        return "executionDate mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.LABEL), db.getField(SctDebitPdfContent.LABEL)))
+        return "label mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.END_TO_END_ID), db.getField(SctDebitPdfContent.END_TO_END_ID)))
+        return "endToEndId mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.TX_ID), db.getField(SctDebitPdfContent.TX_ID)))
+        return "txId mismatch";
+
+    if (!Objects.equals(in.getField(SctDebitPdfContent.CONTROL_KEY), db.getField(SctDebitPdfContent.CONTROL_KEY)))
+        return "controlKey mismatch";
+
+    return null;
 }
-coici le contenu de SctDebitPdfContent car j'ai des erreurs sur les getter sur la methode qui fait la verification
+
+
+⸻
+
+⚡ Résultat
+	•	Plus d’erreur de getter
+	•	Validation fiable et complète
+	•	Utilise uniquement les méthodes disponibles (getField(KEY))
+
+⸻
+
+Si tu veux, je peux te fournir une version encore plus générique qui boucle sur toutes les clés du Map pour ne pas écrire tous les if à la main.
+
+Veux‑tu que je fasse ça ?
