@@ -1,25 +1,90 @@
-Voici un message clair et professionnel que tu peux envoyer directement à XRX pour expliquer la situation :
+   @RequestMapping(value = "/{orderId}/", method = RequestMethod.GET)
+    public ResponseEntity<byte[]> generate(@PathVariable("orderId") int orderId) throws Exception {
+        LOGGER.info("Sct request for SCT order with ID <{}>", orderId);
+        byte[] content = _sctDebitPdfWriter.generateDocument(orderId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = new StringBuilder("Avis-débit-").append(orderId).append(".pdf").toString();
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        ResponseEntity<byte[]> response = new ResponseEntity<byte[]>(content, headers, HttpStatus.OK);
+        return response;
+    }
 
-⸻
+    @PostMapping(value = "/generate", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<?> generate(@RequestBody SctDebitData data) throws Exception {
+        String validationError = validateSctDebitData(data);
+        Map<String, String> errorBody = new HashMap<>();
+        errorBody.put("error", validationError);
+        if (validationError != null) {
+            LOGGER.warn("Invalid input for order: {} -> {}", data.getOrderId(), validationError);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(errorBody);
+        }
+        byte[] pdf = _sctDebitPdfWriter.generatePdf(data);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
 
-✅ Message pour XRX
+J'ai 2 API's, le deuxieme permet de te generer un avis de débit a travers des l'obejt en body. le 1er recupere à partir de la base
+    
 
-Oui exactement, c’est bien l’idée :
-on veut tester le nouveau TS, et donc c’est lui qui doit exécuter les jobs.
+sur cette methode j'aimerai avant de generer le pdf, faire une verification en base de données si SctDebitData correct pour valider si les données :
 
-Si on laisse l’ancien TS + le nouveau TS lancer les mêmes jobs en parallèle, ça provoque :
-	•	🔥 une charge CPU énorme (2 médiators qui traitent les mêmes flux au même moment)
-	•	🔁 des duplications de données en environnement dev
-	•	📄 double génération de fichiers (PACS, OK files, PayZen…)
-	•	🚨 risques d’incohérences dans les intégrations PACS
-	•	🧵 2 schedulers qui se battent pour les mêmes locks
+    public byte[] generatePdf(SctDebitData data) throws Exception {
+        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
 
-Donc oui :
-➡️ on doit désactiver les jobs sur l’ancien TS en mettant poolSize=0 dans tournesol-mediator-facade.xml.
-➡️ L’ancien TS reste opérationnel pour tout le reste (fichiers, répertoires, services), mais ne lance plus aucun job.
+        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
+        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
 
-Comme ça, seul le nouveau TS exécute les jobs, et on peut valider son comportement sans interférences.
+        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
+        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
+        document.getBuiltInDocumentProperties().setCompany("Olkypay");
+        document.getBuiltInDocumentProperties().setKeywords(
+                String.format("%s %s", data.getOrderId(),
+                        Optional.ofNullable(data.getTxId()).orElse(""))
+        );
+        SctDebitPdfContent content = mapToContent(data);
+        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+        setDocumentProperties(cdp, content);
+        document.updateFields();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        document.save(baos, SaveFormat.PDF);
+        return baos.toByteArray();
+    }
 
-⸻
+    private SctDebitPdfContent mapToContent(SctDebitData data) {
+        SctDebitPdfContent content = new SctDebitPdfContent();
+        content.setSupplierName(data.getSupplierName());
+        content.setSupplierIban(data.getSupplierIban());
+        content.setOutName(data.getOutName());
+        content.setOutIban(data.getOutIban());
+        content.setOutAddress(data.getOutAddress());
+        if (data.getAmount() != null) {
+            content.setAmount(data.getAmount().stripTrailingZeros().toPlainString());
+        } else {
+            content.setAmount("0.00");
+        }
+        content.setExecutionDate(data.getExecutionDate());
+        content.setLabel(data.getLabel());
+        content.setEndToEndId(data.getEndToEndId());
+        content.setTxId(data.getTxId());
+        content.setControlKey(data.getTxId());
+        return content;
+    }
 
-Si tu veux, je peux aussi rédiger une version plus courte, plus technique, ou plus interne pour Slack.
+base toi sur ça vu ça contient les élement qu'on récupère de la table order_payment pour les mapper après sur le mm pdf qui est générer par orderId: je veux faire la corrrespondence de ces données avec les données sur SctDebitData
+
+
+
+
+
+
+
