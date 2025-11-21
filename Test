@@ -1,90 +1,169 @@
-   @RequestMapping(value = "/{orderId}/", method = RequestMethod.GET)
-    public ResponseEntity<byte[]> generate(@PathVariable("orderId") int orderId) throws Exception {
-        LOGGER.info("Sct request for SCT order with ID <{}>", orderId);
-        byte[] content = _sctDebitPdfWriter.generateDocument(orderId);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        String filename = new StringBuilder("Avis-débit-").append(orderId).append(".pdf").toString();
-        headers.setContentDispositionFormData(filename, filename);
-        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        ResponseEntity<byte[]> response = new ResponseEntity<byte[]>(content, headers, HttpStatus.OK);
-        return response;
-    }
+Parfait — voici comment déplacer toute la logique de vérification en base dans le service, pour que ton contrôleur reste propre et que l’API ne fasse que déléguer.
 
-    @PostMapping(value = "/generate", produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<?> generate(@RequestBody SctDebitData data) throws Exception {
-        String validationError = validateSctDebitData(data);
-        Map<String, String> errorBody = new HashMap<>();
-        errorBody.put("error", validationError);
-        if (validationError != null) {
-            LOGGER.warn("Invalid input for order: {} -> {}", data.getOrderId(), validationError);
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(errorBody);
-        }
-        byte[] pdf = _sctDebitPdfWriter.generatePdf(data);
+⸻
+
+🎯 Objectif
+	1.	Le controller appelle le service :
+pdfService.generateValidatedPdf(data)
+	2.	Le service :
+	•	charge les données DB
+	•	compare SctDebitData ↔ DB
+	•	renvoie soit une exception (validation KO), soit le PDF (validation OK)
+
+⸻
+
+✅ 1. Contrôleur : nettoyé, sans logique métier
+
+@PostMapping(value = "/generate", produces = MediaType.APPLICATION_PDF_VALUE)
+public ResponseEntity<?> generate(@RequestBody SctDebitData data) throws Exception {
+
+    try {
+        byte[] pdf = sctDebitService.generateValidatedPdf(data);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
         headers.setContentDispositionFormData(filename, filename);
-        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
+
         return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    } catch (InvalidSctDebitDataException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
     }
+}
 
-J'ai 2 API's, le deuxieme permet de te generer un avis de débit a travers des l'obejt en body. le 1er recupere à partir de la base
-    
+👉 Le controller est clean : aucune logique métier, seulement la gestion HTTP.
 
-sur cette methode j'aimerai avant de generer le pdf, faire une verification en base de données si SctDebitData correct pour valider si les données :
+⸻
 
-    public byte[] generatePdf(SctDebitData data) throws Exception {
-        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
+✅ 2. Créer une exception métier propre
 
-        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
-        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
-
-        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
-        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
-        document.getBuiltInDocumentProperties().setCompany("Olkypay");
-        document.getBuiltInDocumentProperties().setKeywords(
-                String.format("%s %s", data.getOrderId(),
-                        Optional.ofNullable(data.getTxId()).orElse(""))
-        );
-        SctDebitPdfContent content = mapToContent(data);
-        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
-        setDocumentProperties(cdp, content);
-        document.updateFields();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        document.save(baos, SaveFormat.PDF);
-        return baos.toByteArray();
+public class InvalidSctDebitDataException extends RuntimeException {
+    public InvalidSctDebitDataException(String message) {
+        super(message);
     }
+}
 
-    private SctDebitPdfContent mapToContent(SctDebitData data) {
-        SctDebitPdfContent content = new SctDebitPdfContent();
-        content.setSupplierName(data.getSupplierName());
-        content.setSupplierIban(data.getSupplierIban());
-        content.setOutName(data.getOutName());
-        content.setOutIban(data.getOutIban());
-        content.setOutAddress(data.getOutAddress());
-        if (data.getAmount() != null) {
-            content.setAmount(data.getAmount().stripTrailingZeros().toPlainString());
-        } else {
-            content.setAmount("0.00");
+
+⸻
+
+✅ 3. Service : logique complète (validation + comparaison + génération PDF)
+
+Ton service devient l’endroit unique où :
+	•	On valide les champs simples
+	•	On charge les données DB avec orderId
+	•	On compare SctDebitData ↔ order_payment
+	•	On génère le PDF
+
+@Service
+public class SctDebitService {
+
+    @Autowired
+    private OrderPaymentService orderPaymentService;
+
+    @Autowired
+    private SctDebitPdfWriter pdfWriter;
+
+    public byte[] generateValidatedPdf(SctDebitData data) throws Exception {
+
+        // 1️⃣ validation simple
+        String basicValidation = validateSctDebitData(data);
+        if (basicValidation != null) {
+            throw new InvalidSctDebitDataException(basicValidation);
         }
-        content.setExecutionDate(data.getExecutionDate());
-        content.setLabel(data.getLabel());
-        content.setEndToEndId(data.getEndToEndId());
-        content.setTxId(data.getTxId());
-        content.setControlKey(data.getTxId());
-        return content;
+
+        // 2️⃣ récupération BDD
+        OrderPayment dbData = orderPaymentService.findByOrderId(data.getOrderId());
+        if (dbData == null) {
+            throw new InvalidSctDebitDataException("Order not found in database");
+        }
+
+        // 3️⃣ validation cohérence input ↔ DB
+        String consistencyError = validateConsistency(data, dbData);
+        if (consistencyError != null) {
+            throw new InvalidSctDebitDataException(consistencyError);
+        }
+
+        // 4️⃣ si tout est OK → génération PDF
+        return pdfWriter.generatePdf(data);
     }
 
-base toi sur ça vu ça contient les élement qu'on récupère de la table order_payment pour les mapper après sur le mm pdf qui est générer par orderId: je veux faire la corrrespondence de ces données avec les données sur SctDebitData
+
+    // ---------------------------
+    // VALIDATION SIMPLE
+    // ---------------------------
+    private String validateSctDebitData(SctDebitData data) {
+        if (data.getOrderId() == null) return "OrderId is required";
+        if (data.getSupplierIban() == null) return "Supplier IBAN missing";
+        // Ajoute les règles déjà présentes chez toi
+        return null;
+    }
 
 
+    // ---------------------------
+    // VALIDATION DB ↔ INPUT
+    // ---------------------------
+    private String validateConsistency(SctDebitData input, OrderPayment db) {
+
+        if (!Objects.equals(input.getSupplierName(), db.getSupplierName()))
+            return "SupplierName doesn't match database";
+
+        if (!Objects.equals(input.getSupplierIban(), db.getSupplierIban()))
+            return "SupplierIban doesn't match database";
+
+        if (!Objects.equals(input.getOutName(), db.getOutName()))
+            return "OutName doesn't match database";
+
+        if (!Objects.equals(input.getOutIban(), db.getOutIban()))
+            return "OutIban doesn't match database";
+
+        if (!Objects.equals(input.getOutAddress(), db.getOutAddress()))
+            return "OutAddress doesn't match database";
+
+        if (input.getAmount() != null &&
+            db.getAmount() != null &&
+            input.getAmount().compareTo(db.getAmount()) != 0)
+            return "Amount mismatch";
+
+        if (!Objects.equals(input.getExecutionDate(), db.getExecutionDate()))
+            return "ExecutionDate mismatch";
+
+        if (!Objects.equals(input.getLabel(), db.getLabel()))
+            return "Label mismatch";
+
+        if (!Objects.equals(input.getEndToEndId(), db.getEndToEndId()))
+            return "EndToEndId mismatch";
+
+        if (!Objects.equals(input.getTxId(), db.getTxId()))
+            return "TxId mismatch";
+
+        return null;
+    }
+}
 
 
+⸻
 
+👍 Résultat
 
+➤ Avant
 
+Le controller contenait trop de logique métier (validation DB, comparaison…).
+
+➤ Après
+	•	Le controller : uniquement HTTP + try/catch
+	•	Le service : toute la logique de validation et comparaison
+	•	Le PDF writer : uniquement génération du PDF
+
+Architecture beaucoup plus propre.
+
+⸻
+
+📌 Tu veux que je t’aide à :
+
+✔ écrire des tests unitaires pour ce service ?
+✔ générer automatiquement les comparaisons avec MapStruct ?
+✔ retourner une liste complète d’erreurs plutôt qu’un seul message ?
+
+Dis-moi !
