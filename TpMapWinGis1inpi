@@ -1,21 +1,109 @@
-[ERROR] [ERROR] Some problems were encountered while processing the POMs:
-[ERROR] Non-resolvable import POM: The following artifacts could not be resolved: eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT (absent): Could not transfer artifact eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT from/to snapshots (https://newartifactory.olkypay.local:443/artifactory/libs-snapshot): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 69, column 16
-[ERROR] Non-resolvable import POM: The following artifacts could not be resolved: org.springframework:spring-framework-bom:pom:4.3.30.RELEASE (absent): Could not transfer artifact org.springframework:spring-framework-bom:pom:4.3.30.RELEASE from/to central (https://newartifactory.olkypay.local:443/artifactory/libs-release): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 77, column 16
- @ 
-[ERROR] The build could not read 1 project -> [Help 1]
-[ERROR]   
-[ERROR]   The project eu.olkypay:olkypay-module:1.1.3-SNAPSHOT (C:\Users\RHABACHI\IdeaProjects\olkypay-module-old2\pom.xml) has 2 errors
-[ERROR]     Non-resolvable import POM: The following artifacts could not be resolved: eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT (absent): Could not transfer artifact eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT from/to snapshots (https://newartifactory.olkypay.local:443/artifactory/libs-snapshot): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 69, column 16 -> [Help 2]
-[ERROR]     Non-resolvable import POM: The following artifacts could not be resolved: org.springframework:spring-framework-bom:pom:4.3.30.RELEASE (absent): Could not transfer artifact org.springframework:spring-framework-bom:pom:4.3.30.RELEASE from/to central (https://newartifactory.olkypay.local:443/artifactory/libs-release): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 77, column 16 -> [Help 2]
-[ERROR] 
-[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
-[ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException
-[ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException
+You can review exactly why the PKIX (SSL certificate validation) failed by enabling Maven SSL debug logging.
+This will show the full certificate chain, what is missing, and why Java refuses the connection.
 
-Process finished with exit code 1
+Here are the places and commands to review the PKIX path building error in full detail:
+
+⸻
+
+✅ 1. Run Maven with full SSL debug output
+
+This is the most complete way to see the PKIX error.
+
+Command (Windows)
+
+mvn clean install -Djavax.net.debug=ssl,handshake,x509 -X
+
+Command (Linux/Mac)
+
+JAVA_TOOL_OPTIONS="-Djavax.net.debug=ssl,handshake,x509" mvn clean install -X
+
+This will print:
+	•	certificates sent by Artifactory
+	•	certificates trusted locally
+	•	which certificate failed
+	•	the exact step where PKIX path building stops
+	•	the issuer that is missing from your truststore
+
+Look for lines like:
+
+trustStore is: C:\Program Files\Java\jdk-17\lib\security\cacerts
+checking server certificate chain
+PKIX path building failed: ...
 
 
-where can i review the pkix
+⸻
+
+✅ 2. Check which truststore Maven is actually using
+
+Run:
+
+mvn -X | findstr "trustStore"
+
+or on PowerShell:
+
+mvn -X | Select-String "trustStore"
+
+You’ll see something like:
+
+trustStore is: C:\Program Files\Eclipse Adoptium\jdk-17\lib\security\cacerts
+
+➡️ This is the JDK where you must import your Artifactory certificate.
+
+⸻
+
+✅ 3. Check if the certificate is already inside the truststore
+
+Use:
+
+keytool -list -keystore "C:\Program Files\Java\jdk-17\lib\security\cacerts" -storepass changeit
+
+Search for your certificate:
+
+Alias name: artifactory-new
+
+If it is missing → PKIX fails.
+
+⸻
+
+✅ 4. Check if IntelliJ is using a different JDK than your terminal
+
+In IntelliJ:
+
+File → Settings → Build Tools → Maven → JDK for importer
+
+Often:
+	•	Terminal uses JDK 17
+	•	IntelliJ uses bundled JDK 21
+
+➡️ The certificate must be imported in the JDK used by Maven in IntelliJ.
+
+⸻
+
+🔍 Summary – Where you can “review the PKIX”
+
+You can inspect PKIX errors in these places:
+
+Where to check	What you get
+mvn -Djavax.net.debug=ssl,handshake,x509	Full certificate chain analysis
+mvn -X	Shows which truststore Maven uses
+keytool -list -keystore cacerts	Validates if the cert is correctly imported
+IntelliJ Maven JDK settings	Verifies the correct JDK truststore
+Browser → Click padlock → Certificate info	Check expiration, issuer, and chain
+
+
+⸻
+
+If you want
+
+I can help you:
+
+✔ decode the SSL debug output
+✔ tell you exactly which certificate is missing
+✔ verify your Artifactory certificate
+✔ give you the exact import command for your JDK
+
+Just paste the part of the error starting with:
+
+*** Certificate chain
+
+from your -Djavax.net.debug output.
