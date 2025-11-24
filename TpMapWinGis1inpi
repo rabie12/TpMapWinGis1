@@ -1,16 +1,28 @@
-689,00 value on db
-689 value sent from bruno
-
+    private String validateInputMatchesDb(SctDebitData input) {
+        SctDebitPdfContent db = getContent(input.getOrderId());
+        SctDebitPdfContent in = mapToContent(input);
+        if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_NAME), db.getField(SctDebitPdfContent.SUPPLIER_NAME)))
+            return "supplierName mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_IBAN), db.getField(SctDebitPdfContent.SUPPLIER_IBAN)))
+            return "supplierIban mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_NAME), db.getField(SctDebitPdfContent.OUT_NAME)))
+            return "outName mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_IBAN), db.getField(SctDebitPdfContent.OUT_IBAN)))
+            return "outIban mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_ADDRESS), db.getField(SctDebitPdfContent.OUT_ADDRESS)))
+            return "outAddress mismatch";
         if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), db.getField(SctDebitPdfContent.AMOUNT)))
             return "amount mismatch";
-
-{
-  "IllegalArgumentException": {
-    "message": "SctDebitData does not match database: amount mismatch"
-  }
-}
-
-
-i have this error :
-
-i thnik i need to review this :         if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), db.getField(SctDebitPdfContent.AMOUNT)))
+        if (!Objects.equals(in.getField(SctDebitPdfContent.EXECUTION_DATE), db.getField(SctDebitPdfContent.EXECUTION_DATE)))
+            return "executionDate mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.LABEL), db.getField(SctDebitPdfContent.LABEL)))
+            return "label mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.END_TO_END_ID), db.getField(SctDebitPdfContent.END_TO_END_ID)))
+            return "endToEndId mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.TX_ID), db.getField(SctDebitPdfContent.TX_ID)))
+            return "txId mismatch";
+        if (!Objects.equals(in.getField(SctDebitPdfContent.CONTROL_KEY), db.getField(SctDebitPdfContent.CONTROL_KEY)))
+            return "controlKey mismatch";
+        return null;
+    }
+is ther eany other way to reduce the number of line
