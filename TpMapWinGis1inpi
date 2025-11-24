@@ -1,1 +1,65 @@
-  "amount": 689.11, I want to be able to use Long and compare also if deciaml value are musch also
+Ah, now I understand clearly: you want to keep Long in your DTO but still be able to compare amounts that may have decimals, like 689.11 from JSON, and detect mismatches correctly.
+
+We can do this, but you need a consistent strategy:
+
+⸻
+
+✅ Option 1: Convert all amounts to “cents” as Long
+	•	Store amounts as cents: multiply by 100 and round to Long.
+	•	Example:
+
+Input JSON	Normalized Long (cents)
+689	68900
+689.11	68911
+689,11	68911
+
+
+⸻
+
+Step 1 — Keep Long in your DTO
+
+private Long amount; // stored in cents
+
+
+⸻
+
+Step 2 — Normalize input
+
+private Long normalizeAmount(String rawAmount) {
+    if (rawAmount == null) return null;
+
+    // replace comma with dot if European format
+    BigDecimal bd = new BigDecimal(rawAmount.replace(",", "."));
+
+    // multiply by 100 to convert to cents
+    bd = bd.multiply(BigDecimal.valueOf(100));
+
+    // round to nearest cent and convert to Long
+    return bd.setScale(0, RoundingMode.HALF_UP).longValue();
+}
+
+
+⸻
+
+Step 3 — Update your comparison
+
+if (!Objects.equals(
+        normalizeAmount(in.getField(SctDebitPdfContent.AMOUNT)),
+        normalizeAmount(db.getField(SctDebitPdfContent.AMOUNT))
+    )) {
+    return "amount mismatch";
+}
+
+	•	Now "689" → 68900
+	•	"689.11" → 68911
+	•	"689,11" → 68911
+
+✅ Comparisons are consistent.
+✅ You can keep the DTO type as Long.
+✅ Decimal mismatches are correctly detected.
+
+⸻
+
+If you want, I can rewrite your entire validator loop using this cents approach so it stays short and clean.
+
+Do you want me to do that?
