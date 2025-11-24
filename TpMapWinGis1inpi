@@ -1,28 +1,82 @@
-    private String validateInputMatchesDb(SctDebitData input) {
-        SctDebitPdfContent db = getContent(input.getOrderId());
-        SctDebitPdfContent in = mapToContent(input);
-        if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_NAME), db.getField(SctDebitPdfContent.SUPPLIER_NAME)))
-            return "supplierName mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.SUPPLIER_IBAN), db.getField(SctDebitPdfContent.SUPPLIER_IBAN)))
-            return "supplierIban mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_NAME), db.getField(SctDebitPdfContent.OUT_NAME)))
-            return "outName mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_IBAN), db.getField(SctDebitPdfContent.OUT_IBAN)))
-            return "outIban mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.OUT_ADDRESS), db.getField(SctDebitPdfContent.OUT_ADDRESS)))
-            return "outAddress mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), db.getField(SctDebitPdfContent.AMOUNT)))
-            return "amount mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.EXECUTION_DATE), db.getField(SctDebitPdfContent.EXECUTION_DATE)))
-            return "executionDate mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.LABEL), db.getField(SctDebitPdfContent.LABEL)))
-            return "label mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.END_TO_END_ID), db.getField(SctDebitPdfContent.END_TO_END_ID)))
-            return "endToEndId mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.TX_ID), db.getField(SctDebitPdfContent.TX_ID)))
-            return "txId mismatch";
-        if (!Objects.equals(in.getField(SctDebitPdfContent.CONTROL_KEY), db.getField(SctDebitPdfContent.CONTROL_KEY)))
-            return "controlKey mismatch";
-        return null;
+You’re right — the simple loop will not work for AMOUNT because it needs special comparison logic (689 vs 689,00).
+
+No problem — we can still keep the clean loop and add a special case only for AMOUNT.
+
+Below is the best clean solution.
+
+⸻
+
+✅ Final Clean Version — Loop + special handling for AMOUNT
+
+private String validateInputMatchesDb(SctDebitData input) {
+    SctDebitPdfContent db = getContent(input.getOrderId());
+    SctDebitPdfContent in = mapToContent(input);
+
+    Map<String, String> checks = Map.of(
+        SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch",
+        SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch",
+        SctDebitPdfContent.OUT_NAME, "outName mismatch",
+        SctDebitPdfContent.OUT_IBAN, "outIban mismatch",
+        SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch",
+        SctDebitPdfContent.AMOUNT, "amount mismatch",
+        SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch",
+        SctDebitPdfContent.LABEL, "label mismatch",
+        SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch",
+        SctDebitPdfContent.TX_ID, "txId mismatch",
+        SctDebitPdfContent.CONTROL_KEY, "controlKey mismatch"
+    );
+
+    for (var entry : checks.entrySet()) {
+        String field = entry.getKey();
+        String message = entry.getValue();
+
+        // Special handling for AMOUNT
+        if (field.equals(SctDebitPdfContent.AMOUNT)) {
+            if (!amountEquals(in.getField(field), db.getField(field))) {
+                return message;
+            }
+        } else {
+            if (!Objects.equals(in.getField(field), db.getField(field))) {
+                return message;
+            }
+        }
     }
-is ther eany other way to reduce the number of line
+
+    return null;
+}
+
+
+⸻
+
+✅ Amount comparison method
+
+This will correctly match:
+	•	"689" ↔ "689,00"
+	•	"689.00" ↔ "689,00"
+	•	"689,50" ↔ "689.50"
+
+private boolean amountEquals(String inVal, String dbVal) {
+    if (inVal == null || dbVal == null)
+        return Objects.equals(inVal, dbVal);
+
+    // Normalize:
+    // - replace comma by dot
+    // - parse as BigDecimal (safest)
+    BigDecimal inDec = new BigDecimal(inVal.replace(",", "."));
+    BigDecimal dbDec = new BigDecimal(dbVal.replace(",", "."));
+
+    return inDec.compareTo(dbDec) == 0;
+}
+
+
+⸻
+
+⭐ Result
+	•	Your method becomes short and clean
+	•	All fields are handled generically
+	•	AMOUNT is handled safely with decimal logic
+	•	You eliminate duplicate comparison lines
+
+⸻
+
+If you want, I can help you clean up the SctDebitPdfContent class as well.
