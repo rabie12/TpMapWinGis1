@@ -1,37 +1,18 @@
-Yes — absolutely. Once you change your amount to a BigDecimal in SctDebitData, you can convert it to a properly formatted string during the mapping. This will preserve the decimal part and let you store it in SctDebitPdfContent, which expects a string.
+[ERROR] [ERROR] Some problems were encountered while processing the POMs:
+[ERROR] Non-resolvable import POM: The following artifacts could not be resolved: eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT (absent): Could not transfer artifact eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT from/to snapshots (https://newartifactory.olkypay.local:443/artifactory/libs-snapshot): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 69, column 16
+[ERROR] Non-resolvable import POM: The following artifacts could not be resolved: org.springframework:spring-framework-bom:pom:4.3.30.RELEASE (absent): Could not transfer artifact org.springframework:spring-framework-bom:pom:4.3.30.RELEASE from/to central (https://newartifactory.olkypay.local:443/artifactory/libs-release): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 77, column 16
+ @ 
+[ERROR] The build could not read 1 project -> [Help 1]
+[ERROR]   
+[ERROR]   The project eu.olkypay:olkypay-module:1.1.3-SNAPSHOT (C:\Users\RHABACHI\IdeaProjects\olkypay-module-old2\pom.xml) has 2 errors
+[ERROR]     Non-resolvable import POM: The following artifacts could not be resolved: eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT (absent): Could not transfer artifact eu.olkypay:olkypay-framework-bom:pom:1.7.2-SNAPSHOT from/to snapshots (https://newartifactory.olkypay.local:443/artifactory/libs-snapshot): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 69, column 16 -> [Help 2]
+[ERROR]     Non-resolvable import POM: The following artifacts could not be resolved: org.springframework:spring-framework-bom:pom:4.3.30.RELEASE (absent): Could not transfer artifact org.springframework:spring-framework-bom:pom:4.3.30.RELEASE from/to central (https://newartifactory.olkypay.local:443/artifactory/libs-release): PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target @ line 77, column 16 -> [Help 2]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/ProjectBuildingException
+[ERROR] [Help 2] http://cwiki.apache.org/confluence/display/MAVEN/UnresolvableModelException
 
-Here’s how you can do it:
-
-private SctDebitPdfContent mapToContent(SctDebitData data) {
-    SctDebitPdfContent content = new SctDebitPdfContent();
-    content.setSupplierName(data.getSupplierName());
-    content.setSupplierIban(data.getSupplierIban());
-    content.setOutName(data.getOutName());
-    content.setOutIban(data.getOutIban());
-    content.setOutAddress(data.getOutAddress());
-
-    if (data.getAmount() != null) {
-        // Convert BigDecimal to string with 2 decimal places
-        content.setAmount(data.getAmount().setScale(2, RoundingMode.HALF_UP).toString());
-    } else {
-        content.setAmount("0.00");
-    }
-
-    content.setExecutionDate(data.getExecutionDate());
-    content.setLabel(data.getLabel());
-    content.setEndToEndId(data.getEndToEndId());
-    content.setTxId(data.getTxId());
-    content.setControlKey(data.getControlKey());
-    
-    return content;
-}
-
-✅ Notes:
-	1.	setScale(2, RoundingMode.HALF_UP) ensures that even numbers like 689 will become "689.00" in the string.
-	2.	Using BigDecimal ensures no decimal precision is lost.
-
-⸻
-
-If you want, I can also show a one-liner conversion that works even if your amount comes as a Double from JSON, but still guarantees "689.11" format.
-
-Do you want me to show that?
+Process finished with exit code 1
