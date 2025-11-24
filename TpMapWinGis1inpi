@@ -1,65 +1,66 @@
-Ah, now I understand clearly: you want to keep Long in your DTO but still be able to compare amounts that may have decimals, like 689.11 from JSON, and detect mismatches correctly.
+normalizeAmount doesnt help it still considertate 689.11 equals 689.00
 
-We can do this, but you need a consistent strategy:
+this is th einpiut i sent and then:
+public class SctDebitData {
 
-⸻
+    private Integer orderId;
+    private String txId;
+    private String executionDate;
+    private String endToEndId;
+    private String outName;
+    private String outAddress;
+    private String outIban;
+    private String supplierName;
+    private String supplierIban;
+    private String controlKey;
+    private Long amount;
+    private String label;
 
-✅ Option 1: Convert all amounts to “cents” as Long
-	•	Store amounts as cents: multiply by 100 and round to Long.
-	•	Example:
-
-Input JSON	Normalized Long (cents)
-689	68900
-689.11	68911
-689,11	68911
-
-
-⸻
-
-Step 1 — Keep Long in your DTO
-
-private Long amount; // stored in cents
-
-
-⸻
-
-Step 2 — Normalize input
-
-private Long normalizeAmount(String rawAmount) {
-    if (rawAmount == null) return null;
-
-    // replace comma with dot if European format
-    BigDecimal bd = new BigDecimal(rawAmount.replace(",", "."));
-
-    // multiply by 100 to convert to cents
-    bd = bd.multiply(BigDecimal.valueOf(100));
-
-    // round to nearest cent and convert to Long
-    return bd.setScale(0, RoundingMode.HALF_UP).longValue();
-}
+    public SctDebitData() {
+    }
 
 
-⸻
+and then i mapped it to this :
+    private SctDebitPdfContent mapToContent(SctDebitData data) {
+        SctDebitPdfContent content = new SctDebitPdfContent();
+        content.setSupplierName(data.getSupplierName());
+        content.setSupplierIban(data.getSupplierIban());
+        content.setOutName(data.getOutName());
+        content.setOutIban(data.getOutIban());
+        content.setOutAddress(data.getOutAddress());
+        if (data.getAmount() != null) {
+            content.setAmount(data.getAmount().toString());
+        } else {
+            content.setAmount("0.00");
+        }
+        content.setExecutionDate(data.getExecutionDate());
+        content.setLabel(data.getLabel());
+        content.setEndToEndId(data.getEndToEndId());
+        content.setTxId(data.getTxId());
+        content.setControlKey(data.getTxId());
+        return content;
+    }
 
-Step 3 — Update your comparison
 
-if (!Objects.equals(
-        normalizeAmount(in.getField(SctDebitPdfContent.AMOUNT)),
-        normalizeAmount(db.getField(SctDebitPdfContent.AMOUNT))
-    )) {
-    return "amount mismatch";
-}
+this is SctDebitPdfvContent :
 
-	•	Now "689" → 68900
-	•	"689.11" → 68911
-	•	"689,11" → 68911
+public class SctDebitPdfContent {
 
-✅ Comparisons are consistent.
-✅ You can keep the DTO type as Long.
-✅ Decimal mismatches are correctly detected.
+    public static final String SUPPLIER_IBAN = "SUPPLIER_IBAN";
+    public static final String SUPPLIER_NAME = "SUPPLIER_NAME";
 
-⸻
+    public static final String OUT_IBAN = "OUT_IBAN";
+    public static final String OUT_NAME = "OUT_NAME";
+    public static final String OUT_ADDRESS = "OUT_ADDRESS";
 
-If you want, I can rewrite your entire validator loop using this cents approach so it stays short and clean.
+    public static final String AMOUNT = "AMOUNT";
+    public static final String EXECUTION_DATE = "EXECUTION_DATE";
+    public static final String LABEL = "LABEL";
 
-Do you want me to do that?
+    public static final String CONTROL_KEY = "CONTROL_KEY";
+    
+    // new fields EndToEndId and TxId (https://support.olky.eu/issues/5673) :
+    public static final String END_TO_END_ID = "END_TO_END_ID";
+    public static final String TX_ID = "TX_ID";
+
+    private Map<String, String> fields;
