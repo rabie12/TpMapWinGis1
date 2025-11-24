@@ -1,42 +1,16 @@
+689,00 value on db
+689 value sent from bruno
+
+        if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), db.getField(SctDebitPdfContent.AMOUNT)))
+            return "amount mismatch";
+
 {
-  "HttpMessageNotReadableException": {
-    "message": "JSON parse error: Cannot deserialize value of type `java.lang.Long` from String \"689,00\": not a valid Long value; nested exception is com.fasterxml.jackson.databind.exc.InvalidFormatException: Cannot deserialize value of type `java.lang.Long` from String \"689,00\": not a valid Long value\n at [Source: (org.springframework.util.StreamUtils$NonClosingInputStream); line: 1, column: 322] (through reference chain: eu.olkypay.tournesol.api.dto.SctDebitData[\"amount\"])"
+  "IllegalArgumentException": {
+    "message": "SctDebitData does not match database: amount mismatch"
   }
 }
 
-{
-  "orderId": 237,
-  "txId": "V-5000266-237-LU756445982",
-  "executionDate": "29/03/2016",
-  "endToEndId": "165-1518-237",
-  "outName": "PETER AUTO",
-  "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
-  "outIban": "FR907481700001LU75644598201",
-  "supplierName": "PETER AUTO",
-  "supplierIban": "FR907481700001LU75644598201",
-  "controlKey": "ABC123",
-  "amount": "689,00",
-  "label": "12 HOUSSEAU JOELLE suppl/ta"
-}
 
-public class SctDebitData {
+i have this error :
 
-    private Integer orderId;
-    private String txId;
-    private String executionDate;
-    private String endToEndId;
-    private String outName;
-    private String outAddress;
-    private String outIban;
-    private String supplierName;
-    private String supplierIban;
-    private String controlKey;
-    private Long amount;
-    private String label;
-
-    public SctDebitData() {
-    }
-
-
-while try to call my api via bruno hinkk i need to review this line   "amount": "689,00", check plz
-
+i thnik i need to review this :         if (!Objects.equals(in.getField(SctDebitPdfContent.AMOUNT), db.getField(SctDebitPdfContent.AMOUNT)))
