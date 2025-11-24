@@ -110,17 +110,57 @@ Once the message is confirmed as accepted by the external network, the bank's **
 
 ---
 
-## 📝 Summary: Where is the Message Stored?
+That's an important context shift! **Littlepay's core business is processing payments in the transport sector (e.g., contactless tapping on buses or trains).** This means their systems are heavily optimized for **speed, high volume, and complex fare calculation** (like capping or transfers).
 
-| Stage | Where it's Stored/Handled |
-| :--- | :--- |
-| **User Input** | Transiently in the Web Server/API Memory. |
-| **Initial Record** | **Core Banking System (CBS) Database.** This is the permanent, auditable record. |
-| **Internal Routing** | **Internal Message Queues** (Kafka/MQ), ensuring durability and resilience. |
-| **External Exchange** | **ACH/RTGS System** or **SWIFT Network** databases, as they route the message to the recipient bank. |
+The payment message workflow is significantly different from web banking. It's focused on real-time **card authorization** and later **batch settlement**.
 
-* **Custom Header (e.g., 4 bytes):** Might contain network ID, institution ID, or a length indicator.
-* **ISO 8583 Payload:** The content from the table above (`0100F23804018A818000...`).
-* **Custom Trailer (e.g., 8 bytes):** Often contains a Message Authentication Code (MAC) for integrity check.
+Here is the specialized workflow for a contactless transport payment system, where the initial message is an ISO 8583 Authorization Request (`0100`).
 
-Your Java application using a library like jPOS would use a **custom Channel** (a `CB2AChannel` or `APACSChannel`) to handle the proprietary Header/Trailer, and a standard **Packager** to handle the ISO 8583 core payload.
+---
+
+## 🚌 1. The Transport Payment Workflow (Littlepay Focus)
+
+The process is broken down into two main parts: the **Tap-In** (Authorization) and the **Daily Settlement** (Capture/Financial).
+
+### A. Phase 1: Tap-In (Real-Time Authorization)
+
+This phase must be extremely fast to avoid delaying passengers.
+
+1.  **Terminal Interaction (Contactless Tap):**
+    * A passenger taps a contactless card (or phone) on the reader (the **terminal**).
+    * The terminal extracts the **Primary Account Number (PAN)** or a tokenized representation (like a **Payment Token**).
+2.  **Littlepay's Role (The Acquirer/Processor):**
+    * The terminal sends a small, fast message (often an **ISO 8583 Authorization Request - `0100`**) to Littlepay's platform. This message typically asks for a **small pre-authorization** (e.g., $1.00 or even $0.00) to confirm the card is valid, *not* the final fare.
+    * Littlepay performs immediate checks (known as "velocity checks" or "hotlist checks").
+    * Littlepay then forwards this `0100` message to the relevant Card Scheme (Visa/MasterCard/etc.). 
+3.  **Issuer Response:**
+    * The Card Scheme routes the message to the **Issuing Bank** (where the passenger's money is).
+    * The Issuer sends back an **Authorization Response (`0110`)**—usually an "Approved" or "Valid Card" signal.
+4.  **Terminal Confirmation:** The approval signal travels back through Littlepay to the terminal, which flashes green, allowing the passenger to travel. **Crucially, the final fare amount is NOT charged yet.**
+
+### B. Phase 2: Tap-Out and Settlement (Batch Processing)
+
+This phase happens hours later, after the passenger has finished traveling.
+
+1.  **Fare Calculation (Capping/Transfers):** After the end of the day, Littlepay's system gathers all the passenger's taps and calculates the **best possible fare** (e.g., applying daily caps, weekly caps, or transfer discounts).
+2.  **Capture Message Generation:** Littlepay generates an **ISO 8583 Financial Request (Capture - `0200`)** or a **Financial Advice (`0220`)** message.
+    * **The amount in this new message is the final, actual fare** (e.g., $4.50), and it references the original Tap-In authorization.
+    * This is often done in large batches (settlement files).
+3.  **Scheme and Settlement:**
+    * Littlepay sends this batch of Capture messages to the Card Scheme.
+    * The Scheme forwards the capture requests to the Issuers.
+    * The Issuers debit the final amount from the passenger's account.
+4.  **Funds Clearing:** The transactions are grouped into settlement files and sent to the **ACH/Settlement Network** for final clearing and movement of funds between the banks. This is typically done once a day.
+
+---
+
+## 🔀 2. Messages Handled by Littlepay
+
+Littlepay primarily deals with the full set of ISO 8583 message types, with heavy emphasis on the following to handle the unique transport needs:
+
+| Message Type | MTI | Littlepay's Use in Transport |
+| :--- | :--- | :--- |
+| **Authorization Request** | **0100** | **Tap-In Validation:** Used for a fast, low-value, or zero-dollar check to ensure the card is valid for travel. |
+| **Financial Advice** | **0220/0230** | **Capture/Charge:** Used in a batch later that day to charge the final, capped fare amount against the original authorization. |
+| **Reversal Request** | **0400** | **Error Correction:** Used if a terminal misreads a tap or if the passenger gets an immediate refund, canceling a previous charge. |
+| **Network Management** | **0800** | **Connection Health:** Used constantly to perform **Echo Tests** and confirm all transit terminals are successfully connected to Littlepay's payment host.
