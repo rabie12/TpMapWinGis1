@@ -1,69 +1,16 @@
-normalizeAmount doesnt help it still considertate 689.11 equals 689.00
+{
+  "orderId": 237,
+  "txId": "V-5000266-237-LU756445982",
+  "executionDate": "29/03/2016",
+  "endToEndId": "165-1518-237",
+  "outName": "PETER AUTO",
+  "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
+  "outIban": "FR907481700001LU75644598201",
+  "supplierName": "PETER AUTO",
+  "supplierIban": "FR907481700001LU75644598201",
+  "controlKey": "ABC123",
+  "amount": 689.11,
+  "label": "12 HOUSSEAU JOELLE suppl/ta"
+}
 
-this is th einpiut i sent and then:
-public class SctDebitData {
-
-    private Integer orderId;
-    private String txId;
-    private String executionDate;
-    private String endToEndId;
-    private String outName;
-    private String outAddress;
-    private String outIban;
-    private String supplierName;
-    private String supplierIban;
-    private String controlKey;
-    private Long amount;
-    private String label;
-
-    public SctDebitData() {
-    }
-
-
-and then i mapped it to this :
-    private SctDebitPdfContent mapToContent(SctDebitData data) {
-        SctDebitPdfContent content = new SctDebitPdfContent();
-        content.setSupplierName(data.getSupplierName());
-        content.setSupplierIban(data.getSupplierIban());
-        content.setOutName(data.getOutName());
-        content.setOutIban(data.getOutIban());
-        content.setOutAddress(data.getOutAddress());
-        if (data.getAmount() != null) {
-            content.setAmount(data.getAmount().toString());
-        } else {
-            content.setAmount("0.00");
-        }
-        content.setExecutionDate(data.getExecutionDate());
-        content.setLabel(data.getLabel());
-        content.setEndToEndId(data.getEndToEndId());
-        content.setTxId(data.getTxId());
-        content.setControlKey(data.getTxId());
-        return content;
-    }
-
-
-this is SctDebitPdfvContent :
-
-public class SctDebitPdfContent {
-
-    public static final String SUPPLIER_IBAN = "SUPPLIER_IBAN";
-    public static final String SUPPLIER_NAME = "SUPPLIER_NAME";
-
-    public static final String OUT_IBAN = "OUT_IBAN";
-    public static final String OUT_NAME = "OUT_NAME";
-    public static final String OUT_ADDRESS = "OUT_ADDRESS";
-
-    public static final String AMOUNT = "AMOUNT";
-    public static final String EXECUTION_DATE = "EXECUTION_DATE";
-    public static final String LABEL = "LABEL";
-
-    public static final String CONTROL_KEY = "CONTROL_KEY";
-    
-    // new fields EndToEndId and TxId (https://support.olky.eu/issues/5673) :
-    public static final String END_TO_END_ID = "END_TO_END_ID";
-    public static final String TX_ID = "TX_ID";
-
-    private Map<String, String> fields;
-
-
-i can for exemple conver amount SctDebitData to bigDecimal and during the comparasion betwenn SctDebitData Amount and SctDebitPdfContent Amount convert the second tobigDecimal to be able to take in consideration the decimal part alsoe
+it doesnt take in consideration .11 in amount on my back i just receive 698 can you check please
