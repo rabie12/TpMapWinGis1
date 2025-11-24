@@ -1,1 +1,41 @@
-Salut Clément, je prévois de prendre des congés en fin d’année. J’aimerais m’organiser avec toi avant de faire la demande. Ça fait plus d’un an que je ne suis pas rentré au pays et ça commence à peser.
+{
+  "HttpMessageNotReadableException": {
+    "message": "JSON parse error: Cannot deserialize value of type `java.lang.Long` from String \"689,00\": not a valid Long value; nested exception is com.fasterxml.jackson.databind.exc.InvalidFormatException: Cannot deserialize value of type `java.lang.Long` from String \"689,00\": not a valid Long value\n at [Source: (org.springframework.util.StreamUtils$NonClosingInputStream); line: 1, column: 322] (through reference chain: eu.olkypay.tournesol.api.dto.SctDebitData[\"amount\"])"
+  }
+}
+
+{
+  "orderId": 237,
+  "txId": "V-5000266-237-LU756445982",
+  "executionDate": "29/03/2016",
+  "endToEndId": "165-1518-237",
+  "outName": "PETER AUTO",
+  "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
+  "outIban": "FR907481700001LU75644598201",
+  "supplierName": "PETER AUTO",
+  "supplierIban": "FR907481700001LU75644598201",
+  "controlKey": "ABC123",
+  "amount": "689,00",
+  "label": "12 HOUSSEAU JOELLE suppl/ta"
+}
+
+public class SctDebitData {
+
+    private Integer orderId;
+    private String txId;
+    private String executionDate;
+    private String endToEndId;
+    private String outName;
+    private String outAddress;
+    private String outIban;
+    private String supplierName;
+    private String supplierIban;
+    private String controlKey;
+    private Long amount;
+    private String label;
+
+    public SctDebitData() {
+    }
+
+
+while try to call my api via bruno
