@@ -1,3 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <servers>
+        <server>
+            <username>rhabachi</username>
+            <password>mdp</password>
+            <id>central</id>
+        </server>
+        <server>
+            <username>rhabachi</username>
+            <password>mdp</password>
+            <id>snapshots</id>
+        </server>
+    </servers>
+    <profiles>
+        <profile>
+            <repositories>
+                <repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>libs-release</name>
+                    <url>https://newartifactory.olkypay.local:443/artifactory/libs-release</url>
+                </repository>
+                <repository>
+                    <snapshots />
+                    <id>snapshots</id>
+                    <name>libs-snapshot</name>
+                    <url>https://newartifactory.olkypay.local:443/artifactory/libs-snapshot</url>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>libs-release</name>
+                    <url>https://newartifactory.olkypay.local:443/artifactory/libs-release</url>
+                </pluginRepository>
+                <pluginRepository>
+                    <snapshots />
+                    <id>snapshots</id>
+                    <name>libs-snapshot</name>
+                    <url>https://newartifactory.olkypay.local:443/artifactory/libs-snapshot</url>
+                </pluginRepository>
+            </pluginRepositories>
+            <id>artifactory</id>
+        </profile>
+    </profiles>
+    <activeProfiles>
+        <activeProfile>artifactory</activeProfile>
+    </activeProfiles>
+</settings>
+
+this is my new artifactory  should i create manually security file on my zulu java version lib path and add there the certificate used on jdk 17
 "C:\Program Files\Zulu\zulu-8\bin\java.exe" -Dmaven.multiModuleProjectDirectory=C:\Users\RHABACHI\IdeaProjects\olkypay-module-old2 -Djansi.passthrough=true "-Dmaven.home=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3" "-Dclassworlds.conf=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\bin\m2.conf" "-Dmaven.ext.class.path=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven-event-listener.jar" "-javaagent:C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\lib\idea_rt.jar=53124:C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\bin" -Dfile.encoding=UTF-8 -classpath "C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\boot\plexus-classworlds-2.8.0.jar;C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\boot\plexus-classworlds.license" org.codehaus.classworlds.Launcher -Didea.version=2024.3 -s C:\Users\RHABACHI\.m2\settings.xml -Dmaven.repo.local=C:\Users\RHABACHI\.m2\repository clean
 [INFO] Scanning for projects...
 Downloading from snapshots: https://newartifactory.olkypay.local:443/artifactory/libs-snapshot/eu/olkypay/olkypay-framework-bom/1.7.2-SNAPSHOT/maven-metadata.xml
