@@ -1,2 +1,1 @@
-  "amount": 689.11,
-when i change the value it still considerate it as much
+  "amount": 689.11, I want to be able to use Long and compare also if deciaml value are musch also
