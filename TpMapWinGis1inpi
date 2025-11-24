@@ -4,3 +4,9 @@ Sinon c'est un coup à pas maîtriser la conso de ram et se manger un OOM ^^
 garbage collector je pense qu'il y a des options de fine tuning un peu standard qu'on doit pouvoir choper sur les internets
 
 dans le serveur de dev ou est est ce que je peux ajouter des param jvm pour heap memory et garbage collector
+
+Faut au moins fixer min/max heap size
+
+Sinon c'est un coup à pas maîtriser la conso de ram et se manger un OOM ^^
+
+garbage collector je pense qu'il y a des options de fine tuning un peu standard qu'on doit pouvoir choper sur les internets
