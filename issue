@@ -1,129 +1,53 @@
-Ah! I see exactly what’s happening. Thanks for sharing your settings.xml. Let me break it down carefully.
-
-⸻
-
-1️⃣ The problem
-
-Your Maven error says:
-
-Could not transfer artifact eu.olkypay:olkypay:pom:7 from/to maven-default-http-blocker (http://0.0.0.0/): Blocked mirror for repositories
-
-This is caused by Maven’s HTTP blocker. Modern Maven versions block plain HTTP (instead of HTTPS) by default, and your Artifactory URLs are HTTP:
-
-http://artifactory.olkypay.local/artifactory/libs-release
-http://artifactory.olkypay.local/artifactory/libs-snapshot
-
-Additionally, your settings.xml doesn’t define any <mirrors>, so Maven defaults to maven-default-http-blocker and blocks HTTP.
-
-⸻
-
-2️⃣ Why the parent POM cannot be resolved
-	•	Your olkypay-core POM has this:
-
-<parent>
-    <groupId>eu.olkypay</groupId>
-    <artifactId>olkypay</artifactId>
-    <version>7</version>
-</parent>
-
-	•	Maven looks for eu.olkypay:olkypay:pom:7 in the remote repositories.
-	•	Because HTTP is blocked, it cannot download the parent POM.
-	•	And your parent.relativePath points to ../pom.xml, which doesn’t exist locally, so there’s no fallback.
-
-⸻
-
-3️⃣ How to fix
-
-Option 1: Enable a mirror and allow HTTP
-
-Update your settings.xml like this:
-
-<settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 
-                              http://maven.apache.org/xsd/settings-1.1.0.xsd">
-
-    <mirrors>
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<mirrors>
         <mirror>
             <id>internal</id>
             <mirrorOf>*</mirrorOf>
             <url>http://artifactory.olkypay.local/artifactory/libs-release</url>
         </mirror>
     </mirrors>
-
-    <profiles>
-        <profile>
-            <id>artifactory</id>
-
-            <repositories>
-                <repository>
-                    <id>libs-release</id>
-                    <url>http://artifactory.olkypay.local/artifactory/libs-release</url>
-                    <releases><enabled>true</enabled></releases>
-                    <snapshots><enabled>false</enabled></snapshots>
-                </repository>
-                <repository>
-                    <id>libs-snapshot</id>
-                    <url>http://artifactory.olkypay.local/artifactory/libs-snapshot</url>
-                    <releases><enabled>false</enabled></releases>
-                    <snapshots><enabled>true</enabled></snapshots>
-                </repository>
-            </repositories>
-
-            <pluginRepositories>
-                <pluginRepository>
-                    <id>plugins-release</id>
-                    <url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
-                    <releases><enabled>true</enabled></releases>
-                    <snapshots><enabled>false</enabled></snapshots>
-                </pluginRepository>
-                <pluginRepository>
-                    <id>plugins-snapshot</id>
-                    <url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
-                    <releases><enabled>false</enabled></releases>
-                    <snapshots><enabled>true</enabled></snapshots>
-                </pluginRepository>
-            </pluginRepositories>
-
-        </profile>
-    </profiles>
-
-    <activeProfiles>
-        <activeProfile>artifactory</activeProfile>
-    </activeProfiles>
+  <profiles>
+    <profile>
+      <repositories>
+        <repository>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <id>central</id>
+          <name>libs-release</name>
+          <url>http://artifactory.olkypay.local/artifactory/libs-release</url>
+        </repository>
+        <repository>
+          <snapshots />
+          <id>snapshots</id>
+          <name>libs-snapshot</name>
+          <url>http://artifactory.olkypay.local/artifactory/libs-snapshot</url>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+          <id>central</id>
+          <name>plugins-release</name>
+          <url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
+        </pluginRepository>
+        <pluginRepository>
+          <snapshots />
+          <id>snapshots</id>
+          <name>plugins-release</name>
+          <url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
+        </pluginRepository>
+      </pluginRepositories>
+      <id>artifactory</id>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>artifactory</activeProfile>
+  </activeProfiles>
 </settings>
 
-Notes:
-	•	<mirrors> ensures all repositories go through your Artifactory.
-	•	This allows Maven to bypass the maven-default-http-blocker.
-
-⸻
-
-Option 2: Download parent POM manually
-
-If Artifactory is not reachable, manually install the parent POM locally:
-
-mvn install:install-file \
-  -Dfile=/path/to/olkypay-7.pom \
-  -DgroupId=eu.olkypay \
-  -DartifactId=olkypay \
-  -Dversion=7 \
-  -Dpackaging=pom
-
-This makes Maven find the parent POM locally, bypassing Artifactory.
-
-⸻
-
-Option 3: Use HTTPS
-
-If your Artifactory supports HTTPS, switch all URLs to https://…. This is recommended.
-
-⸻
-
-💡 Important: Until Maven can resolve the parent POM, your <maven.compiler.target> and Java version settings do nothing. This explains why even though you set 1.8, Maven still complains about 17.
-
-⸻
-
-If you want, I can write a ready-to-use settings.xml specifically for your corporate Artifactory that will let Maven download the parent POM and compile with Java 1.8 immediately.
-
-Do you want me to do that?
+if didnt find here go to maven central addiit on my settings.xml
