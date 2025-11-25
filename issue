@@ -1,61 +1,38 @@
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-assembly-plugin:3.7.1:single (default) on project tournesol-distribution: Execution default of goal org.apache.maven.plugins:maven-assembly-plugin:3.7.1:single failed: parameter 'descriptor' has been removed from the plugin, please verify documentation. -> [Help 1]
-[ERROR] 
-[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
-[ERROR] Re-run Maven using the -X switch to enable full debug logging.
-[ERROR] 
-[ERROR] For more information about the errors and possible solutions, please read the following articles:
-[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/PluginExecutionException
+    private String validateInputMatchesDb(SctDebitData input) {
+        SctDebitPdfContent db = getContent(input.getOrderId());
+        SctDebitPdfContent in = mapToContent(input);
 
-Process finished with exit code 1
+        Map<String, String> checks = Map.of(
+                SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch",
+                SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch",
+                SctDebitPdfContent.OUT_NAME, "outName mismatch",
+                SctDebitPdfContent.OUT_IBAN, "outIban mismatch",
+                SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch",
+                SctDebitPdfContent.AMOUNT, "amount mismatch",
+                SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch",
+                SctDebitPdfContent.LABEL, "label mismatch",
+                SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch",
+                SctDebitPdfContent.TX_ID, "txId mismatch"
+        );
+
+        for (var entry : checks.entrySet()) {
+            String field = entry.getKey();
+            String message = entry.getValue();
+            if (field.equals(SctDebitPdfContent.AMOUNT)) {
+                if (!Objects.equals(
+                        normalizeAmount(in.getField(SctDebitPdfContent.AMOUNT)),
+                        normalizeAmount(db.getField(SctDebitPdfContent.AMOUNT))
+                )) {
+                    return "amount mismatch";
+                }
+            } else {
+                if (!Objects.equals(in.getField(field), db.getField(field))) {
+                    return message;
+                }
+            }
+        }
+        return null;
+    }
 
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>eu.olkypay</groupId>
-		<artifactId>tournesol</artifactId>
-		<version>1.9.10-SNAPSHOT</version>
-	</parent>
-	<artifactId>tournesol-distribution</artifactId>
-	<packaging>pom</packaging>
-	<name>Tournesol Distribution</name>
-
-
-	<properties>
-		<solr.project.path>../tournesol-solr</solr.project.path>
-	</properties>
-
-
-	<dependencies>
-		<dependency>
-			<groupId>eu.olkypay</groupId>
-			<artifactId>tournesol-solr</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
-
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<finalName>${project.artifactId}-${project.version}</finalName>
-					<appendAssemblyId>false</appendAssemblyId>
-					<descriptor>src/assembly/assembly.xml</descriptor>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
-</project>
-
-ca you check why descriptor arae not working
+je dois remplacer cette ligne pour que ça fonctionne pour java 8
