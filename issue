@@ -1,53 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd" xmlns="http://maven.apache.org/SETTINGS/1.1.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<mirrors>
-        <mirror>
-            <id>internal</id>
-            <mirrorOf>*</mirrorOf>
-            <url>http://artifactory.olkypay.local/artifactory/libs-release</url>
-        </mirror>
-    </mirrors>
+<settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 
+                              http://maven.apache.org/xsd/settings-1.1.0.xsd" 
+          xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <mirrors>
+    <mirror>
+      <id>internal</id>
+      <mirrorOf>*</mirrorOf>
+      <url>http://artifactory.olkypay.local/artifactory/libs-release</url>
+    </mirror>
+  </mirrors>
+
   <profiles>
     <profile>
+      <id>artifactory</id>
+      
       <repositories>
         <repository>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-          <id>central</id>
-          <name>libs-release</name>
+          <id>libs-release</id>
           <url>http://artifactory.olkypay.local/artifactory/libs-release</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
         </repository>
         <repository>
-          <snapshots />
-          <id>snapshots</id>
-          <name>libs-snapshot</name>
+          <id>libs-snapshot</id>
           <url>http://artifactory.olkypay.local/artifactory/libs-snapshot</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>central</id>
+          <name>Maven Central</name>
+          <url>https://repo1.maven.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
         </repository>
       </repositories>
+
       <pluginRepositories>
         <pluginRepository>
-          <snapshots>
-            <enabled>false</enabled>
-          </snapshots>
-          <id>central</id>
-          <name>plugins-release</name>
+          <id>plugins-release</id>
           <url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
         </pluginRepository>
         <pluginRepository>
-          <snapshots />
-          <id>snapshots</id>
-          <name>plugins-release</name>
+          <id>plugins-snapshot</id>
           <url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </pluginRepository>
+        <pluginRepository>
+          <id>central-plugins</id>
+          <url>https://repo1.maven.org/maven2/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
         </pluginRepository>
       </pluginRepositories>
-      <id>artifactory</id>
     </profile>
   </profiles>
+
   <activeProfiles>
     <activeProfile>artifactory</activeProfile>
   </activeProfiles>
 </settings>
-
-if didnt find here go to maven central addiit on my settings.xml
