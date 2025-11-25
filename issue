@@ -1,3 +1,59 @@
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd">
+<servers>
+<server>
+<username>rhabachi</username>
+<password>cmVmdGtuOjAxOjE3ODg1MzQwNzM6M0Y3anpFaVdMSXFKRXI4QlpnaDEwWFBTNzgw</password>
+<id>central</id>
+</server>
+<server>
+<username>rhabachi</username>
+<password>cmVmdGtuOjAxOjE3ODg1MzQwNzM6M0Y3anpFaVdMSXFKRXI4QlpnaDEwWFBTNzgw</password>
+<id>snapshots</id>
+</server>
+</servers>
+<profiles>
+<profile>
+<repositories>
+<repository>
+<snapshots>
+<enabled>false</enabled>
+</snapshots>
+<id>central</id>
+<name>libs-release</name>
+<url>https://newartifactory.olkypay.local:443/artifactory/libs-release</url>
+</repository>
+<repository>
+<snapshots/>
+<id>snapshots</id>
+<name>libs-snapshot</name>
+<url>https://newartifactory.olkypay.local:443/artifactory/libs-snapshot</url>
+</repository>
+</repositories>
+<pluginRepositories>
+<pluginRepository>
+<snapshots>
+<enabled>false</enabled>
+</snapshots>
+<id>central</id>
+<name>libs-release</name>
+<url>https://newartifactory.olkypay.local:443/artifactory/libs-release</url>
+</pluginRepository>
+<pluginRepository>
+<snapshots/>
+<id>snapshots</id>
+<name>libs-snapshot</name>
+<url>https://newartifactory.olkypay.local:443/artifactory/libs-snapshot</url>
+</pluginRepository>
+</pluginRepositories>
+<id>artifactory</id>
+</profile>
+</profiles>
+<activeProfiles>
+<activeProfile>artifactory</activeProfile>
+</activeProfiles>
+</settings>
+
+this is my settings.xml 
 [ERROR] [ERROR] Some problems were encountered while processing the POMs:
 [FATAL] Non-resolvable parent POM for eu.olkypay:olkypay-core:1.7.2-SNAPSHOT: The following artifacts could not be resolved: eu.olkypay:olkypay:pom:7 (absent): Could not transfer artifact eu.olkypay:olkypay:pom:7 from/to maven-default-http-blocker (http://0.0.0.0/): Blocked mirror for repositories: [central (http://artifactory.olkypay.local/artifactory/libs-release, default, releases), snapshots (http://artifactory.olkypay.local/artifactory/libs-snapshot, default, releases+snapshots)] and 'parent.relativePath' points at wrong local POM @ line 5, column 10
  @ 
@@ -15,5 +71,4 @@
 
 Process finished with exit code 1
 
-
-its on this artifactory but im still blocked should i add somthing
+can you check please
