@@ -1,2 +1,6 @@
-eu.olkypay/olkypay/9-SNAPSHOT/pom.xml
- where can i find thispath in my project please
+[ERROR]   
+[ERROR]   The project eu.olkypay:olkypay-module:1.1.3-SNAPSHOT (C:\Users\RHABACHI\IdeaProjects\olkypay-module-old\pom.xml) has 1 error
+[ERROR]     Non-resolvable parent POM for eu.olkypay:olkypay-module:1.1.3-SNAPSHOT: The following artifacts could not be resolved: eu.olkypay:olkypay:pom:7 (absent): Could not transfer artifact eu.olkypay:olkypay:pom:7 from/to maven-default-http-blocker (http://0.0.0.0/): Blocked mirror for repositories: [AsposeJavaAPI (http://maven.aspose.com/artifactory/simple/ext-release-local/, default, releases+snapshots)] and 'parent.relativePath' points at wrong local POM @ line 5, column 10 -> [Help 2]
+[ERROR] 
+
+i need to check on this one but im blocked
