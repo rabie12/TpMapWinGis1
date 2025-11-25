@@ -1,38 +1,46 @@
-    private String validateInputMatchesDb(SctDebitData input) {
-        SctDebitPdfContent db = getContent(input.getOrderId());
-        SctDebitPdfContent in = mapToContent(input);
+Ah, je vois ! Le code que tu as fourni utilise Map.of(...), ce qui est introduit à partir de Java 9. Si tu veux que ce code fonctionne en Java 8, il faut remplacer Map.of(...) par une alternative compatible.
 
-        Map<String, String> checks = Map.of(
-                SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch",
-                SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch",
-                SctDebitPdfContent.OUT_NAME, "outName mismatch",
-                SctDebitPdfContent.OUT_IBAN, "outIban mismatch",
-                SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch",
-                SctDebitPdfContent.AMOUNT, "amount mismatch",
-                SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch",
-                SctDebitPdfContent.LABEL, "label mismatch",
-                SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch",
-                SctDebitPdfContent.TX_ID, "txId mismatch"
-        );
+En Java 8, tu peux utiliser HashMap ou Collections.unmodifiableMap comme ceci :
 
-        for (var entry : checks.entrySet()) {
-            String field = entry.getKey();
-            String message = entry.getValue();
-            if (field.equals(SctDebitPdfContent.AMOUNT)) {
-                if (!Objects.equals(
-                        normalizeAmount(in.getField(SctDebitPdfContent.AMOUNT)),
-                        normalizeAmount(db.getField(SctDebitPdfContent.AMOUNT))
-                )) {
-                    return "amount mismatch";
-                }
-            } else {
-                if (!Objects.equals(in.getField(field), db.getField(field))) {
-                    return message;
-                }
+private String validateInputMatchesDb(SctDebitData input) {
+    SctDebitPdfContent db = getContent(input.getOrderId());
+    SctDebitPdfContent in = mapToContent(input);
+
+    Map<String, String> checks = new HashMap<>();
+    checks.put(SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch");
+    checks.put(SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch");
+    checks.put(SctDebitPdfContent.OUT_NAME, "outName mismatch");
+    checks.put(SctDebitPdfContent.OUT_IBAN, "outIban mismatch");
+    checks.put(SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch");
+    checks.put(SctDebitPdfContent.AMOUNT, "amount mismatch");
+    checks.put(SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch");
+    checks.put(SctDebitPdfContent.LABEL, "label mismatch");
+    checks.put(SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch");
+    checks.put(SctDebitPdfContent.TX_ID, "txId mismatch");
+
+    for (Map.Entry<String, String> entry : checks.entrySet()) {
+        String field = entry.getKey();
+        String message = entry.getValue();
+        if (field.equals(SctDebitPdfContent.AMOUNT)) {
+            if (!Objects.equals(
+                    normalizeAmount(in.getField(SctDebitPdfContent.AMOUNT)),
+                    normalizeAmount(db.getField(SctDebitPdfContent.AMOUNT))
+            )) {
+                return "amount mismatch";
+            }
+        } else {
+            if (!Objects.equals(in.getField(field), db.getField(field))) {
+                return message;
             }
         }
-        return null;
     }
+    return null;
+}
 
+✅ Points clés :
+	•	Map.of → Java 9+ only, donc remplacement par new HashMap<>() pour Java 8.
+	•	Tu peux aussi rendre la map immuable si tu veux en Java 8 :
 
-je dois remplacer cette ligne pour que ça fonctionne pour java 8
+Map<String, String> checks = Collections.unmodifiableMap(tempMap);
+
+Si tu veux, je peux te réécrire toute la méthode en Java 8 idiomatique avec moins de répétitions pour la rendre plus propre. Veux‑tu que je fasse ça ?
