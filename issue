@@ -1,14 +1,71 @@
-"C:\Program Files\Zulu\zulu-8\bin\java.exe" -Dmaven.multiModuleProjectDirectory=C:\Users\RHABACHI\IdeaProjects\corporate-frameworks2 -Djansi.passthrough=true -Djavax.net.ssl.trustStoreType=Windows-ROOT --add-exports java.base/sun.nio.ch=ALL-UNNAMED "-Dmaven.home=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3" "-Dclassworlds.conf=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\bin\m2.conf" "-Dmaven.ext.class.path=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven-event-listener.jar" "-javaagent:C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\lib\idea_rt.jar=59983:C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\bin" -Dfile.encoding=UTF-8 -classpath "C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\boot\plexus-classworlds-2.8.0.jar;C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\boot\plexus-classworlds.license" org.codehaus.classworlds.Launcher -Didea.version=2024.3 -DskipTests=true clean
-Unrecognized option: --add-exports
-Error: Could not create the Java Virtual Machine.
-Error: A fatal exception has occurred. Program will exit.
+You’re getting this error because --add-exports is not supported in Java 8.
+That option was introduced in Java 9 with the module system (Project Jigsaw).
 
-Process finished with exit code 1
+Since you’re running Maven with Zulu-8 (Java 8):
+
+C:\Program Files\Zulu\zulu-8\bin\java.exe
+
+Java 8 simply doesn’t recognize:
+
+--add-exports java.base/sun.nio.ch=ALL-UNNAMED
+
+✔ Why you see the error
+
+Java 8 → ❌ does not support --add-exports
+Java 9+ → ✔ supports --add-exports
+
+So the JVM exits before Maven can start.
+
+⸻
+
+✅ How to fix it
+
+Option 1 — Remove the --add-exports line (if you don’t need it for Java 8)
+
+Since Java 8 does not enforce module access, you can normally access sun.nio.ch without exports.
+
+So your JVM config could simply be:
+
+-Djavax.net.ssl.trustStoreType=Windows-ROOT
 
 
+⸻
 
-this is my jvm config 
+Option 2 — Switch Maven to run with Java 9+ (if you actually need --add-exports)
 
--Djavax.net.ssl.trustStoreType=Windows-ROOT --add-exports java.base/sun.nio.ch=ALL-UNNAMED 
+Keep your project using Java 8 for compilation, but run Maven with Java 11 or Java 17.
 
-im using java 8 as you see
+In IntelliJ:
+
+Settings → Build Tools → Maven → JDK
+Select a JDK ≥ 11.
+
+Or using environment variables:
+
+set JAVA_HOME=C:\Program Files\Zulu\zulu-17
+
+Then run Maven again.
+
+⸻
+
+Option 3 — Disable IntelliJ from injecting that JVM argument
+
+If IntelliJ added it automatically:
+	1.	Go to:
+Help → Edit Custom VM Options
+	2.	Remove the line:
+
+--add-exports java.base/sun.nio.ch=ALL-UNNAMED
+
+
+	3.	Restart IntelliJ.
+
+⸻
+
+📌 Summary
+	•	Java 8 cannot interpret --add-exports → JVM startup failure.
+	•	Remove this option if you stay on Java 8, or run Maven with Java 11+.
+
+⸻
+
+If you want, I can check your full Maven/IntelliJ config and tell you exactly where the flag is coming from.
