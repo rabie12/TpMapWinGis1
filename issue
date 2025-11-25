@@ -1,13 +1,11 @@
-        Map<String, String> checks = Map.of(
-                SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch",
-                SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch",
-                SctDebitPdfContent.OUT_NAME, "outName mismatch",
-                SctDebitPdfContent.OUT_IBAN, "outIban mismatch",
-                SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch",
-                SctDebitPdfContent.AMOUNT, "amount mismatch",
-                SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch",
-                SctDebitPdfContent.LABEL, "label mismatch",
-                SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch",
-                SctDebitPdfContent.TX_ID, "txId mismatch"
-        ); 
-this under java 8  also
+Map<String, String> checks = new HashMap<>();
+checks.put(SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch");
+checks.put(SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch");
+checks.put(SctDebitPdfContent.OUT_NAME, "outName mismatch");
+checks.put(SctDebitPdfContent.OUT_IBAN, "outIban mismatch");
+checks.put(SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch");
+checks.put(SctDebitPdfContent.AMOUNT, "amount mismatch");
+checks.put(SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch");
+checks.put(SctDebitPdfContent.LABEL, "label mismatch");
+checks.put(SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch");
+checks.put(SctDebitPdfContent.TX_ID, "txId mismatch");
