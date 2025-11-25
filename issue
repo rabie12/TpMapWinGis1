@@ -1,88 +1,61 @@
-Ah! I see exactly what’s happening. This is similar to the previous Maven plugin issue: Maven cannot resolve the springmvc-raml-parser:0.9.1_FORKED dependency for your springmvc-raml-plugin. Let me break it down carefully.
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-assembly-plugin:3.7.1:single (default) on project tournesol-distribution: Execution default of goal org.apache.maven.plugins:maven-assembly-plugin:3.7.1:single failed: parameter 'descriptor' has been removed from the plugin, please verify documentation. -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/PluginExecutionException
 
-⸻
-
-Problem Analysis
-	1.	In your pom.xml, the plugin is declared like this:
-
-<plugin>
-    <groupId>com.phoenixnap.oss</groupId>
-    <artifactId>springmvc-raml-plugin</artifactId>
-    <version>0.9.1</version>
-    <dependencies>
-        <dependency>
-            <groupId>com.phoenixnap.oss</groupId>
-            <artifactId>springmvc-raml-parser</artifactId>
-            <version>0.9.1_FORKED</version>
-        </dependency>
-    </dependencies>
-</plugin>
-
-	•	Notice the version: 0.9.1_FORKED.
-	•	This is not a standard Maven Central version. It’s either a custom fork published in your internal Artifactory or maybe not published at all.
-
-	2.	Because your settings.xml mirrors everything to internal Artifactory, Maven looks there first:
-
-http://artifactory.olkypay.local/artifactory/libs-release
-
-	•	The dependency is not found → build fails.
-
-⸻
-
-Solutions
-
-Option 1: Use the original version from Maven Central
-	•	The official Maven Central version is 0.9.1 (no _FORKED).
-	•	Update your plugin dependency to:
-
-<plugin>
-    <groupId>com.phoenixnap.oss</groupId>
-    <artifactId>springmvc-raml-plugin</artifactId>
-    <version>0.9.1</version>
-</plugin>
-
-	•	Remove the <dependencies> section that points to _FORKED.
-	•	This works if you don’t need the forked features.
-
-⸻
-
-Option 2: Publish _FORKED to your Artifactory
-	•	If you must use _FORKED, make sure the jar and its pom are available in:
-
-http://artifactory.olkypay.local/artifactory/libs-release/com/phoenixnap/oss/springmvc-raml-parser/0.9.1_FORKED/
-
-	•	You can install it manually in local .m2 with:
-
-mvn install:install-file \
-    -DgroupId=com.phoenixnap.oss \
-    -DartifactId=springmvc-raml-parser \
-    -Dversion=0.9.1_FORKED \
-    -Dpackaging=jar \
-    -Dfile=/path/to/springmvc-raml-parser-0.9.1_FORKED.jar
-
-	•	Or deploy it to your internal Artifactory so CI builds can fetch it.
-
-⸻
-
-Option 3: Temporarily bypass internal mirror
-	•	You can temporarily bypass the mirror and fetch the plugin and its dependencies from Maven Central using:
-
-mvn clean install -U -Dmaven.repo.local=/tmp/m2
-
-	•	This avoids Artifactory entirely for this run (useful for testing).
-
-⸻
-
-✅ Recommendation
-	1.	If you don’t need the forked parser → remove _FORKED dependency entirely and rely on Maven Central.
-	2.	If you need _FORKED → ensure it’s deployed in Artifactory or install it locally.
-	3.	After fixing the dependency, always force update:
-
-mvn clean install -U
+Process finished with exit code 1
 
 
-⸻
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>eu.olkypay</groupId>
+		<artifactId>tournesol</artifactId>
+		<version>1.9.10-SNAPSHOT</version>
+	</parent>
+	<artifactId>tournesol-distribution</artifactId>
+	<packaging>pom</packaging>
+	<name>Tournesol Distribution</name>
 
-I can also give you a ready-to-use fixed plugin snippet for your POM that works with Maven Central and doesn’t require _FORKED. This will make your build work immediately.
 
-Do you want me to do that?
+	<properties>
+		<solr.project.path>../tournesol-solr</solr.project.path>
+	</properties>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>eu.olkypay</groupId>
+			<artifactId>tournesol-solr</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<finalName>${project.artifactId}-${project.version}</finalName>
+					<appendAssemblyId>false</appendAssemblyId>
+					<descriptor>src/assembly/assembly.xml</descriptor>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
+
+ca you check why descriptor arae not working
