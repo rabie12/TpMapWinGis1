@@ -10,3 +10,8 @@ Faut au moins fixer min/max heap size
 Sinon c'est un coup à pas maîtriser la conso de ram et se manger un OOM ^^
 
 garbage collector je pense qu'il y a des options de fine tuning un peu standard qu'on doit pouvoir choper sur les internets
+mais t as vu tous ls objets 
+
+qui sont instancie 
+
+les les lecture memoire
