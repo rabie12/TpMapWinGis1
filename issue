@@ -1,11 +1,5 @@
-Map<String, String> checks = new HashMap<>();
-checks.put(SctDebitPdfContent.SUPPLIER_NAME, "supplierName mismatch");
-checks.put(SctDebitPdfContent.SUPPLIER_IBAN, "supplierIban mismatch");
-checks.put(SctDebitPdfContent.OUT_NAME, "outName mismatch");
-checks.put(SctDebitPdfContent.OUT_IBAN, "outIban mismatch");
-checks.put(SctDebitPdfContent.OUT_ADDRESS, "outAddress mismatch");
-checks.put(SctDebitPdfContent.AMOUNT, "amount mismatch");
-checks.put(SctDebitPdfContent.EXECUTION_DATE, "executionDate mismatch");
-checks.put(SctDebitPdfContent.LABEL, "label mismatch");
-checks.put(SctDebitPdfContent.END_TO_END_ID, "endToEndId mismatch");
-checks.put(SctDebitPdfContent.TX_ID, "txId mismatch");
+Commande: git -c diff.mnemonicprefix=false -c core.quotepath=false --no-optional-locks ls-remote https://RHABACHI@bitbucket.olkypay.local/scm/ts/tournesol.git
+Sortie: 
+Erreur: fatal: unable to access 'https://bitbucket.olkypay.local/scm/ts/tournesol.git/': SSL certificate problem: self-signed certificate
+
+in sourcetree
