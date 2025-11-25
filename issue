@@ -1,71 +1,10 @@
-You’re getting this error because --add-exports is not supported in Java 8.
-That option was introduced in Java 9 with the module system (Project Jigsaw).
+INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project olkypay-core-unsafe: Fatal error compiling: invalid target release: 17 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
 
-Since you’re running Maven with Zulu-8 (Java 8):
-
-C:\Program Files\Zulu\zulu-8\bin\java.exe
-
-Java 8 simply doesn’t recognize:
-
---add-exports java.base/sun.nio.ch=ALL-UNNAMED
-
-✔ Why you see the error
-
-Java 8 → ❌ does not support --add-exports
-Java 9+ → ✔ supports --add-exports
-
-So the JVM exits before Maven can start.
-
-⸻
-
-✅ How to fix it
-
-Option 1 — Remove the --add-exports line (if you don’t need it for Java 8)
-
-Since Java 8 does not enforce module access, you can normally access sun.nio.ch without exports.
-
-So your JVM config could simply be:
-
--Djavax.net.ssl.trustStoreType=Windows-ROOT
-
-
-⸻
-
-Option 2 — Switch Maven to run with Java 9+ (if you actually need --add-exports)
-
-Keep your project using Java 8 for compilation, but run Maven with Java 11 or Java 17.
-
-In IntelliJ:
-
-Settings → Build Tools → Maven → JDK
-Select a JDK ≥ 11.
-
-Or using environment variables:
-
-set JAVA_HOME=C:\Program Files\Zulu\zulu-17
-
-Then run Maven again.
-
-⸻
-
-Option 3 — Disable IntelliJ from injecting that JVM argument
-
-If IntelliJ added it automatically:
-	1.	Go to:
-Help → Edit Custom VM Options
-	2.	Remove the line:
-
---add-exports java.base/sun.nio.ch=ALL-UNNAMED
-
-
-	3.	Restart IntelliJ.
-
-⸻
-
-📌 Summary
-	•	Java 8 cannot interpret --add-exports → JVM startup failure.
-	•	Remove this option if you stay on Java 8, or run Maven with Java 11+.
-
-⸻
-
-If you want, I can check your full Maven/IntelliJ config and tell you exactly where the flag is coming from.
+Process finished with exit code 1
