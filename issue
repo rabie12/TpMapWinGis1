@@ -1,450 +1,101 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+Great — this confirms the situation 100%:
 
-	<parent> 
-		<groupId>eu.olkypay</groupId>
-		<artifactId>olkypay</artifactId>
-		<version>9-SNAPSHOT</version>
-	</parent>
-	
-	<artifactId>olkypay-core</artifactId>
-	<version>1.7.2-SNAPSHOT</version>
-	<packaging>pom</packaging>
+👉 This POM is NOT the root parent.
+It has:
 
-	<modules>
-		<module>olkypay-core-test</module>
-		<module>olkypay-core-test-jdbc</module>
-		<module>olkypay-core-unsafe</module>
-		<module>olkypay-core-util</module>
-		<module>olkypay-core-disruptor</module>
-		<module>olkypay-core-iban</module>
-		<module>olkypay-core-spring</module>
-		<module>olkypay-core-mariadb</module>
-		<module>olkypay-core-pool</module>
-		<module>olkypay-core-xml</module>
-		<module>olkypay-core-csv</module>
-		<module>olkypay-core-sql</module>
-		<module>olkypay-core-sql-proc</module>
-		<module>olkypay-framework</module>
-		<module>olkypay-monext</module>
-		<module>olkypay-framework-rest</module>
-		<module>olkypay-framework-workflow</module>
-		<module>olkypay-framework-bom</module>
-		<module>olkypay-mapper</module>
-		<module>olkypay-core-jmh</module>
-		<module>olkypay-core-sftp</module>
-	</modules>
-	
-	<properties>
-		<org.springframework.version>4.3.5.RELEASE</org.springframework.version>
-		<org.slf4j.version>1.7.22</org.slf4j.version>
-		<org.apache.logging.log4j.version>2.7</org.apache.logging.log4j.version>
-		<maven.compiler.source>1.8</maven.compiler.source>
-		<maven.compiler.target>1.8</maven.compiler.target>
-		<hikari.version>2.5.1</hikari.version>
-		<jackson.version>2.8.5</jackson.version>
-		<spring.ws.version>2.2.4.RELEASE</spring.ws.version>
-		<disruptor.version>3.3.6</disruptor.version>
-		<aspectj.version>1.8.9</aspectj.version>
-		<log4j2.version>2.7</log4j2.version>
-		<junit.version>4.12</junit.version>
-		<mockito.version>2.3.3</mockito.version>
-		<mail.version>1.5.6</mail.version>
-		<hibernate.version>5.2.4.Final</hibernate.version>
-		<ehcache.version>2.10.1</ehcache.version>
-		<xerces.version>2.11.0</xerces.version>
-		<javax.servlet.version>3.1.0</javax.servlet.version>
-		<aspose.cells.version>8.7.1</aspose.cells.version>
-		<aspose.words.version>16.1.0</aspose.words.version>
-		<wsdl4j.version>1.6.3</wsdl4j.version>
-		<apache.httpclient.version>4.5.2</apache.httpclient.version>
-		<apache.httpcore.version>4.4.4</apache.httpcore.version>
-		<javax.transaxion.version>1.2</javax.transaxion.version>
-		<json.path.version>2.0.0</json.path.version>
-		<json.assert.version>1.3.0</json.assert.version>
-		<javax.cache.version>1.0.0</javax.cache.version>
-		<commons.lang.version>2.3</commons.lang.version>
-		<commons.cli.version>1.2</commons.cli.version>
-		<asm.version>5.1</asm.version>
-		<jsch.version>0.1.53</jsch.version>
-		<mariadb.java.client.version>1.5.5</mariadb.java.client.version>
-	</properties>
+<parent>
+    <groupId>eu.olkypay</groupId>
+    <artifactId>olkypay</artifactId>
+    <version>9-SNAPSHOT</version>
+</parent>
 
-	<dependencyManagement>
-		<dependencies>
-			<!-- Spring -->
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-framework-bom</artifactId>
-				<version>${org.springframework.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-				<exclusions>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+That means:
 
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-core</artifactId>
-				<version>${org.springframework.version}</version>
-				<exclusions>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+❗ The Java 17 configuration is inside:
 
-			<dependency>
-				<groupId>org.springframework.ws</groupId>
-				<artifactId>spring-ws-core</artifactId>
-				<version>${spring.ws.version}</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.springframework</groupId>
-						<artifactId>*</artifactId>
-					</exclusion>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+eu.olkypay : olkypay : 9-SNAPSHOT
 
-			<dependency>
-				<groupId>org.springframework.ws</groupId>
-				<artifactId>spring-ws-test</artifactId>
-				<version>${spring.ws.version}</version>
-				<scope>test</scope>
-				<exclusions>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+This POM you showed does NOT contain Java 17,
+meaning the Java version is inherited from the parent, not defined here.
 
-			<!-- hibernate -->
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-core</artifactId>
-				<version>${hibernate.version}</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.apache.geronimo.specs</groupId>
-						<artifactId>geronimo-jta_1.1_spec</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>xml-apis</groupId>
-						<artifactId>xml-apis</artifactId>
-					</exclusion>
-					<exclusion>
-						<artifactId>jboss-logging</artifactId>
-						<groupId>org.jboss.logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+Your properties:
 
-			<dependency>
-				<groupId>org.hibernate</groupId>
-				<artifactId>hibernate-ehcache</artifactId>
-				<version>${hibernate.version}</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.apache.geronimo.specs</groupId>
-						<artifactId>geronimo-jta_1.1_spec</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>xml-apis</groupId>
-						<artifactId>xml-apis</artifactId>
-					</exclusion>
-					<exclusion>
-						<artifactId>jboss-logging</artifactId>
-						<groupId>org.jboss.logging</groupId>
-					</exclusion>
-					<exclusion>
-						<groupId>net.sf.ehcache</groupId>
-						<artifactId>ehcache-core</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+<maven.compiler.source>1.8</maven.compiler.source>
+<maven.compiler.target>1.8</maven.compiler.target>
 
-			<!-- ehcache -->
-			<dependency>
-				<groupId>net.sf.ehcache</groupId>
-				<artifactId>ehcache</artifactId>
-				<version>${ehcache.version}</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-api</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+are fine — but they are being OVERRIDDEN by the real parent.
 
-			<dependency>
-				<groupId>javax.cache</groupId>
-				<artifactId>cache-api</artifactId>
-				<version>${javax.cache.version}</version>
-				<scope>compile</scope>
-			</dependency>
+⸻
 
-			<!--JavaEE -->
-			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>javax.servlet-api</artifactId>
-				<version>${javax.servlet.version}</version>
-				<scope>provided</scope>
-			</dependency>
+🔥 So THIS is your problem:
 
-			<dependency>
-				<groupId>javax.transaction</groupId>
-				<artifactId>javax.transaction-api</artifactId>
-				<version>${javax.transaxion.version}</version>
-			</dependency>
+The real parent:
 
-			<!-- xmls -->
-			<dependency>
-				<groupId>xerces</groupId>
-				<artifactId>xercesImpl</artifactId>
-				<version>${xerces.version}</version>
-				<scope>compile</scope>
-			</dependency>
+eu.olkypay/olkypay/9-SNAPSHOT/pom.xml
 
-			<!-- Hikari -->
-			<dependency>
-				<groupId>com.zaxxer</groupId>
-				<artifactId>HikariCP</artifactId>
-				<version>${hikari.version}</version>
-				<scope>test</scope>
-			</dependency>
+contains either:
+	•	<maven.compiler.release>17>
+	•	or a plugin definition like:
 
-			<!-- mariadb -->
-			<dependency>
-				<groupId>org.mariadb.jdbc</groupId>
-				<artifactId>mariadb-java-client</artifactId>
-				<version>${mariadb.java.client.version}</version>
-				<scope>provided</scope>
-			</dependency>
+<maven-compiler-plugin>
+    <configuration>
+        <release>17</release>
+    </configuration>
+</maven-compiler-plugin>
 
+or it imports a BOM that sets Java 17.
 
-			<!-- Jackson -->
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-core</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-databind</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.core</groupId>
-				<artifactId>jackson-annotations</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.fasterxml.jackson.datatype</groupId>
-				<artifactId>jackson-datatype-jsr310</artifactId>
-				<version>${jackson.version}</version>
-			</dependency>
+⸻
 
-			<!-- Disruptor -->
-			<dependency>
-				<groupId>com.lmax</groupId>
-				<artifactId>disruptor</artifactId>
-				<version>${disruptor.version}</version>
-				<scope>compile</scope>
-			</dependency>
+✅ FIX
 
-			<!-- Aspose -->
-			<dependency>
-				<groupId>com.aspose</groupId>
-				<artifactId>aspose-cells</artifactId>
-				<version>${aspose.cells.version}</version>
-			</dependency>
+You MUST edit the top-level parent POM:
 
-			<dependency>
-				<groupId>com.aspose</groupId>
-				<artifactId>aspose-words</artifactId>
-				<version>${aspose.words.version}</version>
-				<classifier>jdk16</classifier>
-			</dependency>
+Open:
 
-			<!-- WS -->
-			<dependency>
-				<groupId>wsdl4j</groupId>
-				<artifactId>wsdl4j</artifactId>
-				<version>${wsdl4j.version}</version>
-				<scope>compile</scope>
-			</dependency>
+olkypay/pom.xml
 
-			<!-- Apache Libraries -->
-			<dependency>
-				<groupId>org.apache.httpcomponents</groupId>
-				<artifactId>httpclient</artifactId>
-				<version>${apache.httpclient.version}</version>
-				<scope>compile</scope>
-				<exclusions>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+Search for anything like:
 
-			<dependency>
-				<groupId>org.apache.httpcomponents</groupId>
-				<artifactId>httpcore</artifactId>
-				<version>${apache.httpcore.version}</version>
-				<scope>compile</scope>
-				<exclusions>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+17
+<release>
+<source>
+<target>
+<maven.compiler.*
 
-			<dependency>
-				<groupId>commons-lang</groupId>
-				<artifactId>commons-lang</artifactId>
-				<version>${commons.lang.version}</version>
-			</dependency>
+And change it to Java 8:
 
-			<dependency>
-				<groupId>commons-cli</groupId>
-				<artifactId>commons-cli</artifactId>
-				<version>${commons.cli.version}</version>
-			</dependency>
+<maven.compiler.source>1.8</maven.compiler.source>
+<maven.compiler.target>1.8</maven.compiler.target>
+<maven.compiler.release>8</maven.compiler.release>
 
-			<!-- Logs -->
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>${org.slf4j.version}</version>
-			</dependency>
-			
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>jcl-over-slf4j</artifactId>
-				<version>${org.slf4j.version}</version>
-			</dependency>
-			
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>${org.apache.logging.log4j.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-jcl</artifactId>
-				<version>${org.apache.logging.log4j.version}</version>
-				<scope>provided</scope>
-				<exclusions>
-					<exclusion>
-						<artifactId>commons-logging</artifactId>
-						<groupId>commons-logging</groupId>
-					</exclusion>
-				</exclusions>
-			</dependency>
+Or remove <release> completely.
 
-			<!-- aspectj deps -->
-			<dependency>
-				<groupId>org.aspectj</groupId>
-				<artifactId>aspectjweaver</artifactId>
-				<version>${aspectj.version}</version>
-				<scope>compile</scope>
-			</dependency>
-			
-			<dependency>
-				<groupId>org.aspectj</groupId>
-				<artifactId>aspectjrt</artifactId>
-				<version>${aspectj.version}</version>
-				<scope>compile</scope>
-			</dependency>
+⸻
 
-			<!-- test -->
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>${junit.version}</version>
-				<scope>test</scope>
-			</dependency>
+✔ Why your modules still compile with Java 17
 
-			<dependency>
-				<groupId>org.mockito</groupId>
-				<artifactId>mockito-core</artifactId>
-				<version>${mockito.version}</version>
-				<scope>test</scope>
-			</dependency>
+Your modules inherit in this order:
 
-			<dependency>
-				<groupId>com.jayway.jsonpath</groupId>
-				<artifactId>json-path</artifactId>
-				<version>${json.path.version}</version>
-				<scope>test</scope>
-			</dependency>
+olkypay  (root)   ← sets Java 17
+   ↓
+olkypay-core      ← inherits Java 17
+   ↓
+olkypay-core-util ← inherits Java 17
 
-			<dependency>
-				<groupId>com.jayway.jsonpath</groupId>
-				<artifactId>json-path-assert</artifactId>
-				<version>${json.path.version}</version>
-				<scope>test</scope>
-			</dependency>
+So even though you put Java 8 here, parent wins because Maven property inheritance works like:
+	•	If parent defines property → child inherits it
+	•	If child redefines property → child overrides it
+	•	But your parent probably sets maven-compiler-plugin directly, not just properties → plugin ALWAYS overrides child properties
 
-			<dependency>
-				<groupId>org.skyscreamer</groupId>
-				<artifactId>jsonassert</artifactId>
-				<version>${json.assert.version}</version>
-				<scope>test</scope>
-			</dependency>
+Which means your Java 8 property is ignored.
 
-			<!-- mail -->
-			<dependency>
-				<groupId>javax.mail</groupId>
-				<artifactId>javax.mail-api</artifactId>
-				<version>${mail.version}</version>
-				<scope>compile</scope>
-			</dependency>
+⸻
 
-			<dependency>
-				<groupId>com.sun.mail</groupId>
-				<artifactId>smtp</artifactId>
-				<version>${mail.version}</version>
-				<scope>compile</scope>
-			</dependency>
+👉 Next step (simple):
 
-			<dependency>
-				<groupId>com.sun.mail</groupId>
-				<artifactId>mailapi</artifactId>
-				<version>${mail.version}</version>
-				<scope>compile</scope>
-			</dependency>
+Please paste the root parent POM:
 
-			<!-- asm -->
-			<dependency>
-				<groupId>org.ow2.asm</groupId>
-				<artifactId>asm</artifactId>
-				<version>${asm.version}</version>
-			</dependency>
+eu.olkypay/olkypay/9-SNAPSHOT/pom.xml
 
-			<!-- Jsch -->
-			<dependency>
-				<groupId>com.jcraft</groupId>
-				<artifactId>jsch</artifactId>
-				<version>${jsch.version}</version>
-			</dependency>
-
-		</dependencies>
-	</dependencyManagement>
-</project>
+It is the one causing the Java 17 target. I will tell you exactly which lines to change.
