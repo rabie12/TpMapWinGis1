@@ -1,1 +1,14 @@
+"C:\Program Files\Zulu\zulu-8\bin\java.exe" -Dmaven.multiModuleProjectDirectory=C:\Users\RHABACHI\IdeaProjects\corporate-frameworks2 -Djansi.passthrough=true -Djavax.net.ssl.trustStoreType=Windows-ROOT --add-exports java.base/sun.nio.ch=ALL-UNNAMED "-Dmaven.home=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3" "-Dclassworlds.conf=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\bin\m2.conf" "-Dmaven.ext.class.path=C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven-event-listener.jar" "-javaagent:C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\lib\idea_rt.jar=59983:C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\bin" -Dfile.encoding=UTF-8 -classpath "C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\boot\plexus-classworlds-2.8.0.jar;C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\plugins\maven\lib\maven3\boot\plexus-classworlds.license" org.codehaus.classworlds.Launcher -Didea.version=2024.3 -DskipTests=true clean
+Unrecognized option: --add-exports
+Error: Could not create the Java Virtual Machine.
+Error: A fatal exception has occurred. Program will exit.
 
+Process finished with exit code 1
+
+
+
+this is my jvm config 
+
+-Djavax.net.ssl.trustStoreType=Windows-ROOT --add-exports java.base/sun.nio.ch=ALL-UNNAMED 
+
+im using java 8 as you see
