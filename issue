@@ -1,16 +1,5 @@
-<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 http://maven.apache.org/xsd/settings-1.2.0.xsd">
-<servers>
-<server>
-<username>rhabachi</username>
-<password>cmVmdGtuOjAxOjE3ODg1MzQwNzM6M0Y3anpFaVdMSXFKRXI4QlpnaDEwWFBTNzgw</password>
-<id>central</id>
-</server>
-<server>
-<username>rhabachi</username>
-<password>cmVmdGtuOjAxOjE3ODg1MzQwNzM6M0Y3anpFaVdMSXFKRXI4QlpnaDEwWFBTNzgw</password>
-<id>snapshots</id>
-</server>
-</servers>
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<settings xmlns="http://maven.apache.org/SETTINGS/1.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
 <profiles>
 <profile>
 <repositories>
@@ -20,13 +9,13 @@
 </snapshots>
 <id>central</id>
 <name>libs-release</name>
-<url>https://newartifactory.olkypay.local:443/artifactory/libs-release</url>
+<url>http://artifactory.olkypay.local/artifactory/libs-release</url>
 </repository>
 <repository>
 <snapshots/>
 <id>snapshots</id>
 <name>libs-snapshot</name>
-<url>https://newartifactory.olkypay.local:443/artifactory/libs-snapshot</url>
+<url>http://artifactory.olkypay.local/artifactory/libs-snapshot</url>
 </repository>
 </repositories>
 <pluginRepositories>
@@ -35,14 +24,14 @@
 <enabled>false</enabled>
 </snapshots>
 <id>central</id>
-<name>libs-release</name>
-<url>https://newartifactory.olkypay.local:443/artifactory/libs-release</url>
+<name>plugins-release</name>
+<url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
 </pluginRepository>
 <pluginRepository>
 <snapshots/>
 <id>snapshots</id>
-<name>libs-snapshot</name>
-<url>https://newartifactory.olkypay.local:443/artifactory/libs-snapshot</url>
+<name>plugins-release</name>
+<url>http://artifactory.olkypay.local/artifactory/plugins-release</url>
 </pluginRepository>
 </pluginRepositories>
 <id>artifactory</id>
