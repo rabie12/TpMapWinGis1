@@ -1,2 +1,9 @@
-Could not find artifact eu.olkypay:olkypay-core-util:jar:1.7.2-SNAPSHOT in internal (http://artifactory.olkypay.local/artifactory/libs-release)
-i still have this msg
+[ERROR] Plugin org.apache.maven.plugins:maven-clean-plugin:3.2.0 or one of its dependencies could not be resolved:
+[ERROR] 	org.apache.maven.plugins:maven-clean-plugin:jar:3.2.0 was not found in http://artifactory.olkypay.local/artifactory/libs-release during a previous attempt. This failure was cached in the local repository and resolution is not reattempted until the update interval of internal has elapsed or updates are forced
+[ERROR] -> [Help 1]
+
+in core-util i have this :
+
+[ERROR] Plugin org.apache.maven.plugins:maven-clean-plugin:3.2.0 or one of its dependencies could not be resolved:
+[ERROR] 	org.apache.maven.plugins:maven-clean-plugin:jar:3.2.0 was not found in http://artifactory.olkypay.local/artifactory/libs-release during a previous attempt. This failure was cached in the local repository and resolution is not reattempted until the update interval of internal has elapsed or updates are forced
+[ERROR] -> [Help 1]
