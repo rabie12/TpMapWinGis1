@@ -1,5 +1,66 @@
-Commande: git -c diff.mnemonicprefix=false -c core.quotepath=false --no-optional-locks ls-remote https://RHABACHI@bitbucket.olkypay.local/scm/ts/tournesol.git
-Sortie: 
-Erreur: fatal: unable to access 'https://bitbucket.olkypay.local/scm/ts/tournesol.git/': SSL certificate problem: self-signed certificate
+L’erreur vient du fait que Git (et donc SourceTree) refuse le certificat SSL auto-signé de votre Bitbucket Server on-premise.
 
-in sourcetree
+Voici les solutions possibles — dans l’ordre recommandé (de la plus propre à la moins propre).
+
+⸻
+
+✅ Solution 1 — Ajouter le certificat SSL de votre Bitbucket dans le store Windows / Git
+
+La meilleure solution consiste à ajouter le certificat racine (CA) ou le certificat serveur au magasin de certificats de votre machine.
+
+Étapes :
+	1.	Récupérez le certificat du serveur Bitbucket :
+	•	Ouvrir l’URL dans un navigateur :
+https://bitbucket.olkypay.local
+	•	Cliquer sur le cadenas → Afficher le certificat → Exporter (format .crt).
+	2.	Importez-le dans le magasin Autorités de certification racines de confiance de Windows :
+	•	certmgr.msc
+	•	Dossier : Autorités de certification racines de confiance → Certificats
+	•	Clic droit → Importer → Sélectionnez le .crt
+	3.	Redémarrez SourceTree.
+
+⸻
+
+✅ Solution 2 — Configurer Git pour utiliser le certificat
+
+Placez votre certificat dans Git et configurez-le.
+	1.	Mettre votre bitbucket.crt dans :
+
+C:\Program Files\Git\mingw64\ssl\certs\
+
+
+	2.	Ajouter dans la config Git :
+
+git config --global http.sslCAInfo "C:/Program Files/Git/mingw64/ssl/certs/bitbucket.crt"
+
+
+
+⸻
+
+⚠️ Solution 3 (temporaire et NON recommandée) — Désactiver la vérification SSL
+
+À utiliser seulement pour tester, car cela désactive la sécurité :
+
+Ligne de commande :
+
+git config --global http.sslVerify false
+
+Dans SourceTree :
+	1.	Aller dans Outils → Options → Git
+	2.	Cocher Disable SSL certificate validation (si présent selon version)
+
+⚠️ Danger : vous désactivez complètement la vérification SSL pour toutes les connexions Git.
+
+⸻
+
+🧪 Testez ensuite :
+
+git ls-remote https://bitbucket.olkypay.local/scm/ts/tournesol.git
+
+
+⸻
+
+Si tu veux, je peux aussi :
+	•	te guider pour trouver le certificat du serveur,
+	•	vérifier ta configuration SourceTree,
+	•	ou t’aider à configurer Git pour une seule URL (sans global).
