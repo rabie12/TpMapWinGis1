@@ -1,3 +1,52 @@
-[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project olkypay-core-test: Fatal error compiling: invalid target release: 17 -> [Help 1]
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project olkypay-core-util: Fatal error compiling: invalid target release: 17 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
 
-i dont why it still showing java 17 and mvn version show exactly java 1.8 is it related to maven version ?
+Process finished with exit code 1
+
+
+
+this the pom of olkypay-core-util
+
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>eu.olkypay</groupId>
+		<artifactId>olkypay-core</artifactId>
+		<version>1.7.2-SNAPSHOT</version>
+	</parent>
+	<artifactId>olkypay-core-util</artifactId>
+	<name>olkypay-core-util</name>
+
+	<dependencies>
+		
+		<dependency>
+			<groupId>eu.olkypay</groupId>
+			<artifactId>olkypay-core-unsafe</artifactId>
+			<version>${project.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>eu.olkypay</groupId>
+			<artifactId>olkypay-core-test</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+	</dependencies>
+
+</project>
+
