@@ -1,16 +1,3 @@
-Oui, je peux te faire une version plus robuste et réutilisable pour tous tes mappers. Voici une proposition :
-
-⸻
-
-Méthode utilitaire robuste
-
-/**
- * Convertit un montant en centimes (Long) en String formaté avec virgule pour les euros.
- * Gère les valeurs null et négatives.
- *
- * @param amountInCents montant en centimes
- * @return montant formaté en euros avec virgule, par ex. "689,00"
- */
 public static String formatLongToEuro(Long amountInCents) {
     if (amountInCents == null) {
         return "0,00";
@@ -26,43 +13,5 @@ public static String formatLongToEuro(Long amountInCents) {
     return negative ? "-" + result : result;
 }
 
-
-⸻
-
-Exemple d’utilisation dans ton mapper
-
-private SctDebitPdfContent mapToContent(SctDebitData data) {
-    SctDebitPdfContent content = new SctDebitPdfContent();
-
-    content.setSupplierName(data.getSupplierName());
-    content.setSupplierIban(data.getSupplierIban());
-    content.setOutName(data.getOutName());
-    content.setOutIban(data.getOutIban());
-    content.setOutAddress(data.getOutAddress());
-
-    // Utilisation de la méthode robuste
-    content.setAmount(formatLongToEuro(data.getAmount()));
-
-    content.setExecutionDate(data.getExecutionDate());
-    content.setLabel(data.getLabel());
-    content.setEndToEndId(data.getEndToEndId());
-    content.setTxId(data.getTxId());
-    content.setControlKey(data.getControlKey());
-
-    return content;
-}
-
-
-⸻
-
-✅ Avantages de cette version
-	•	Gère les valeurs null → affiche 0,00
-	•	Gère les nombres négatifs → affiche -12,34
-	•	Toujours 2 décimales
-	•	Format français avec virgule
-	•	Réutilisable dans tous tes mappers
-
-⸻
-
-Si tu veux, je peux te montrer une version qui ajoute aussi le séparateur de milliers, pour que 1234567 devienne 12 345,67.
-Veux‑tu que je fasse ça ?
+i send :   "amount": 689.00,
+but on the pdf generated i hva this : 6,89
