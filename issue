@@ -18,3 +18,32 @@ private SctDebitPdfContent mapToContent(SctDebitData data) {
 
     return content;
 }
+
+
+{
+  "orderId": 237,
+  "txId": "V-5000266-237-LU756445982",
+  "executionDate": "29/03/2016",
+  "endToEndId": "165-1518-237",
+  "outName": "PETER AUTO",
+  "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
+  "outIban": "FR907481700001LU75644598201",
+  "supplierName": "PETER AUTO",
+  "supplierIban": "FR907481700001LU75644598201",
+  "amount": 68900,
+  "label": "12 HOUSSEAU JOELLE suppl/ta"
+}
+    @RequestMapping(value = "/generate",  method = RequestMethod.POST)
+    public ResponseEntity<?> generate(@RequestBody SctDebitData data) throws Exception {
+        byte[] pdf = _sctDebitPdfWriter.generatePdf(data);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
+        headers.setContentDispositionFormData(filename, filename);
+        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+        LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
+voici les erreur
+Je dois préparer une documentation à l'api c'est ce qu'on envoie et retourn un 400 quand il ya des infos manquantes 
