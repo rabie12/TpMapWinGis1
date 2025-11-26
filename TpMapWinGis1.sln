@@ -1,106 +1,113 @@
-Below is the Java-8–compatible validation, with no new class, no reflection, and no Java 11 methods, placed exactly after the log line as you requested.
-
-It uses a list of small inline rules (Java 8 lambdas).
-Clean, compact, no long if chains, and easy to extend.
-
-⸻
-
-✅ Updated generatePdf With Validation Added
-
-@Transactional(readOnly = true)
-public byte[] generatePdf(SctDebitData data) throws Exception {
-    LOGGER.info("Generating SCT document for order <{}>", data != null ? data.getOrderId() : null);
-
-    // ------------------- VALIDATION HERE -------------------
-    String error = validateSctDebitData(data);
-    if (error != null) {
-        throw new IllegalArgumentException(error);
-    }
-    // -------------------------------------------------------
-
-    DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
-    Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
-
-    document.getBuiltInDocumentProperties().setTitle("Avis de débit");
-    document.getBuiltInDocumentProperties().setAuthor("Olkypay");
-    document.getBuiltInDocumentProperties().setCompany("Olkypay");
-    document.getBuiltInDocumentProperties().setKeywords(
-            String.format("%s %s", data.getOrderId(),
-                    Optional.ofNullable(data.getTxId()).orElse(""))
-    );
-
-    SctDebitPdfContent content = mapToContent(data);
-    CustomDocumentProperties cdp = document.getCustomDocumentProperties();
-    setDocumentProperties(cdp, content);
-    document.updateFields();
-
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    document.save(baos, SaveFormat.PDF);
-    return baos.toByteArray();
-}
-
-
-⸻
-
-✅ Validation Method (Java 8 Compatible, No New Class)
-
-private String validateSctDebitData(SctDebitData data) {
-
-    if (data == null) {
-        return "Request body is missing";
-    }
-
-    List<String> errors = new ArrayList<>();
-
-    // Java 8 compatible isBlank
-    Predicate<String> blank = s -> s == null || s.trim().isEmpty();
-
-    // Validate fields in order
-    if (data.getOrderId() == null || data.getOrderId() <= 0)
-        return "Invalid or missing orderId";
-
-    if (blank.test(data.getTxId()))
-        return "txId is required";
-
-    if (blank.test(data.getExecutionDate()))
-        return "executionDate is required";
-
-    if (blank.test(data.getEndToEndId()))
-        return "endtoEndID is required";
-
-    if (blank.test(data.getOutName()))
-        return "outName is required";
-
-    if (blank.test(data.getOutIban()) || !isValidIban(data.getOutIban()))
-        return "Invalid or missing outIban";
-
-    if (blank.test(data.getSupplierName()))
-        return "supplierName is required";
-
-    if (blank.test(data.getSupplierIban()) || !isValidIban(data.getSupplierIban()))
-        return "Invalid or missing supplierIBAN";
-
-    if (blank.test(data.getLabel()))
-        return "Transaction label is required";
-
-    return null; // OK
-}
-
-
-⸻
-
-✔ Why this works for Java 8
-	•	No String.isBlank()
-	•	No custom classes
-	•	No reflection
-	•	Uses only Java 8 lambdas & predicates
-	•	Clear, readable, and close to your original logic
-	•	Returns first validation error
-	•	Easy to extend
-
-⸻
-
-If you want, I can also:
-	•	Replace IllegalArgumentException with a custom exception,
-	•	Return all validation errors instead of one,
-	•	Or restructure to centralize validation rules in one reusable place.
+ Initialization of bean failed; nested exception is org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'sessionFactory' defined in class path resource [META-INF/spring/tournesol-datamodel-db.xml]: Invocation of init method failed; nested exception is java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:563) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:197) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:759) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:866) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:542) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.web.context.ContextLoader.configureAndRefreshWebApplicationContext(ContextLoader.java:444) ~[spring-web-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.web.context.ContextLoader.initWebApplicationContext(ContextLoader.java:326) [spring-web-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.web.context.ContextLoaderListener.contextInitialized(ContextLoaderListener.java:107) [spring-web-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.apache.catalina.core.StandardContext.listenerStart(StandardContext.java:4059) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.StandardContext.startInternal(StandardContext.java:4501) [catalina.jar:9.0.106]
+        at org.apache.catalina.util.LifecycleBase.start(LifecycleBase.java:164) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.ContainerBase.addChildInternal(ContainerBase.java:599) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.ContainerBase.addChild(ContainerBase.java:571) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.StandardHost.addChild(StandardHost.java:603) [catalina.jar:9.0.106]
+        at org.apache.catalina.startup.HostConfig.deployWAR(HostConfig.java:1013) [catalina.jar:9.0.106]
+        at org.apache.catalina.startup.HostConfig$DeployWar.run(HostConfig.java:1861) [catalina.jar:9.0.106]
+        at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+        at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+        at org.apache.tomcat.util.threads.InlineExecutorService.execute(InlineExecutorService.java:76) [tomcat-util.jar:9.0.106]
+        at java.util.concurrent.AbstractExecutorService.submit(AbstractExecutorService.java:123) [?:?]
+        at org.apache.catalina.startup.HostConfig.deployWARs(HostConfig.java:817) [catalina.jar:9.0.106]
+        at org.apache.catalina.startup.HostConfig.deployApps(HostConfig.java:468) [catalina.jar:9.0.106]
+        at org.apache.catalina.startup.HostConfig.check(HostConfig.java:1628) [catalina.jar:9.0.106]
+        at org.apache.catalina.startup.HostConfig.lifecycleEvent(HostConfig.java:308) [catalina.jar:9.0.106]
+        at org.apache.catalina.util.LifecycleBase.fireLifecycleEvent(LifecycleBase.java:109) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.ContainerBase.backgroundProcess(ContainerBase.java:973) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.processChildren(ContainerBase.java:1172) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.processChildren(ContainerBase.java:1176) [catalina.jar:9.0.106]
+        at org.apache.catalina.core.ContainerBase$ContainerBackgroundProcessor.run(ContainerBase.java:1154) [catalina.jar:9.0.106]
+        at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539) [?:?]
+        at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:305) [?:?]
+        at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305) [?:?]
+        at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+        at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) [tomcat-util.jar:9.0.106]
+        at java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'sessionFactory' defined in class path resource [META-INF/spring/tournesol-datamodel-db.xml]: Invocation of init method failed; nested exception is java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1589) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:220) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveNamedBean(DefaultListableBeanFactory.java:1016) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBean(DefaultListableBeanFactory.java:345) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBean(DefaultListableBeanFactory.java:340) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1093) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at eu.olkypay.framework.hibernate.stateless.StatelessSessionManager.setApplicationContext(StatelessSessionManager.java:37) ~[olkypay-framework-1.7.2-SNAPSHOT.jar:?]
+        at org.springframework.context.support.ApplicationContextAwareProcessor.invokeAwareInterfaces(ApplicationContextAwareProcessor.java:121) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.ApplicationContextAwareProcessor.postProcessBeforeInitialization(ApplicationContextAwareProcessor.java:97) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:409) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1581) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        ... 39 more
+Caused by: java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
+        at org.hibernate.boot.spi.XmlMappingBinderAccess.<init>(XmlMappingBinderAccess.java:43) ~[hibernate-core-5.2.5.Final.jar:5.2.5.Final]
+        at org.hibernate.boot.MetadataSources.<init>(MetadataSources.java:87) ~[hibernate-core-5.2.5.Final.jar:5.2.5.Final]
+        at org.springframework.orm.hibernate5.LocalSessionFactoryBean.getMetadataSources(LocalSessionFactoryBean.java:364) ~[spring-orm-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.orm.hibernate5.LocalSessionFactoryBean.afterPropertiesSet(LocalSessionFactoryBean.java:399) ~[spring-orm-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1648) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1585) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:220) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveNamedBean(DefaultListableBeanFactory.java:1016) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBean(DefaultListableBeanFactory.java:345) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBean(DefaultListableBeanFactory.java:340) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1093) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at eu.olkypay.framework.hibernate.stateless.StatelessSessionManager.setApplicationContext(StatelessSessionManager.java:37) ~[olkypay-framework-1.7.2-SNAPSHOT.jar:?]
+        at org.springframework.context.support.ApplicationContextAwareProcessor.invokeAwareInterfaces(ApplicationContextAwareProcessor.java:121) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.ApplicationContextAwareProcessor.postProcessBeforeInitialization(ApplicationContextAwareProcessor.java:97) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:409) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1581) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        ... 39 more
+Caused by: java.lang.ClassNotFoundException: javax.xml.bind.JAXBException
+        at org.apache.catalina.loader.WebappClassLoaderBase.loadClass(WebappClassLoaderBase.java:1354) ~[catalina.jar:9.0.106]
+        at org.apache.catalina.loader.WebappClassLoaderBase.loadClass(WebappClassLoaderBase.java:1163) ~[catalina.jar:9.0.106]
+        at org.hibernate.boot.spi.XmlMappingBinderAccess.<init>(XmlMappingBinderAccess.java:43) ~[hibernate-core-5.2.5.Final.jar:5.2.5.Final]
+        at org.hibernate.boot.MetadataSources.<init>(MetadataSources.java:87) ~[hibernate-core-5.2.5.Final.jar:5.2.5.Final]
+        at org.springframework.orm.hibernate5.LocalSessionFactoryBean.getMetadataSources(LocalSessionFactoryBean.java:364) ~[spring-orm-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.orm.hibernate5.LocalSessionFactoryBean.afterPropertiesSet(LocalSessionFactoryBean.java:399) ~[spring-orm-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1648) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1585) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:483) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory$1.getObject(AbstractBeanFactory.java:306) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:230) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:302) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:220) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveNamedBean(DefaultListableBeanFactory.java:1016) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBean(DefaultListableBeanFactory.java:345) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.DefaultListableBeanFactory.getBean(DefaultListableBeanFactory.java:340) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.AbstractApplicationContext.getBean(AbstractApplicationContext.java:1093) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at eu.olkypay.framework.hibernate.stateless.StatelessSessionManager.setApplicationContext(StatelessSessionManager.java:37) ~[olkypay-framework-1.7.2-SNAPSHOT.jar:?]
+        at org.springframework.context.support.ApplicationContextAwareProcessor.invokeAwareInterfaces(ApplicationContextAwareProcessor.java:121) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.context.support.ApplicationContextAwareProcessor.postProcessBeforeInitialization(ApplicationContextAwareProcessor.java:97) ~[spring-context-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:409) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1581) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
+        ... 39 more
+26-Nov-2025 10:34:45.656 GRAVE [Catalina-utility-2] org.apache.catalina.core.StandardContext.startInternal Un ou plusieurs ├®couteurs n'ont pas pu d├®marrer, les d├®tails sont dans le fichier de log du conteneur
+26-Nov-2025 10:34:45.656 GRAVE [Catalina-utility-2] org.apache.catalina.core.StandardContext.startInternal Erreur de d├®marrage du contexte [/tournesol] suite aux erreurs pr├®c├®dentes
+26-Nov-2025 10:34:45.845 INFOS [Catalina-utility-2] org.apache.catalina.startup.HostConfig.deployWAR Le d├®ploiement de l'archive de l'application web [C:\Users\RHABACHI\Downloads\apache-tomcat-9.0.105\apache-tomcat-9.0.105\webapps\tournesol.war] s'est termin├® en [10ÔÇ»005] ms
