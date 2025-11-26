@@ -1,43 +1,23 @@
-private String validateSctDebitData(SctDebitData data) {
-    if (data == null) {
-        return "Request body is missing";
+    @Transactional(readOnly = true)
+    public byte[] generatePdf(SctDebitData data) throws Exception {
+        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
+
+        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
+        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
+
+        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
+        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
+        document.getBuiltInDocumentProperties().setCompany("Olkypay");
+        document.getBuiltInDocumentProperties().setKeywords(
+                String.format("%s %s", data.getOrderId(),
+                        Optional.ofNullable(data.getTxId()).orElse(""))
+        );
+        SctDebitPdfContent content = mapToContent(data);
+        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+        setDocumentProperties(cdp, content);
+        document.updateFields();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        document.save(baos, SaveFormat.PDF);
+        return baos.toByteArray();
     }
-
-    Map<String, Supplier<Boolean>> validators = new LinkedHashMap<>();
-
-    validators.put("Invalid or missing orderId",
-            () -> data.getOrderId() == null || data.getOrderId() <= 0);
-
-    validators.put("txId is required",
-            () -> isBlank(data.getTxId()));
-
-    validators.put("executionDate is required",
-            () -> isBlank(data.getExecutionDate()));
-
-    validators.put("endtoEndID is required",
-            () -> isBlank(data.getEndToEndId()));
-
-    validators.put("outName is required",
-            () -> isBlank(data.getOutName()));
-
-    validators.put("Invalid or missing outIban",
-            () -> isBlank(data.getOutIban()) || !isValidIban(data.getOutIban()));
-
-    validators.put("supplierName is required",
-            () -> isBlank(data.getSupplierName()));
-
-    validators.put("Invalid or missing supplierIBAN",
-            () -> isBlank(data.getSupplierIban()) || !isValidIban(data.getSupplierIban()));
-
-    validators.put("Transaction label is required",
-            () -> isBlank(data.getLabel()));
-
-    // Return the first matching error, or null if all are valid
-    for (Map.Entry<String, Supplier<Boolean>> entry : validators.entrySet()) {
-        if (entry.getValue().get()) {
-            return entry.getKey();
-        }
-    }
-
-    return null;
-}
+without creating new class i want to add the validation After this line        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId()); before start generating document.
