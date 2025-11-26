@@ -108,6 +108,163 @@ Caused by: java.lang.ClassNotFoundException: javax.xml.bind.JAXBException
         at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1581) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
         at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:554) ~[spring-beans-4.3.5.RELEASE.jar:4.3.5.RELEASE]
         ... 39 more
-26-Nov-2025 10:34:45.656 GRAVE [Catalina-utility-2] org.apache.catalina.core.StandardContext.startInternal Un ou plusieurs ├®couteurs n'ont pas pu d├®marrer, les d├®tails sont dans le fichier de log du conteneur
-26-Nov-2025 10:34:45.656 GRAVE [Catalina-utility-2] org.apache.catalina.core.StandardContext.startInternal Erreur de d├®marrage du contexte [/tournesol] suite aux erreurs pr├®c├®dentes
-26-Nov-2025 10:34:45.845 INFOS [Catalina-utility-2] org.apache.catalina.startup.HostConfig.deployWAR Le d├®ploiement de l'archive de l'application web [C:\Users\RHABACHI\Downloads\apache-tomcat-9.0.105\apache-tomcat-9.0.105\webapps\tournesol.war] s'est termin├® en [10ÔÇ»005] ms
+this is datamodel xml:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jee="http://www.springframework.org/schema/jee"
+	   xmlns:tx="http://www.springframework.org/schema/tx" xmlns:context="http://www.springframework.org/schema/context" xmlns:util="http://www.springframework.org/schema/util"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<tx:annotation-driven mode="aspectj" transaction-manager="transactionManager" />
+
+	<bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager" lazy-init="true">
+		<property name="sessionFactory" ref="sessionFactory" />
+		<property name="allowResultAccessAfterCompletion" value="true" />
+		<property name="nestedTransactionAllowed" value="true" />
+	</bean>
+
+	<bean id="jdbcTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager" lazy-init="true">
+		<property name="dataSource" ref="dataSource" />
+		<property name="rollbackOnCommitFailure" value="true" />
+	</bean>
+
+	<bean class="eu.olkypay.framework.jdbc.LowLevelPersistorService">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate" scope="prototype">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="propagationBehavior" value="0" />
+	</bean>
+
+	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager">
+		<property name="cacheManager">
+			<bean class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+				<property name="configLocation" value="classpath:/META-INF/config/tournesol-ehcache.xml" />
+				<property name="shared" value="true" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="database" class="eu.olkypay.sql.Database">
+		<constructor-arg ref="dataSource" />
+		<constructor-arg value="bbdb" />
+		<property name="modules">
+			<array>
+				<bean class="eu.olkypay.pacs.sql.PacsModule">
+					<constructor-arg value="bbdb" />
+				</bean>
+				<bean class="eu.olkypay.property.PropertyModule">
+					<constructor-arg value="bbdb" />
+				</bean>
+				<bean class="eu.olkypay.mail.MailModule">
+					<constructor-arg value="bbdb" />
+				</bean>
+				<bean class="eu.olkypay.bb.sql.CsvbbModule">
+					<constructor-arg value="bbdb" />
+				</bean>
+			</array>
+		</property>
+	</bean>
+
+	<beans profile="TOMCAT_DEV">
+
+		<util:properties id="HIBERNATE_PROPERTIES" location="classpath:/META-INF/ts-hibernate-mariadb-dev.properties" />
+
+		<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+			<property name="dataSource" ref="dataSource" />
+			<property name="hibernateProperties" ref="HIBERNATE_PROPERTIES" />
+			<property name="packagesToScan" value="eu.olkypay.tournesol.datamodel.bb.bom,eu.olkypay.tournesol.datamodel.symwis.bom,eu.olkypay.tournesol.datamodel.report.bom" />
+		</bean>
+
+		<bean id="dataSource" class="eu.olkypay.framework.spring.TenantRoutingDataSource">
+			<property name="targetDataSources">
+				<map key-type="java.lang.String">
+					<entry key="main" value-ref="mainDataSource" />
+				</map>
+			</property>
+			<property name="defaultTargetDataSource" ref="mainDataSource" />
+		</bean>
+		<jee:jndi-lookup jndi-name="java:comp/env/jdbc/dataSource" id="mainDataSource" />
+	</beans>
+
+	<beans profile="JETTY_DEV">
+
+		<util:properties id="HIBERNATE_PROPERTIES" location="classpath:/META-INF/ts-hibernate-mariadb-dev.properties" />
+
+		<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+			<property name="dataSource" ref="dataSource" />
+			<property name="hibernateProperties" ref="HIBERNATE_PROPERTIES" />
+			<property name="packagesToScan" value="eu.olkypay.tournesol.datamodel.bb.bom,eu.olkypay.tournesol.datamodel.symwis.bom,eu.olkypay.tournesol.datamodel.report.bom" />
+		</bean>
+
+		<bean id="dataSource" class="eu.olkypay.framework.spring.TenantRoutingDataSource">
+			<property name="targetDataSources">
+				<map key-type="java.lang.String">
+					<entry key="main" value-ref="mainDataSource" />
+				</map>
+			</property>
+			<property name="defaultTargetDataSource" ref="mainDataSource" />
+		</bean>
+		<jee:jndi-lookup jndi-name="java:comp/env/jdbc/dataSource" id="mainDataSource" />
+	</beans>
+
+	<beans profile="TOMCAT">
+
+		<util:properties id="HIBERNATE_PROPERTIES" location="classpath:/META-INF/ts-hibernate-mariadb.properties" />
+
+		<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean" depends-on="cacheManager">
+			<property name="dataSource" ref="dataSource" />
+			<property name="hibernateProperties" ref="HIBERNATE_PROPERTIES" />
+			<property name="packagesToScan" value="eu.olkypay.tournesol.datamodel.bb.bom,eu.olkypay.tournesol.datamodel.symwis.bom,eu.olkypay.tournesol.datamodel.report.bom" />
+		</bean>
+
+		<jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/dataSource" />
+
+	</beans>
+
+	<beans profile="JUNIT">
+
+		<util:properties id="applicationProperties">
+			<prop key="environment">TEST</prop>
+			<prop key="saas">VEOLIA</prop>
+		</util:properties>
+
+		<util:properties id="HIBERNATE_PROPERTIES" location="classpath:/META-INF/ts-hibernate-mariadb.properties" />
+
+		<bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean" depends-on="cacheManager">
+			<property name="dataSource" ref="dataSource" />
+			<property name="hibernateProperties" ref="HIBERNATE_PROPERTIES" />
+			<property name="packagesToScan" value="eu.olkypay.tournesol.datamodel.bb.bom,eu.olkypay.tournesol.datamodel.symwis.bom,eu.olkypay.tournesol.datamodel.report.bom" />
+		</bean>
+
+		<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource" destroy-method="close">
+			<constructor-arg>
+				<bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+					<property name="poolName" value="ts-cp" />
+					<property name="dataSourceClassName" value="org.mariadb.jdbc.MariaDbDataSource" />
+					<property name="dataSourceProperties">
+						<props>
+							<prop key="url">jdbc:mariadb://localhost:3306/?autoReconnect=true&amp;cachePrepStmts=true&amp;cacheCallableStmts=true&amp;cacheServerConfiguration=true&amp;useLocalSessionState=true&amp;elideSetAutoCommits=true&amp;alwaysSendSetIsolation=false&amp;enableQueryTimeouts=false&amp;useLocalTransactionState=true&amp;prepStmtCacheSqlLimit=2048&amp;prepStmtCacheSize=250&amp;useServerPrepStmts=true&amp;dumpQueriesOnException=true&amp;allowMultiQueries=true&amp;allowLocalInfile=true
+							</prop>
+							<prop key="userName">root</prop>
+							<prop key="password">root</prop>
+						</props>
+					</property>
+					<property name="autoCommit" value="false" />
+					<property name="leakDetectionThreshold" value="0" />
+					<property name="maximumPoolSize" value="8" />
+					<property name="minimumIdle" value="8" />
+					<property name="transactionIsolation" value="TRANSACTION_READ_COMMITTED" />
+					<property name="registerMbeans" value="true" />
+				</bean>
+			</constructor-arg>
+		</bean>
+	</beans>
+
+
+</beans>
