@@ -1,17 +1,1 @@
-public static String formatLongToEuro(Long amountInCents) {
-    if (amountInCents == null) {
-        return "0,00";
-    }
-
-    BigDecimal euros = BigDecimal.valueOf(amountInCents)
-                                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-    // Gestion des nombres négatifs
-    boolean negative = euros.signum() < 0;
-    String result = euros.abs().toString().replace(".", ",");
-
-    return negative ? "-" + result : result;
-}
-
-i send :   "amount": 689.00,
-but on the pdf generated i hva this : 6,89
+i correct my self we will receive a long but with decimal value  because its mulplied by 100 i will need to divise it long by 100 and then display here as string
