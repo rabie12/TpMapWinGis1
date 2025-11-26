@@ -5,3 +5,9 @@
 
 
 this is the typpe sometime there is centimes sometimes not when its, for exemple 689,00 in db if its like that i should also display 689,00
+
+        if (data.getAmount() != null) {
+            content.setAmount(data.getAmount().toString());
+        } 
+
+il faut que j'arrive à fair ça ici directement si c'est son virrgule j'ajoute les centimes,00 s'il ya des centimes je les mappent correcxtement
