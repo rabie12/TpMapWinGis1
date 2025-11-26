@@ -1,111 +1,56 @@
-Great — with this XML snippet I can now tell you exactly how to disable ALL mediator jobs on the Java 8 instance only, without breaking the Java 17 instance.
+    @Transactional(readOnly = true)
+    public byte[] generatePdf(SctDebitData data) throws Exception {
+        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
+        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
+        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
+        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
+        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
+        document.getBuiltInDocumentProperties().setCompany("Olkypay");
+        document.getBuiltInDocumentProperties().setKeywords(
+                String.format("%s %s", data.getOrderId(),
+                        Optional.ofNullable(data.getTxId()).orElse(""))
+        );
+        SctDebitPdfContent content = mapToContent(data);
+        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
+        setDocumentProperties(cdp, content);
+        document.updateFields();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        document.save(baos, SaveFormat.PDF);
+        return baos.toByteArray();
+    }
 
-Your Java 8 configuration uses:
+before validating generating decument i need to validate that all element are existing  in SctDebitData if possible optimize avoid makeing several if 
 
-<context:component-scan base-package="eu.olkypay.tournesol.mediator" />
-
-This loads every mediator bean, including:
-	•	Mediator
-	•	MediatorExecutionFrame
-	•	Job wrappers
-	•	Cron triggers
-	•	Scheduler config
-
-And the scheduler:
-
-<bean name="mediatorTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-
-So to disable jobs on Java 8, you have 3 safe options.
-
-⸻
-
-✅ OPTION 1 (Recommended): Disable the scheduler with one XML line
-
-In your Java 8 Spring XML, wrap the scheduler bean with a condition so it never loads.
-
-Modify your mediator XML:
-
-<!-- Disable mediator scheduler on Java 8 server -->
-<bean name="mediatorTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-    <property name="poolSize" value="0" />
-</bean>
-
-Or even better, override it with a dummy scheduler:
-
-<!-- DISABLING JOBS ON JAVA 8 -->
-<bean name="mediatorTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-    <property name="poolSize" value="0"/>
-    <property name="daemon" value="false"/>
-    <property name="threadNamePrefix" value="mediator-disabled-"/>
-</bean>
-
-If poolSize = 0, no task will ever run.
-Java 17 instance continues working normally.
-
-⸻
-
-✅ OPTION 2: Disable component scan
-
-If you want to completely block the mediator system, change:
-
-<context:component-scan base-package="eu.olkypay.tournesol.mediator" />
-
-to:
-
-<!-- DISABLED mediator for Java 8 -->
-<context:component-scan base-package="eu.olkypay.tournesol.mediator">
-    <context:exclude-filter type="regex" expression=".*"/>
-</context:component-scan>
-
-This loads zero mediator jobs.
-
-⚠️ But if other components depend on mediator classes, this may break.
-
-OPTION 1 is safer.
-
-⸻
-
-✅ OPTION 3: Use a Java 8–only application property
-
-If your mediator system checks a property (some versions of your app do), add in Java 8 config:
-
-mediator.enabled=false
-
-Then modify your XML as:
-
-<bean name="mediatorTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler"
-      p:poolSize="#{!${mediator.enabled} ? 0 : 5}">
-</bean>
-
-But this requires the XML to support property placeholders.
-
-⸻
-
-⭐ BEST & SAFEST SOLUTION FOR YOU
-
-Modify only Java 8 mediator XML, keep Java 17 untouched:
-
-mediator-dev.xml (Java 8):
-
-<bean name="mediatorTaskScheduler" class="org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler">
-    <property name="threadNamePrefix" value="mediator-disabled-" />
-    <property name="daemon" value="true"/>
-    <property name="poolSize" value="0"/> <!-- DISABLE ALL JOBS -->
-</bean>
-
-Result:
-
-✔ Mediator is loaded
-✔ But no threads exist, so no job runs
-✔ Java 17 instance continues handling all scheduled jobs
-✔ No risk of duplicate executions
-✔ No CPU spike anymore
-
-⸻
-
-❓ If you want, I can also:
-	•	Provide a way to log a message saying “Mediator disabled on Java 8”
-	•	Help you confirm at runtime which instance runs the jobs
-	•	Show you your current cron definition code to disable triggers
-
-Just tell me!
+private String validateSctDebitData(SctDebitData data) {
+        if (data == null) {
+            return "Request body is missing";
+        }
+        if (data.getOrderId() == null || data.getOrderId() <= 0) {
+            return "Invalid or missing orderId";
+        }
+        if (isBlank(data.getTxId())) {
+            return "txId is required";
+        }
+        if (isBlank(data.getExecutionDate())) {
+            return "executionDate is required";
+        }
+        if (isBlank(data.getEndToEndId())) {
+            return "endtoEndID is required";
+        }
+        if (isBlank(data.getOutName())) {
+            return "outName is required";
+        }
+        if (isBlank(data.getOutIban()) || !isValidIban(data.getOutIban())) {
+            return "Invalid or missing outIban";
+        }
+        if (isBlank(data.getSupplierName())) {
+            return "supplierName is required";
+        }
+        if (isBlank(data.getSupplierIban()) || !isValidIban(data.getSupplierIban())) {
+            return "Invalid or missing supplierIBAN ";
+        }
+        if (isBlank(data.getLabel())) {
+            return "Transaction label is required";
+        }
+        return null;
+    }
