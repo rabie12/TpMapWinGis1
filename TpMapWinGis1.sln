@@ -1,56 +1,166 @@
-    @Transactional(readOnly = true)
-    public byte[] generatePdf(SctDebitData data) throws Exception {
-        LOGGER.info("Generating SCT document for order <{}>", data.getOrderId());
-        DocumentTemplate documentTemplate = _docTemplateSvc.findLastVersionActive(SCT_TEMPLATE);
-        Document document = new Document(new ByteArrayInputStream(documentTemplate.getContent()));
-        document.getBuiltInDocumentProperties().setTitle("Avis de débit");
-        document.getBuiltInDocumentProperties().setAuthor("Olkypay");
-        document.getBuiltInDocumentProperties().setCompany("Olkypay");
-        document.getBuiltInDocumentProperties().setKeywords(
-                String.format("%s %s", data.getOrderId(),
-                        Optional.ofNullable(data.getTxId()).orElse(""))
-        );
-        SctDebitPdfContent content = mapToContent(data);
-        CustomDocumentProperties cdp = document.getCustomDocumentProperties();
-        setDocumentProperties(cdp, content);
-        document.updateFields();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        document.save(baos, SaveFormat.PDF);
-        return baos.toByteArray();
-    }
+Here are three optimized and cleaner ways to validate your SctDebitData without writing a long chain of if statements.
+Pick the one that best fits your style and project.
 
-before validating generating decument i need to validate that all element are existing  in SctDebitData if possible optimize avoid makeing several if 
+⸻
+
+✅ Option 1: Use a Map of validators (cleanest & compact)
+
+This avoids repetitive if statements and is very easy to extend.
 
 private String validateSctDebitData(SctDebitData data) {
-        if (data == null) {
-            return "Request body is missing";
-        }
-        if (data.getOrderId() == null || data.getOrderId() <= 0) {
-            return "Invalid or missing orderId";
-        }
-        if (isBlank(data.getTxId())) {
-            return "txId is required";
-        }
-        if (isBlank(data.getExecutionDate())) {
-            return "executionDate is required";
-        }
-        if (isBlank(data.getEndToEndId())) {
-            return "endtoEndID is required";
-        }
-        if (isBlank(data.getOutName())) {
-            return "outName is required";
-        }
-        if (isBlank(data.getOutIban()) || !isValidIban(data.getOutIban())) {
-            return "Invalid or missing outIban";
-        }
-        if (isBlank(data.getSupplierName())) {
-            return "supplierName is required";
-        }
-        if (isBlank(data.getSupplierIban()) || !isValidIban(data.getSupplierIban())) {
-            return "Invalid or missing supplierIBAN ";
-        }
-        if (isBlank(data.getLabel())) {
-            return "Transaction label is required";
-        }
+    if (data == null) {
+        return "Request body is missing";
+    }
+
+    Map<String, Supplier<Boolean>> validators = new LinkedHashMap<>();
+    validators.put("Invalid or missing orderId", () -> data.getOrderId() == null || data.getOrderId() <= 0);
+    validators.put("txId is required", () -> isBlank(data.getTxId()));
+    validators.put("executionDate is required", () -> isBlank(data.getExecutionDate()));
+    validators.put("endtoEndID is required", () -> isBlank(data.getEndToEndId()));
+    validators.put("outName is required", () -> isBlank(data.getOutName()));
+    validators.put("Invalid or missing outIban", () -> isBlank(data.getOutIban()) || !isValidIban(data.getOutIban()));
+    validators.put("supplierName is required", () -> isBlank(data.getSupplierName()));
+    validators.put("Invalid or missing supplierIBAN", () -> isBlank(data.getSupplierIban()) || !isValidIban(data.getSupplierIban()));
+    validators.put("Transaction label is required", () -> isBlank(data.getLabel()));
+
+    return validators.entrySet().stream()
+            .filter(entry -> entry.getValue().get())
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElse(null);
+}
+
+✔ avoids many ifs
+✔ keeps all rules in one place
+✔ easy to add/remove validations
+
+⸻
+
+✅ Option 2: Use Java Bean Validation (best practice)
+
+If you can annotate your DTO, this is the cleanest and most maintainable solution.
+
+1. Add annotations to your DTO
+
+public class SctDebitData {
+
+    @NotNull(message = "orderId is required")
+    @Min(value = 1, message = "orderId must be > 0")
+    private Long orderId;
+
+    @NotBlank(message = "txId is required")
+    private String txId;
+
+    @NotBlank(message = "executionDate is required")
+    private String executionDate;
+
+    @NotBlank(message = "endtoEndID is required")
+    private String endToEndId;
+
+    @NotBlank(message = "outName is required")
+    private String outName;
+
+    @NotBlank(message = "outIban is required")
+    @ValidIban
+    private String outIban;
+
+    @NotBlank(message = "supplierName is required")
+    private String supplierName;
+
+    @NotBlank(message = "supplierIban is required")
+    @ValidIban
+    private String supplierIban;
+
+    @NotBlank(message = "Transaction label is required")
+    private String label;
+
+}
+
+You can add custom annotation:
+
+@Target({ FIELD })
+@Retention(RUNTIME)
+@Constraint(validatedBy = IbanValidator.class)
+public @interface ValidIban {
+    String message() default "Invalid IBAN";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+2. Validate it in service
+
+@Autowired
+private Validator validator;
+
+private String validateSctDebitData(SctDebitData data) {
+    Set<ConstraintViolation<SctDebitData>> violations = validator.validate(data);
+    if (violations.isEmpty()) {
         return null;
     }
+    return violations.iterator().next().getMessage();
+}
+
+✔ standard
+✔ extremely maintainable
+✔ future-proof
+
+⸻
+
+✅ Option 3: Use reflection + required field list (compact but less explicit)
+
+You list the required fields once:
+
+private static final List<String> requiredFields = List.of(
+        "txId", "executionDate", "endToEndId", "outName",
+        "supplierName", "label"
+);
+
+Validation:
+
+private String validateSctDebitData(SctDebitData data) {
+    if (data == null) return "Request body is missing";
+
+    try {
+        for (String field : requiredFields) {
+            Field f = SctDebitData.class.getDeclaredField(field);
+            f.setAccessible(true);
+            Object value = f.get(data);
+
+            if (value == null || (value instanceof String && isBlank((String) value))) {
+                return field + " is required";
+            }
+        }
+    } catch (Exception e) {
+        throw new RuntimeException(e);
+    }
+
+    // Special rules
+    if (data.getOrderId() == null || data.getOrderId() <= 0) {
+        return "Invalid or missing orderId";
+    }
+    if (isBlank(data.getOutIban()) || !isValidIban(data.getOutIban())) {
+        return "Invalid or missing outIban";
+    }
+    if (isBlank(data.getSupplierIban()) || !isValidIban(data.getSupplierIban())) {
+        return "Invalid or missing supplierIBAN";
+    }
+
+    return null;
+}
+
+✔ compact
+❌ less readable than map or bean validation
+
+⸻
+
+⭐ Recommended approach
+
+If you can:
+➡ Use Bean Validation (Option 2) — cleanest, standard, integrates well with Spring Boot.
+
+If you want pure Java without annotations:
+➡ Use the Map-based validator (Option 1) — best balance between readability and maintainability.
+
+⸻
+
+If you want, I can refactor your entire method to incorporate this validation cleanly.
