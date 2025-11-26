@@ -1,24 +1,44 @@
-private SctDebitPdfContent mapToContent(SctDebitData data) {
-    SctDebitPdfContent content = new SctDebitPdfContent();
+Parfait — tu veux préparer la documentation officielle de ton API pour les équipes qui vont appeler ton endpoint /generate.
+Je peux te fournir un modèle professionnel, clair et directement réutilisable dans une API doc (Swagger, Confluence, Notion, etc.).
 
-    content.setSupplierName(data.getSupplierName());
-    content.setSupplierIban(data.getSupplierIban());
-    content.setOutName(data.getOutName());
-    content.setOutIban(data.getOutIban());
-    content.setOutAddress(data.getOutAddress());
+Voici un template complet avec :
+	•	📌 Description du service
+	•	🔧 Endpoint et méthode
+	•	📥 JSON attendu (request)
+	•	📤 Réponse (PDF ou erreurs)
+	•	⚠️ Erreurs 400 possibles (validations)
+	•	📝 Exemple complet d’appel
 
-    // Format amount
-    content.setAmount(formatLongToEuroString(data.getAmount()));
+⸻
 
-    content.setExecutionDate(data.getExecutionDate());
-    content.setLabel(data.getLabel());
-    content.setEndToEndId(data.getEndToEndId());
-    content.setTxId(data.getTxId());
-    content.setControlKey(data.getControlKey());
+📘 Documentation API — Génération d’un PDF de Débit SCT
 
-    return content;
-}
+🧾 Description
 
+Ce service permet de générer un PDF d’avis de débit SCT à partir des informations transmises par le client.
+La requête doit contenir tous les champs obligatoires, sinon une erreur HTTP 400 est renvoyée.
+
+⸻
+
+🔧 1. Endpoint
+
+POST /generate
+
+
+⸻
+
+✔️ 2. En-têtes requis
+
+Header	Valeur
+Content-Type	application/json
+Accept	application/pdf
+
+
+⸻
+
+📥 3. Body JSON attendu
+
+Tous les champs sont obligatoires, sauf mention contraire.
 
 {
   "orderId": 237,
@@ -33,17 +53,105 @@ private SctDebitPdfContent mapToContent(SctDebitData data) {
   "amount": 68900,
   "label": "12 HOUSSEAU JOELLE suppl/ta"
 }
-    @RequestMapping(value = "/generate",  method = RequestMethod.POST)
-    public ResponseEntity<?> generate(@RequestBody SctDebitData data) throws Exception {
-        byte[] pdf = _sctDebitPdfWriter.generatePdf(data);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_PDF);
-        String filename = String.format("Avis-debit-%d.pdf", data.getOrderId());
-        headers.setContentDispositionFormData(filename, filename);
-        headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-        LOGGER.info("PDF generated successfully for order <{}>", data.getOrderId());
-        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
-    }
 
-voici les erreur
-Je dois préparer une documentation à l'api c'est ce qu'on envoie et retourn un 400 quand il ya des infos manquantes 
+
+⸻
+
+🧬 4. Description des champs
+
+Champ	Type	Obligatoire	Description
+orderId	Long	✔️	Identifiant interne de l’ordre.
+txId	String	✔️	Identifiant de la transaction.
+executionDate	String (dd/MM/yyyy)	✔️	Date d’exécution du prélèvement.
+endToEndId	String	✔️	Identifiant EndToEnd du SCT.
+outName	String	✔️	Nom du débiteur.
+outAddress	String	✔️	Adresse du débiteur.
+outIban	String	✔️	IBAN du débiteur.
+supplierName	String	✔️	Nom du créancier.
+supplierIban	String	✔️	IBAN du créancier.
+amount	Long	✔️	Montant en centimes (ex. 68900 = 689,00€).
+label	String	✔️	Libellé du prélèvement.
+
+
+⸻
+
+📤 5. Réponse — Succès (200 OK)
+
+Un fichier PDF est retourné dans le corps de la réponse.
+
+Headers
+
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="Avis-debit-237.pdf"
+
+Body
+
+(binaire PDF)
+
+⸻
+
+❌ 6. Réponse — Erreur (400 Bad Request)
+
+Renvoyée automatiquement si un champ obligatoire est manquant ou invalide.
+
+Exemple :
+
+{
+  "orderId": "must not be null",
+  "amount": "must not be null",
+  "supplierIban": "must not be blank"
+}
+
+
+⸻
+
+🚫 7. Réponse — Erreur (500 Internal Server Error)
+
+En cas d’erreur interne lors de la génération du PDF.
+
+Exemple :
+
+{
+  "error": "Unable to generate PDF"
+}
+
+
+⸻
+
+📝 8. Exemple d’appel complet (cURL)
+
+curl -X POST https://your-api-url/generate \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/pdf" \
+  -d '{
+        "orderId": 237,
+        "txId": "V-5000266-237-LU756445982",
+        "executionDate": "29/03/2016",
+        "endToEndId": "165-1518-237",
+        "outName": "PETER AUTO",
+        "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
+        "outIban": "FR907481700001LU75644598201",
+        "supplierName": "PETER AUTO",
+        "supplierIban": "FR907481700001LU75644598201",
+        "amount": 68900,
+        "label": "12 HOUSSEAU JOELLE suppl/ta"
+      }' \
+  --output Avis-debit-237.pdf
+
+
+⸻
+
+💡 9. Notes importantes
+	•	Le champ amount est toujours en centimes.
+Votre application doit faire : montant en euros × 100.
+	•	Le PDF généré contient le montant en format “xxx,xx”.
+	•	La validation est automatique grâce à @Valid, @NotNull, @NotBlank.
+
+⸻
+
+Si tu veux, je peux :
+✅ Générer la version Swagger/OpenAPI 3.0
+ou
+✅ Générer une page HTML prête à mettre dans Confluence / Notion
+
+Souhaites-tu l’un des deux ?
