@@ -1,1 +1,20 @@
-i correct my self we will receive a long but with decimal value  because its mulplied by 100 i will need to divise it long by 100 and then display here as string
+private SctDebitPdfContent mapToContent(SctDebitData data) {
+    SctDebitPdfContent content = new SctDebitPdfContent();
+
+    content.setSupplierName(data.getSupplierName());
+    content.setSupplierIban(data.getSupplierIban());
+    content.setOutName(data.getOutName());
+    content.setOutIban(data.getOutIban());
+    content.setOutAddress(data.getOutAddress());
+
+    // Format amount
+    content.setAmount(formatLongToEuroString(data.getAmount()));
+
+    content.setExecutionDate(data.getExecutionDate());
+    content.setLabel(data.getLabel());
+    content.setEndToEndId(data.getEndToEndId());
+    content.setTxId(data.getTxId());
+    content.setControlKey(data.getControlKey());
+
+    return content;
+}
