@@ -1,66 +1,68 @@
-L’erreur vient du fait que Git (et donc SourceTree) refuse le certificat SSL auto-signé de votre Bitbucket Server on-premise.
-
-Voici les solutions possibles — dans l’ordre recommandé (de la plus propre à la moins propre).
+Oui, je peux te faire une version plus robuste et réutilisable pour tous tes mappers. Voici une proposition :
 
 ⸻
 
-✅ Solution 1 — Ajouter le certificat SSL de votre Bitbucket dans le store Windows / Git
+Méthode utilitaire robuste
 
-La meilleure solution consiste à ajouter le certificat racine (CA) ou le certificat serveur au magasin de certificats de votre machine.
+/**
+ * Convertit un montant en centimes (Long) en String formaté avec virgule pour les euros.
+ * Gère les valeurs null et négatives.
+ *
+ * @param amountInCents montant en centimes
+ * @return montant formaté en euros avec virgule, par ex. "689,00"
+ */
+public static String formatLongToEuro(Long amountInCents) {
+    if (amountInCents == null) {
+        return "0,00";
+    }
 
-Étapes :
-	1.	Récupérez le certificat du serveur Bitbucket :
-	•	Ouvrir l’URL dans un navigateur :
-https://bitbucket.olkypay.local
-	•	Cliquer sur le cadenas → Afficher le certificat → Exporter (format .crt).
-	2.	Importez-le dans le magasin Autorités de certification racines de confiance de Windows :
-	•	certmgr.msc
-	•	Dossier : Autorités de certification racines de confiance → Certificats
-	•	Clic droit → Importer → Sélectionnez le .crt
-	3.	Redémarrez SourceTree.
+    BigDecimal euros = BigDecimal.valueOf(amountInCents)
+                                 .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-⸻
+    // Gestion des nombres négatifs
+    boolean negative = euros.signum() < 0;
+    String result = euros.abs().toString().replace(".", ",");
 
-✅ Solution 2 — Configurer Git pour utiliser le certificat
-
-Placez votre certificat dans Git et configurez-le.
-	1.	Mettre votre bitbucket.crt dans :
-
-C:\Program Files\Git\mingw64\ssl\certs\
-
-
-	2.	Ajouter dans la config Git :
-
-git config --global http.sslCAInfo "C:/Program Files/Git/mingw64/ssl/certs/bitbucket.crt"
-
+    return negative ? "-" + result : result;
+}
 
 
 ⸻
 
-⚠️ Solution 3 (temporaire et NON recommandée) — Désactiver la vérification SSL
+Exemple d’utilisation dans ton mapper
 
-À utiliser seulement pour tester, car cela désactive la sécurité :
+private SctDebitPdfContent mapToContent(SctDebitData data) {
+    SctDebitPdfContent content = new SctDebitPdfContent();
 
-Ligne de commande :
+    content.setSupplierName(data.getSupplierName());
+    content.setSupplierIban(data.getSupplierIban());
+    content.setOutName(data.getOutName());
+    content.setOutIban(data.getOutIban());
+    content.setOutAddress(data.getOutAddress());
 
-git config --global http.sslVerify false
+    // Utilisation de la méthode robuste
+    content.setAmount(formatLongToEuro(data.getAmount()));
 
-Dans SourceTree :
-	1.	Aller dans Outils → Options → Git
-	2.	Cocher Disable SSL certificate validation (si présent selon version)
+    content.setExecutionDate(data.getExecutionDate());
+    content.setLabel(data.getLabel());
+    content.setEndToEndId(data.getEndToEndId());
+    content.setTxId(data.getTxId());
+    content.setControlKey(data.getControlKey());
 
-⚠️ Danger : vous désactivez complètement la vérification SSL pour toutes les connexions Git.
+    return content;
+}
+
 
 ⸻
 
-🧪 Testez ensuite :
-
-git ls-remote https://bitbucket.olkypay.local/scm/ts/tournesol.git
-
+✅ Avantages de cette version
+	•	Gère les valeurs null → affiche 0,00
+	•	Gère les nombres négatifs → affiche -12,34
+	•	Toujours 2 décimales
+	•	Format français avec virgule
+	•	Réutilisable dans tous tes mappers
 
 ⸻
 
-Si tu veux, je peux aussi :
-	•	te guider pour trouver le certificat du serveur,
-	•	vérifier ta configuration SourceTree,
-	•	ou t’aider à configurer Git pour une seule URL (sans global).
+Si tu veux, je peux te montrer une version qui ajoute aussi le séparateur de milliers, pour que 1234567 devienne 12 345,67.
+Veux‑tu que je fasse ça ?
