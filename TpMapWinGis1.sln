@@ -1,3 +1,142 @@
-GRANT DELETE ON external_bank_data.DATABASECHANGELOGLOCK TO 'bankinfoboy'@'192.168.89.3'   i want to excute this script for liquibase when should i excute it 
+Ah — now the situation is clear:
 
-because i cannot lanch it before the start of the app is possible to tlaunch after first build or what happel because we re not allow to delete anything in dev environement
+❗You cannot run the GRANT before the first build
+
+because:
+
+external_bank_data.DATABASECHANGELOGLOCK does not exist yet
+→ The GRANT fails
+→ DBA refuses to run GRANT on a table that does not exist
+→ But Liquibase needs the GRANT to create the table
+→ Deadlock situation
+
+This is a classic Liquibase “bootstrap” problem.
+
+Let me show you the correct, secure way to solve it, used in banks and production-locked environments.
+
+⸻
+
+✅ Why the table doesn’t exist yet
+
+Liquibase creates these tables automatically on first run:
+	•	DATABASECHANGELOG
+	•	DATABASECHANGELOGLOCK
+
+But to create them, Liquibase already needs permissions.
+
+The conflict:
+	•	You cannot GRANT DELETE on a table that doesn’t exist
+	•	Liquibase cannot create the table because DELETE is missing
+
+⸻
+
+✅ Correct solution (industry standard): GRANT ON SCHEMA, NOT ON TABLE
+
+You do not grant DELETE on a table.
+You grant it on the schema, for ALL objects inside it.
+
+✔ Step 1: DBA runs a schema-level GRANT before first deployment
+
+This is the standard secure solution:
+
+GRANT DELETE ON external_bank_data.* 
+TO 'bankinfoboy'@'192.168.89.3';
+
+This works because:
+	•	Liquibase will create its internal tables
+	•	The DELETE applies automatically to new tables
+	•	You do not need to reference a table that does not yet exist
+
+✔ Why is this allowed even in restricted environments?
+
+Because:
+	•	You are only granting DELETE to this schema
+	•	The schema contains only Liquibase metadata (not business data)
+
+If your application tables are in another schema, this is 100% safe.
+
+⸻
+
+❗If your DBA refuses DELETE on the entire schema
+
+Then you must use Solution B.
+
+⸻
+
+✅ Solution B — DBA creates the Liquibase tables manually before first deployment
+
+DBA runs:
+
+CREATE TABLE external_bank_data.DATABASECHANGELOGLOCK (
+    ID INT NOT NULL,
+    LOCKED BOOLEAN NOT NULL,
+    LOCKGRANTED TIMESTAMP NULL,
+    LOCKEDBY VARCHAR(255) NULL,
+    PRIMARY KEY (ID)
+);
+
+CREATE TABLE external_bank_data.DATABASECHANGELOG (
+    ID VARCHAR(255) NOT NULL,
+    AUTHOR VARCHAR(255) NOT NULL,
+    FILENAME VARCHAR(255) NOT NULL,
+    DATEEXECUTED TIMESTAMP NOT NULL,
+    ORDEREXECUTED INT NOT NULL,
+    EXECTYPE VARCHAR(10) NOT NULL,
+    MD5SUM VARCHAR(35) NULL,
+    DESCRIPTION VARCHAR(255) NULL,
+    COMMENTS VARCHAR(255) NULL,
+    TAG VARCHAR(255) NULL,
+    LIQUIBASE VARCHAR(20) NULL,
+    CONTEXTS VARCHAR(255) NULL,
+    LABELS VARCHAR(255) NULL,
+    DEPLOYMENT_ID VARCHAR(10) NULL
+);
+
+Then the DBA can safely run:
+
+GRANT DELETE ON external_bank_data.DATABASECHANGELOGLOCK 
+TO 'bankinfoboy'@'192.168.89.3';
+
+Now the tables exist, so the GRANT is possible.
+
+⸻
+
+❗Solution C (last resort): Disable Liquibase for first run
+
+If the organisation is very restrictive, you can:
+
+Step 1 — Disable Liquibase in PROD
+
+spring.liquibase.enabled=false
+
+Step 2 — Deploy the app → tables are NOT created
+
+(No problem)
+
+Step 3 — DBA manually executes Liquibase SQL (generated using updateSQL)
+
+This creates the Liquibase tables + your schema changes.
+
+Step 4 — Enable Liquibase for future deployments
+
+Once DBA created metadata tables manually, you can allow Liquibase to run.
+
+⸻
+
+⭐ Recommended: Use Solution A
+
+✔ One schema-level DELETE GRANT
+✔ Works across environments
+✔ No manual table creation
+✔ No future problems
+
+This is what almost every enterprise with restricted databases does.
+
+⸻
+
+If you want, I can:
+	•	Prepare the exact message to send to your DBA
+	•	Review your Liquibase changelog.xml to check first-run actions
+	•	Suggest how to organize schemas so app data is protected
+
+Just tell me!
