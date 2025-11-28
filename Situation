@@ -1,24 +1,24 @@
-Here’s a clean, professional STAR-format example based on the situation you described. I filled in missing details and structured it so it sounds clear and interview-ready. If you want it shorter or tailored to a behavioral question (“Tell me about a time you resolved a conflict,” “Tell me about a time you handled confusion in a project,” etc.), I can adjust it.
-
-⸻
-
-STAR Example: Deployment Confusion Due to Missed Database Script
+Deployment Confusion Due to Missed Database Script
 
 Situation:
-I was working on a shared project with several senior developers, and we often deployed our features at the same time. On one release, a colleague forgot to run an important database script. After deployment, 
-unexpected bugs appeared in another part of the system, even though the codebases were separate. This created confusion, because we couldn’t immediately tell whose functionality was causing the issue. 
-I was working on the Medical Score module for Finagora GDPR rules, so at first it was unclear whether the issue originated from my work or elsewhere.
+I was working on a shared project with several senior developers, and we often deployed our features at the same time. On one release, 
+a colleague forgot to run an important database script. After deployment, unexpected bugs appeared in another part of the system, 
+even though the codebases were separate. This created confusion, because we couldn’t immediately tell whose functionality was causing 
+the issue. I was working on the Medical Score module for Finagora GDPR rules,so at first it was unclear whether the issue originated 
+from my work or elsewhere.
 
 Action:
-The first thing I did was focus on understanding the problem rather than jumping to conclusions. I coordinated with the team to recreate the issue and compared the behavior with the expected logic from my module.
-Once I confirmed my part was functioning as designed, I reached out to the colleague responsible for the related area and walked through the deployment checklist with him. That’s when we discovered the missing database script.
+The first thing I did was focus on understanding the problem rather than jumping to conclusions. 
+I coordinated with the team to recreate the issue and compared the behavior with the expected logic from my module.
+Once I confirmed my part was functioning as designed, I reached out to the colleague responsible for the related area and walked through 
+the deployment checklist with him. That’s when we discovered the missing database script.
 
-After identifying the root cause, I proposed improving our process to prevent similar problems in the future. I helped create a simple pre-deployment checklist that included items like schema updates,
+After identifying the root cause, I proposed improving our process to prevent similar problems in the future. 
+I helped create a simple pre-deployment checklist that included items like schema updates,
 script execution, and dependency verification. We also added a short, mandatory pre-release sync meeting so everyone was aligned.
 
 Result:
-The issue was quickly resolved once the missing script was executed. Our deployments became smoother afterward, and confusion during release cycles dropped significantly.
-The checklist and sync meeting are now standard practice for the team, improving reliability and reducing last-minute surprises.
-
-⸻
+The issue was quickly resolved once the missing script was executed. Our deployments became smoother afterward, 
+and confusion during release cycles dropped significantly.The checklist and sync meeting are now standard practice for the team, 
+improving reliability and reducing last-minute surprises.
 
