@@ -1,0 +1,25 @@
+🔹 Quorum
+
+A quorum is the minimum number of valid approvals (signatures) required to authorize a transaction.
+Example: If quorum = 2 of 3, then at least 2 users/systems must approve before the transaction is executed.
+✅ Prevents a single person from moving funds alone.
+
+❄️ Cold Wallet
+
+A cold wallet is a wallet kept offline (no internet connection).
+It is used to store large funds securely.
+
+✅ Very secure (cannot be hacked remotely)
+❌ Slow access (manual approval, extra steps)
+
+Use case: Long-term storage / treasury funds.
+
+🔥 Hot Wallet
+
+A hot wallet is a wallet connected to the internet.
+Used for daily transactions (withdrawals, swaps, payments).
+
+✅ Fast and automated
+❌ More exposed to hacking risk
+
+Use case: User withdrawals, trading operations.
