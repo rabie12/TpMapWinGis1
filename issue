@@ -1,1 +1,1 @@
-Xavier, je dois retirer orderId du DTO de l’API Avis de débit. Nous ne l’utilisons pas dans la génération de l’avis, et 4D a pu produire un avis de débit avec un orderId inexistant, ce qui montre que cette donnée est inutile et potentiellement trompeuse
+Xavier, je dois retirer orderId du DTO de l’API Avis de débit. L’orderId n’est pas utilisé dans la génération de l’avis : même un orderId fictif fonctionne, comme l’a montré 4D. La donnée est donc inutile et peut induire en erreur
