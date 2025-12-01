@@ -1,115 +1,77 @@
-Je suis vraiment désolé d’apprendre ça.
-Ce que tu décris n’a plus rien à voir avec un problème de junior têtu — c’est un environnement toxique avec des comportements discriminatoires, et ça peut te mettre une énorme pression psychologique.
+variables:
+  MAVEN_CLI_OPTS: "-B -DskipTests -DupdateReleaseInfo=true -s settings.xml"
+  MAVEN_OPTS: ''
+  GIT_MAIN: main
+  GIT_UAT: uat
+  GIT_SNAPSHOT_REGEX: "(feat(ure)?/.*)|develop"
+  GITLAB_TAG: deploy_dev
+  GITLAB_ENV: none
+workflow:
+  rules:
+  - if: "$CI_COMMIT_BRANCH =~ $GIT_SNAPSHOT_REGEX"
+    variables:
+      GITLAB_TAG: deploy_dev
+      GITLAB_ENV: develop
+  - if: "$CI_COMMIT_BRANCH == $GIT_UAT"
+    variables:
+      GITLAB_TAG: deploy_uat
+      GITLAB_ENV: uat
+  - if: "$CI_COMMIT_BRANCH == $GIT_MAIN"
+    variables:
+      GITLAB_TAG: deploy_prd
+      GITLAB_ENV: prd
+default:
+  image: maven:3.9.10-amazoncorretto-21-alpine
+stages:
+- liquibase
+- build
+- publish
+updateLiquibase:
+  stage: liquibase
+  environment: "$GITLAB_ENV"
+  script:
+  - "echo \"\U0001F50D Vérification de la connexion DB external_bank_data...\""
+  - echo $JDBC_DB_URL
+  - echo $DB_USERNAME
+  - mariadb -h 192.168.89.1 -u $DB_USERNAME -p$DB_PASSWORD --connect-timeout=4 -e
+    '\q' external_bank_data
+  when: manual
+  tags:
+  - "$GITLAB_TAG"
+before_script:
+- echo "$JAVA_HOME"
+- java -version
+- mvn -version
+- echo "$OLKY_CA_BUNDLE_BASE64" | base64 -d > olky.pem
+- echo "Import du certificat dans le truststore..."
+- keytool -import -trustcacerts -alias olky_bundle -file olky.pem -storepass $JAVA_KEYSTORE_PASSWORD
+  -noprompt -keystore $JAVA_HOME/lib/security/cacerts
+- keytool -list -keystore $JAVA_HOME/lib/security/cacerts -storepass $JAVA_KEYSTORE_PASSWORD
+  | grep olky
+build:
+  stage: build
+  script:
+  - mvn $MAVEN_CLI_OPTS clean install -X
+  artifacts:
+    paths:
+    - target/bank-info.jar
+publish:
+  stage: publish
+  script:
+  - mvn $MAVEN_CLI_OPTS deploy
+deploy:
+  needs:
+  - job: build
+  stage: publish
+  before_script: []
+  environment: "$GITLAB_ENV"
+  script:
+  - sudo /opt/script/gitlab/deploy_java_jar.sh -j ./target/bank-info.jar -d /opt/bank-info/
+    -u bank-info -s bank-info
+  tags:
+  - "$GITLAB_TAG"
+include:
+- template: Security/Secret-Detection.gitlab-ci.yml
 
-Je vais t’aider de manière claire, pratique et sécurisée.
 
-⸻
-
-✦ 1. Tu n’es pas le problème
-
-Quand un milieu est raciste ou cherche à exclure quelqu’un “juste parce qu’il est arabe”, peu importe ce que tu fais :
-⚠️ ils trouveront toujours un prétexte
-Seulement pour justifier ce qu’ils ont déjà décidé.
-
-Ce n’est pas lié à ta compétence, ton comportement ou ton travail.
-C’est leur biais, pas ton échec.
-
-⸻
-
-✦ 2. Protéger ta position avant tout
-
-Dans un environnement toxique, ce qui compte c’est te protéger, pas “convaincre les gens”.
-
-Voici ce que tu peux commencer à faire discrètement :
-
-✔ Garder des traces
-	•	mails
-	•	messages
-	•	demandes absurdes
-	•	remarques déplacées
-	•	contradictions
-	•	changements soudains d’attente
-
-Garde tout hors du travail (sur ton cloud perso).
-
-✔ Documenter ton travail
-
-Chaque tâche, chaque commit, chaque décision technique.
-Ça te protège contre les tentatives d’accuser ou de déformer les faits.
-
-⸻
-
-✦ 3. Ne pas se laisser isoler
-
-Un milieu toxique essaie souvent de couper la personne visée du reste de l’équipe.
-Tu peux contrer ça en :
-	•	parlant calmement avec les gens neutres
-	•	créant des relations professionnelles simples
-	•	demandant des retours “techniques” sans pression
-	•	restant professionnel même s’ils ne le sont pas
-
-L’objectif n’est pas d’être ami → c’est d’éviter qu’ils te peignent comme “conflit”.
-
-⸻
-
-✦ 4. Ne jamais réagir sous le coup de l’émotion
-
-Les environnements toxiques attendent que tu craques ou que tu t’énerves pour te coller une étiquette.
-
-Tu dois rester :
-	•	calme
-	•	professionnel
-	•	propre dans ton attitude
-
-Ça les frustre parce qu’ils ne trouvent rien à utiliser contre toi.
-
-⸻
-
-✦ 5. Leur stratégie : trouver un prétexte
-
-Tu l’as très bien dit :
-
-“Ils essaient de trouver une raison pour le virer.”
-
-Donc leur tactique est prévisible :
-	•	exagérer un petit problème
-	•	interpréter un comportement neutre comme “manque de collaboration”
-	•	isoler
-	•	mettre la pression
-	•	chercher la faute
-
-👉 Si tu connais leur jeu, tu peux le contrer.
-
-⸻
-
-✦ 6. Et maintenant ? Tu as plusieurs options, selon ton énergie
-
-✔ Option A : Tenir jusqu’à trouver un meilleur environnement
-
-Beaucoup de devs passent par un milieu pourri avant de trouver une boîte saine.
-Le marché du développement reste large.
-
-✔ Option B : Se protéger légalement (général, sans conseil juridique)
-
-Dans beaucoup de pays, la discrimination raciale au travail est illégale.
-Tu peux :
-	•	documenter
-	•	garder des preuves
-	•	consulter (si nécessaire) un organisme officiel contre les discriminations
-(Sans t’annoncer au travail !)
-
-✔ Option C : Préparer une sortie stratégique
-
-Parfois le mieux est d’utiliser cet emploi comme tremplin, pas comme combat.
-
-⸻
-
-✦ 7. Si tu veux, je peux t’aider à choisir la meilleure stratégie
-
-Dis-moi :
-	•	Dans quel pays ou ville es-tu ? (les options varient selon les pays)
-	•	Depuis combien de temps tu es dans cette entreprise ?
-	•	Est-ce qu’il y a une personne dans l’équipe avec qui tu t’entends bien ?
-	•	Est-ce que les remarques discriminatoires sont directes, indirectes, ou juste un climat ?
-
-Je te répondrai de manière précise, adaptée à ta situation, et surtout protectrice.
+Security/Secret-Detection.gitlab-ci.yml ou est ce que je pourrai retrouvé ce document
