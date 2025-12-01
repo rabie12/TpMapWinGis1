@@ -1,157 +1,115 @@
-Parfait — tu veux préparer la documentation officielle de ton API pour les équipes qui vont appeler ton endpoint /generate.
-Je peux te fournir un modèle professionnel, clair et directement réutilisable dans une API doc (Swagger, Confluence, Notion, etc.).
+Je suis vraiment désolé d’apprendre ça.
+Ce que tu décris n’a plus rien à voir avec un problème de junior têtu — c’est un environnement toxique avec des comportements discriminatoires, et ça peut te mettre une énorme pression psychologique.
 
-Voici un template complet avec :
-	•	📌 Description du service
-	•	🔧 Endpoint et méthode
-	•	📥 JSON attendu (request)
-	•	📤 Réponse (PDF ou erreurs)
-	•	⚠️ Erreurs 400 possibles (validations)
-	•	📝 Exemple complet d’appel
+Je vais t’aider de manière claire, pratique et sécurisée.
 
 ⸻
 
-📘 Documentation API — Génération d’un PDF de Débit SCT
+✦ 1. Tu n’es pas le problème
 
-🧾 Description
+Quand un milieu est raciste ou cherche à exclure quelqu’un “juste parce qu’il est arabe”, peu importe ce que tu fais :
+⚠️ ils trouveront toujours un prétexte
+Seulement pour justifier ce qu’ils ont déjà décidé.
 
-Ce service permet de générer un PDF d’avis de débit SCT à partir des informations transmises par le client.
-La requête doit contenir tous les champs obligatoires, sinon une erreur HTTP 400 est renvoyée.
-
-⸻
-
-🔧 1. Endpoint
-
-POST /generate
-
+Ce n’est pas lié à ta compétence, ton comportement ou ton travail.
+C’est leur biais, pas ton échec.
 
 ⸻
 
-✔️ 2. En-têtes requis
+✦ 2. Protéger ta position avant tout
 
-Header	Valeur
-Content-Type	application/json
-Accept	application/pdf
+Dans un environnement toxique, ce qui compte c’est te protéger, pas “convaincre les gens”.
 
+Voici ce que tu peux commencer à faire discrètement :
 
-⸻
+✔ Garder des traces
+	•	mails
+	•	messages
+	•	demandes absurdes
+	•	remarques déplacées
+	•	contradictions
+	•	changements soudains d’attente
 
-📥 3. Body JSON attendu
+Garde tout hors du travail (sur ton cloud perso).
 
-Tous les champs sont obligatoires, sauf mention contraire.
+✔ Documenter ton travail
 
-{
-  "orderId": 237,
-  "txId": "V-5000266-237-LU756445982",
-  "executionDate": "29/03/2016",
-  "endToEndId": "165-1518-237",
-  "outName": "PETER AUTO",
-  "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
-  "outIban": "FR907481700001LU75644598201",
-  "supplierName": "PETER AUTO",
-  "supplierIban": "FR907481700001LU75644598201",
-  "amount": 68900,
-  "label": "12 HOUSSEAU JOELLE suppl/ta"
-}
-
+Chaque tâche, chaque commit, chaque décision technique.
+Ça te protège contre les tentatives d’accuser ou de déformer les faits.
 
 ⸻
 
-🧬 4. Description des champs
+✦ 3. Ne pas se laisser isoler
 
-Champ	Type	Obligatoire	Description
-orderId	Long	✔️	Identifiant interne de l’ordre.
-txId	String	✔️	Identifiant de la transaction.
-executionDate	String (dd/MM/yyyy)	✔️	Date d’exécution du prélèvement.
-endToEndId	String	✔️	Identifiant EndToEnd du SCT.
-outName	String	✔️	Nom du débiteur.
-outAddress	String	✔️	Adresse du débiteur.
-outIban	String	✔️	IBAN du débiteur.
-supplierName	String	✔️	Nom du créancier.
-supplierIban	String	✔️	IBAN du créancier.
-amount	Long	✔️	Montant en centimes (ex. 68900 = 689,00€).
-label	String	✔️	Libellé du prélèvement.
+Un milieu toxique essaie souvent de couper la personne visée du reste de l’équipe.
+Tu peux contrer ça en :
+	•	parlant calmement avec les gens neutres
+	•	créant des relations professionnelles simples
+	•	demandant des retours “techniques” sans pression
+	•	restant professionnel même s’ils ne le sont pas
 
+L’objectif n’est pas d’être ami → c’est d’éviter qu’ils te peignent comme “conflit”.
 
 ⸻
 
-📤 5. Réponse — Succès (200 OK)
+✦ 4. Ne jamais réagir sous le coup de l’émotion
 
-Un fichier PDF est retourné dans le corps de la réponse.
+Les environnements toxiques attendent que tu craques ou que tu t’énerves pour te coller une étiquette.
 
-Headers
+Tu dois rester :
+	•	calme
+	•	professionnel
+	•	propre dans ton attitude
 
-Content-Type: application/pdf
-Content-Disposition: attachment; filename="Avis-debit-237.pdf"
-
-Body
-
-(binaire PDF)
+Ça les frustre parce qu’ils ne trouvent rien à utiliser contre toi.
 
 ⸻
 
-❌ 6. Réponse — Erreur (400 Bad Request)
+✦ 5. Leur stratégie : trouver un prétexte
 
-Renvoyée automatiquement si un champ obligatoire est manquant ou invalide.
+Tu l’as très bien dit :
 
-Exemple :
+“Ils essaient de trouver une raison pour le virer.”
 
-{
-  "orderId": "must not be null",
-  "amount": "must not be null",
-  "supplierIban": "must not be blank"
-}
+Donc leur tactique est prévisible :
+	•	exagérer un petit problème
+	•	interpréter un comportement neutre comme “manque de collaboration”
+	•	isoler
+	•	mettre la pression
+	•	chercher la faute
 
-
-⸻
-
-🚫 7. Réponse — Erreur (500 Internal Server Error)
-
-En cas d’erreur interne lors de la génération du PDF.
-
-Exemple :
-
-{
-  "error": "Unable to generate PDF"
-}
-
+👉 Si tu connais leur jeu, tu peux le contrer.
 
 ⸻
 
-📝 8. Exemple d’appel complet (cURL)
+✦ 6. Et maintenant ? Tu as plusieurs options, selon ton énergie
 
-curl -X POST https://your-api-url/generate \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/pdf" \
-  -d '{
-        "orderId": 237,
-        "txId": "V-5000266-237-LU756445982",
-        "executionDate": "29/03/2016",
-        "endToEndId": "165-1518-237",
-        "outName": "PETER AUTO",
-        "outAddress": "103 RUE DE LAMARCK, 75018 PARIS",
-        "outIban": "FR907481700001LU75644598201",
-        "supplierName": "PETER AUTO",
-        "supplierIban": "FR907481700001LU75644598201",
-        "amount": 68900,
-        "label": "12 HOUSSEAU JOELLE suppl/ta"
-      }' \
-  --output Avis-debit-237.pdf
+✔ Option A : Tenir jusqu’à trouver un meilleur environnement
 
+Beaucoup de devs passent par un milieu pourri avant de trouver une boîte saine.
+Le marché du développement reste large.
 
-⸻
+✔ Option B : Se protéger légalement (général, sans conseil juridique)
 
-💡 9. Notes importantes
-	•	Le champ amount est toujours en centimes.
-Votre application doit faire : montant en euros × 100.
-	•	Le PDF généré contient le montant en format “xxx,xx”.
-	•	La validation est automatique grâce à @Valid, @NotNull, @NotBlank.
+Dans beaucoup de pays, la discrimination raciale au travail est illégale.
+Tu peux :
+	•	documenter
+	•	garder des preuves
+	•	consulter (si nécessaire) un organisme officiel contre les discriminations
+(Sans t’annoncer au travail !)
+
+✔ Option C : Préparer une sortie stratégique
+
+Parfois le mieux est d’utiliser cet emploi comme tremplin, pas comme combat.
 
 ⸻
 
-Si tu veux, je peux :
-✅ Générer la version Swagger/OpenAPI 3.0
-ou
-✅ Générer une page HTML prête à mettre dans Confluence / Notion
+✦ 7. Si tu veux, je peux t’aider à choisir la meilleure stratégie
 
-Souhaites-tu l’un des deux ?
+Dis-moi :
+	•	Dans quel pays ou ville es-tu ? (les options varient selon les pays)
+	•	Depuis combien de temps tu es dans cette entreprise ?
+	•	Est-ce qu’il y a une personne dans l’équipe avec qui tu t’entends bien ?
+	•	Est-ce que les remarques discriminatoires sont directes, indirectes, ou juste un climat ?
+
+Je te répondrai de manière précise, adaptée à ta situation, et surtout protectrice.
