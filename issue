@@ -1,1 +1,149 @@
-lors d'une mep aprè validation est-ce que c'est à ce moment je dois taguer la version et comment le faire juste intelij, lors de la prochaine si je veux récupérer la version taguer comment je dois faire 
+Très bonne question.
+Voici la manière propre et professionnelle de gérer les tags de version lors d’une mise en production (MEP), ainsi que comment les créer et les récupérer depuis IntelliJ.
+
+Je te donne un guide clair, simple et sans confusion 👇
+
+⸻
+
+🟦 1. À quel moment faut-il taguer ?
+
+La règle professionnelle est :
+
+✅ Tu tagues juste après la validation de la MEP
+
+Au moment où tu sais que la version déployée en PROD est stabilisée et validée.
+
+Pourquoi ?
+	•	le tag devient une photo exacte du code livré en production
+	•	tu peux y revenir à tout moment (rollback, analyse, hotfix)
+	•	toutes les équipes savent quelle version tourne
+
+👉 Tu tagues quand la version est jugée “released”.
+
+⸻
+
+🟦 2. Comment taguer dans IntelliJ (facile)
+
+➤ Étape 1 — Ouvrir le menu Git
+
+En bas à droite : Git → Branches
+
+➤ Étape 2 — Choisir “Tags…”
+
+Git → Tags → New Tag…
+
+➤ Étape 3 — Choisir :
+	•	Nom du tag :
+Exemple :
+	•	v1.0.0
+	•	v1.2.7
+	•	release-2025-01-04
+	•	Commit :
+→ normalement HEAD sur ta branche main (ou master ou release)
+
+➤ Étape 4 — Pousser le tag
+
+Après création :
+Git → Git Push…
+Décocher tout sauf le tag, ou laisser IntelliJ pousser automatiquement.
+
+👉 Et voilà, ton tag est créé et existe maintenant dans GitLab.
+
+⸻
+
+🟦 3. Comment taguer en ligne de commande (option rapide)
+
+Si jamais tu veux le faire en terminal :
+
+Créer un tag :
+
+git tag -a v1.0.0 -m "Release version 1.0.0"
+
+Pousser le tag :
+
+git push origin v1.0.0
+
+Pousser tous les tags :
+
+git push --tags
+
+
+⸻
+
+🟦 4. Comment récupérer une version taguée ?
+
+⭐ Dans IntelliJ
+	1.	Git → Tags
+	2.	Choisir le tag que tu veux
+	3.	Clic droit → Checkout Tag
+	4.	Tu te retrouves en mode “detached HEAD” (normal)
+
+Si tu veux travailler dessus :
+
+👉 Pour créer une branche depuis un tag :
+
+Git → New Branch from… → choisir ton tag
+Exemple :
+
+hotfix/from-v1.0.0
+
+
+⸻
+
+⭐ En ligne de commande
+
+Checkout simple :
+
+git checkout v1.0.0
+
+Créer une branche depuis le tag :
+
+git checkout -b hotfix-v1.0.0 v1.0.0
+
+
+⸻
+
+🟦 5. Bon processus de versioning (recommandé)
+
+Utilise semantic versioning (SemVer) :
+
+Version	Signification
+MAJOR	Breaking changes
+MINOR	Nouvelles features
+PATCH	Correctifs / hotfix
+
+Exemples :
+	•	v1.0.0 — première release stable
+	•	v1.0.1 — patch hotfix
+	•	v1.1.0 — nouvelle feature
+	•	v2.0.0 — gros changement incompatible
+
+⸻
+
+🟦 6. Quand utiliser le tag ensuite ?
+
+Pour :
+	•	faire un rollback
+	•	identifier exactement ce qui tourne en PROD
+	•	créer un hotfix basé sur une version déployée
+	•	cloner une version exacte pour debug
+	•	comparer deux releases
+
+Exemple : rollback en PROD
+
+git checkout v1.0.0
+
+
+⸻
+
+🟩 Si tu veux, je peux t’aider à définir un processus standardisé de release
+
+Avec :
+	•	tagging automatique
+	•	version dans le pom.xml
+	•	génération auto du changelog
+	•	branche release + merge automatique
+	•	pipeline de build basé sur les tags
+	•	déploiements propres PROD et UAT
+
+Dis-moi comment tu veux structurer tes releases et je te construis un process propre.
