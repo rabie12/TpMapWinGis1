@@ -1,77 +1,33 @@
-variables:
-  MAVEN_CLI_OPTS: "-B -DskipTests -DupdateReleaseInfo=true -s settings.xml"
-  MAVEN_OPTS: ''
-  GIT_MAIN: main
-  GIT_UAT: uat
-  GIT_SNAPSHOT_REGEX: "(feat(ure)?/.*)|develop"
-  GITLAB_TAG: deploy_dev
-  GITLAB_ENV: none
-workflow:
-  rules:
-  - if: "$CI_COMMIT_BRANCH =~ $GIT_SNAPSHOT_REGEX"
-    variables:
-      GITLAB_TAG: deploy_dev
-      GITLAB_ENV: develop
-  - if: "$CI_COMMIT_BRANCH == $GIT_UAT"
-    variables:
-      GITLAB_TAG: deploy_uat
-      GITLAB_ENV: uat
-  - if: "$CI_COMMIT_BRANCH == $GIT_MAIN"
-    variables:
-      GITLAB_TAG: deploy_prd
-      GITLAB_ENV: prd
-default:
-  image: maven:3.9.10-amazoncorretto-21-alpine
-stages:
-- liquibase
-- build
-- publish
-updateLiquibase:
-  stage: liquibase
-  environment: "$GITLAB_ENV"
-  script:
-  - "echo \"\U0001F50D Vérification de la connexion DB external_bank_data...\""
-  - echo $JDBC_DB_URL
-  - echo $DB_USERNAME
-  - mariadb -h 192.168.89.1 -u $DB_USERNAME -p$DB_PASSWORD --connect-timeout=4 -e
-    '\q' external_bank_data
-  when: manual
-  tags:
-  - "$GITLAB_TAG"
-before_script:
-- echo "$JAVA_HOME"
-- java -version
-- mvn -version
-- echo "$OLKY_CA_BUNDLE_BASE64" | base64 -d > olky.pem
-- echo "Import du certificat dans le truststore..."
-- keytool -import -trustcacerts -alias olky_bundle -file olky.pem -storepass $JAVA_KEYSTORE_PASSWORD
-  -noprompt -keystore $JAVA_HOME/lib/security/cacerts
-- keytool -list -keystore $JAVA_HOME/lib/security/cacerts -storepass $JAVA_KEYSTORE_PASSWORD
-  | grep olky
-build:
-  stage: build
-  script:
-  - mvn $MAVEN_CLI_OPTS clean install -X
-  artifacts:
-    paths:
-    - target/bank-info.jar
-publish:
-  stage: publish
-  script:
-  - mvn $MAVEN_CLI_OPTS deploy
-deploy:
-  needs:
-  - job: build
-  stage: publish
-  before_script: []
-  environment: "$GITLAB_ENV"
-  script:
-  - sudo /opt/script/gitlab/deploy_java_jar.sh -j ./target/bank-info.jar -d /opt/bank-info/
-    -u bank-info -s bank-info
-  tags:
-  - "$GITLAB_TAG"
+Bonne question — voici où tu peux trouver le fichier Security/Secret-Detection.gitlab-ci.yml que tu inclus dans ton .gitlab-ci.yml, et comment y accéder.
+
+📂 Où est ce template
+	•	Ce template fait partie des templates officiels de GitLab.  ￼
+	•	Plus précisément, les templates CI/CD de GitLab sont stockés dans le répertoire lib/gitlab/ci/templates/ dans le code source de GitLab.  ￼
+	•	Le template Security/Secret-Detection.gitlab-ci.yml se trouve dans le sous-dossier Security/ de ce répertoire.  ￼
+
+🔍 Comment y accéder
+	1.	Sur GitLab.com / GitLab public
+	•	Si tu utilises GitLab en version hébergée (GitLab.com), ce template est inclus “out-of-the-box”. Tu peux le référencer dans ton .gitlab-ci.yml avec :
+
 include:
-- template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+```  [oai_citation:3‡GitLab Docs](https://docs.gitlab.com/user/application_security/secret_detection/pipeline/?utm_source=chatgpt.com)  
 
 
-Security/Secret-Detection.gitlab-ci.yml ou est ce que je pourrai retrouvé ce document
+	•	Tu ne verras pas forcément le fichier dans ton dépôt, car c’est un template “global”, fourni par GitLab — pas stocké dans ton projet.
+
+	2.	Sur une instance auto-hébergée
+	•	Si tu administrés ta propre instance GitLab, tu peux trouver le template dans les fichiers source de GitLab, sous lib/gitlab/ci/templates/Security/Secret-Detection.gitlab-ci.yml.  ￼
+	•	Si tu as les droits d’administration / accès au serveur GitLab, tu peux naviguer directement dans ce répertoire pour consulter ou copier le template.
+	3.	Via l’UI GitLab (éditeur CI/CD)
+	•	Sur GitLab, navigue dans CI/CD → Editor pour ouvrir le .gitlab-ci.yml.
+	•	Ajoute ou modifie la section include pour référencer le template. GitLab charge alors le contenu “virtuellement” — tu n’as pas besoin de stocker physiquement le template dans ton repo.  ￼
+
+✅ À savoir / limites
+	•	Le template n’apparaît pas dans ton dépôt comme un fichier normal — c’est un fichier “interne” maintenu par GitLab.
+	•	Si tu utilises une version auto-hébergée, attention à la version de GitLab : les chemins et le contenu peuvent varier selon la version.
+	•	Si ton pipeline échoue en disant que le template “n’existe pas”, cela peut signifier que la version de GitLab ne l’inclut pas ou que le chemin est incorrect (ex : erreur de majuscules/minuscules). Il y a eu des bugs rapportés quand on essaye de référencer une version “latest” inexistante.
+
+⸻
+
+Si tu veux : je peux donner un lien direct vers le fichier Secret-Detection.gitlab-ci.yml dans le dépôt source de GitLab — comme ça tu peux le consulter dans un navigateur ou le copier/coller. Tu veux que je fasse ça pour toi ?
