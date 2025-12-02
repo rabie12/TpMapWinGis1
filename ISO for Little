@@ -1,24 +1,137 @@
+You want this final setup:
+
+🎯 Goal
+	•	Be able to run simply:
+
 .\liquibase.bat update
-####################################################
-##   _     _             _ _                      ##
-##  | |   (_)           (_) |                     ##
-##  | |    _  __ _ _   _ _| |__   __ _ ___  ___   ##
-##  | |   | |/ _` | | | | | '_ \ / _` / __|/ _ \  ##
-##  | |___| | (_| | |_| | | |_) | (_| \__ \  __/  ##
-##  \_____/_|\__, |\__,_|_|_.__/ \__,_|___/\___|  ##
-##              | |                               ##
-##              |_|                               ##
-##                                                ##
-##  Get documentation at docs.liquibase.com       ##
-##  Get certified courses at learn.liquibase.com  ##
-##                                                ##
-####################################################
-Starting Liquibase at 15:52:10 using Java 17.0.17 (version 4.33.0 #8744 built at 2025-07-08 20:43+0000)
-Liquibase Version: 4.33.0
-Liquibase Open Source 4.33.0 by Liquibase
-Error parsing command line: Invalid argument '--changelog-file': missing required argument. If you need to configure new liquibase project files and arguments, run the 'liquibase init project' command.
 
-For detailed help, try 'liquibase --help' or 'liquibase <command-name> --help'
+	•	Without specifying:
+	•	--changelog-file
+	•	--search-path
+	•	--url
+	•	--username
+	•	--password
+	•	And also be able to run Liquibase directly from your Java project using the same config.
 
+This is 100% possible using only liquibase.properties.
+No environment variables needed.
+No PowerShell syntax issues.
+No broken arguments.
 
-i want to changelofile as var env wih so ican lunch directly update without argument and after that to be able to lunch it directly from my java project in local
+⸻
+
+✅ 1. Create a liquibase.properties file
+
+Create this file:
+
+C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.properties
+
+Or (better):
+
+C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase\liquibase.properties
+
+Put this inside:
+
+searchPath=C:/Users/RHABACHI/IdeaProjects/bankinfo/liquibase
+changelogFile=changelogMaster.yaml
+
+url=jdbc:mariadb://localhost:3306/external_bank_data
+username=root
+password=root
+
+# optional: log level
+logLevel=info
+
+⚠️ IMPORTANT:
+Liquibase 4.20+ uses camelCase, not kebab-case nor snake_case:
+
+❌ --changelog-file
+✔️ changelogFile=
+
+❌ --search-path
+✔️ searchPath=
+
+Without correct casing, it fails.
+
+⸻
+
+✅ 2. Run Liquibase with no arguments
+
+Go to your Liquibase folder:
+
+cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0
+
+Then run:
+
+.\liquibase.bat update
+
+🎉 It will automatically:
+	•	load liquibase.properties
+	•	know your changelog file
+	•	know your search path
+	•	know your DB credentials
+	•	execute without arguments
+
+⸻
+
+❗ Why your command failed earlier
+
+You saw this:
+
+Error parsing command line: Invalid argument '--changelog-file': missing required argument.
+
+Because:
+	•	The argument is now deprecated
+	•	It must be:
+	•	--changelog-file=<value>
+	•	Or better: changelogFile=... in liquibase.properties
+
+But using liquibase.properties removes all these issues.
+
+⸻
+
+✅ 3. Running Liquibase from your Java Spring project
+
+Spring Boot will automatically detect your liquibase.properties IF it is placed in:
+
+src/main/resources/liquibase.properties
+
+Or you can point Spring to it via:
+
+spring:
+  liquibase:
+    config: classpath:liquibase.properties
+
+Then you can run in your Java code:
+
+Liquibase liquibase = new Liquibase();
+liquibase.update();
+
+Or even better:
+Let Spring Boot run it automatically at startup.
+
+⸻
+
+🔥 BONUS (Optional): Set system environment variables
+
+If you really want environment variables, Liquibase expects:
+
+setx LIQUIBASE_COMMAND_CHANGELOG_FILE "changelogMaster.yaml"
+setx LIQUIBASE_SEARCH_PATH "C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase"
+
+Then run a new PowerShell window (setx requires restart), then:
+
+.\liquibase.bat update
+
+But truly:
+The recommended and clean solution is liquibase.properties.
+
+⸻
+
+✔️ If you send me your folder structure:
+
+Run:
+
+tree C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase /F
+
+I will write your perfect liquibase.properties for your exact structure.
