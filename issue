@@ -84,4 +84,15 @@ Use LIQUIBASE_SEARCH_PATH=filesystem:...	✔️ Light	✔️
 
 ⸻
 
-If you want, tell me what build system you use (Maven or Gradle) and whether you deploy using Docker / JAR / Spring Boot run, and I can give you the exact recommended folder layout and config.
+liquibase.bat : Le terme «liquibase.bat» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script
+ou programme exécutable. Vérifiez l'orthographe du nom, ou si un chemin d'accès existe, vérifiez que le chemin d'accès
+est correct et réessayez.
+Au caractère Ligne:1 : 1
++ liquibase.bat  ^--search-path=C:\RHABACHI\IdeaProjects\bank-info\liqu ...
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (liquibase.bat:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+
+
+Suggestion [3,General]: La commande liquibase.bat est introuvable, mais elle existe à l''emplacement actuel. Par défaut, Windows PowerShell ne charge aucune commande à partir de l''emplacement actuel. Si vous approuvez cette commande, tapez « .\liquibase.bat » à la place. Pour en savoir plus, voir "get-help about_Command_Precedence".
+PS C:\Users\RHABACHI\Downloads\liquibase-4.33.0> liquibase.bat  ^--search-path=C:\RHABACHI\IdeaProjects\bank-info\liquibase^  --changeLogFile=db.changelog-master.yaml^ update
