@@ -1,81 +1,11 @@
-Your error comes from a naming change in Liquibase 4.20+.
+ERROR: Exception Primary Source:  4.33.0
 
-Liquibase now uses camelCase arguments, NOT the old --changeLogFile.
+Unexpected error running Liquibase: changelogMaster.yaml does not exist
 
-So this will FAIL:
+For more information, please use the --log-level flag
 
---changeLogFile=...
---changelog-file=...
+i have it here ; 
 
-But this will WORK:
+C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
 
---changelog-file=db.changelog-master.yaml
-
-OR
-
---change-log-file=db.changelog-master.yaml
-
-Liquibase accepts both but they must be followed by a value.
-
-⸻
-
-✅ Correct full command for Liquibase 4.33.0 (Windows PowerShell)
-
-Use this EXACT command, with quotes and correct argument names:
-
-.\liquibase.bat ^
-  --search-path="C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog" ^
-  --changelog-file=db.changelog-master.yaml ^
-  --url="jdbc:postgresql://localhost:5432/bankinfo" ^
-  --username=postgres ^
-  --password=postgres ^
-  update
-
-✔ All arguments are correct
-✔ Works for Liquibase 4.33.0
-✔ Matching your folder structure
-
-⸻
-
-📌 Why you got the error
-
-Liquibase expects a value immediately after:
-
---changelog-file=
-
-Your previous command likely looked like:
-
---changelog-file^ update
-
-Because the caret (^) in PowerShell joins lines — but if you place it incorrectly, the argument becomes empty.
-
-⸻
-
-🛠 Recommended solution (much easier)
-
-Create a file:
-
-C:\RHABACHI\IdeaProjects\bank-info\liquibase\liquibase.properties
-
-Put this inside:
-
-search-path=changelog
-changelog-file=db.changelog-master.yaml
-url=jdbc:postgresql://localhost:5432/bankinfo
-username=postgres
-password=postgres
-
-Then run:
-
-cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0\
-.\liquibase.bat update
-
-✔ No more complex CLI
-✔ No more errors
-✔ Works on any OS
-
-⸻
-
-If you want, I can also validate your folder structure — just paste:
-
-tree C:\RHABACHI\IdeaProjects\bank-info\liquibase /F
+and the file name is changelogMaster.yaml
