@@ -1,16 +1,7 @@
-ERROR: Exception Primary Reason:  The file db/changelog/data/bank_info.csv was not found in the configured search path:
-    - C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
-More locations can be added with the 'searchPath' parameter.
-ERROR: Exception Primary Source:  MariaDB 11.7.2-MariaDB-log
-ERROR: Exception Details
-ERROR: Exception Primary Class:  FileNotFoundException
-ERROR: Exception Primary Reason:  The file db/changelog/data/bank_info.csv was not found in the configured search path:
-    - C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
-More locations can be added with the 'searchPath' parameter.
 ERROR: Exception Primary Source:  MariaDB 11.7.2-MariaDB-log
 
-i have an issue with this path because ive changed the structure of the document
+Unexpected error running Liquibase: Migration failed for changeset baseline.yaml::1-baseline-schema::RHI:
+     Reason: liquibase.exception.DatabaseException: (conn=20) Table 'users' already exists [Failed SQL: (1050) CREATE TABLE external_bank_data.users (username VARCHAR(255) NOT NULL, password VARCHAR(255) NULL, enabled TINYINT(1) NULL, CONSTRAINT PK_USERS PRIMARY KEY (username))]
 
-so i need to update the path on the baseline and  ive already lunch the baseline on production i guess  ishould not update it 
-
-
+For more information, please use the --log-level flag
+cause the table alreaydy exists and the baseline has been already executed
