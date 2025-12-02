@@ -1,3 +1,128 @@
-je veux pouvoir tester directement sur le patch du projet :
+Ok, je comprends exactement ce que tu veux :
 
-PS C:\Users\RHABACHI\IdeaProjects\bankinfo il le dossier liquibase dedans je veux pôuvoir appeler le liquibase.bat qui se trouve dans le projet :  C:\Users\RHABACHI\Downloads\liquibase-4.33.0
+🎯 Objectif
+
+Depuis ton dossier projet :
+
+C:\Users\RHABACHI\IdeaProjects\bankinfo
+
+Tu veux pouvoir lancer :
+
+liquibase update
+
+ou :
+
+.\liquibase.bat update
+
+ET que Liquibase utilise :
+
+✔ ton changelog dans bankinfo\liquibase
+✔ ton liquibase installé dans C:\Users\RHABACHI\Downloads\liquibase-4.33.0
+✔ sans passer 1h à taper des paths
+
+⸻
+
+🟢 SOLUTION SIMPLE (RECOMMANDÉE)
+
+➤ 1. Ajouter Liquibase au PATH Windows
+
+Exécute ceci dans PowerShell (en admin) :
+
+setx PATH "%PATH%;C:\Users\RHABACHI\Downloads\liquibase-4.33.0"
+
+Ensuite ferme complètement PowerShell et rouvre-le.
+
+⸻
+
+➤ 2. Créer un liquibase.properties dans ton projet
+
+Dans :
+
+C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
+
+Créer un fichier :
+
+liquibase.properties
+
+Avec :
+
+searchPath=C:/Users/RHABACHI/IdeaProjects/bankinfo/liquibase
+changelogFile=changelogMaster.yaml
+
+url=jdbc:mariadb://localhost:3306/external_bank_data
+username=root
+password=root
+logLevel=info
+
+⚠️ IMPORTANT : camelCase obligatoire
+✔ changelogFile
+✔ searchPath
+
+⸻
+
+➤ 3. Depuis ton projet, lance :
+
+cd C:\Users\RHABACHI\IdeaProjects\bankinfo
+liquibase update
+
+OU :
+
+liquibase.bat update
+
+Liquibase va automatiquement :
+	•	trouver le liquibase.properties
+	•	suivre le changelog
+	•	exécuter les changements
+	•	utiliser ton Liquibase global installé
+
+⸻
+
+🟡 ALTERNATIVE (sans modifier PATH)
+
+Créer un petit script .cmd directement dans ton projet.
+
+➤ 1. Dans ton dossier projet bankinfo
+
+Créer un fichier :
+
+run-liquibase.cmd
+
+Contenu :
+
+@echo off
+C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat update
+
+Ensuite tu exécutes :
+
+.\run-liquibase.cmd
+
+
+⸻
+
+🟣 ALTERNATIVE (symlink propre)
+
+Créer un lien symbolique dans ton projet :
+
+cmd /c mklink C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase.bat C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat
+
+Puis :
+
+cd C:\Users\RHABACHI\IdeaProjects\bankinfo
+.\liquibase.bat update
+
+
+⸻
+
+🟢 RECOMMANDATION GÉNÉRALE
+
+➡️ Toujours mettre le liquibase.properties dans ton projet
+➡️ Ne JAMAIS mettre liquibase dans ton jar
+➡️ Toujours exécuter Liquibase via CLI en local (comme tu fais)
+
+⸻
+
+🟣 Si tu veux, envoie-moi :
+
+tree C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase /F
+
+Je te génère ton liquibase.properties parfait, clean, sans erreurs, avec les bons paths.
