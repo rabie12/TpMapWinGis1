@@ -1,3 +1,87 @@
-    LIQUIBASE_SEARCH_PATH: "./src/main/resources/db/changelog/"
+If your Liquibase changelog files (especially large data CSV/XML/JSON files) are placed under
+src/main/resources, Maven/Gradle will package them inside the JAR, which is why your JAR becomes >10 MB heavier.
 
-i have this path for liquibase i want to make directly on the same path as source becaus my liquibase contains more than 10mb data file and it make my jar heavy as it stored inside it
+✅ Goal
+
+Keep Liquibase files outside the JAR, but still make Liquibase load them at runtime.
+
+Below are the correct ways to do it.
+
+⸻
+
+✔️ Solution 1 — Move Liquibase files outside resources and use an absolute/relative filesystem path
+
+Instead of putting your changelogs under src/main/resources, place them in a directory outside the project’s classpath, for example:
+
+/liquibase/changelog/
+
+Then configure:
+
+application.properties
+
+spring.liquibase.change-log=filesystem:/liquibase/changelog/db.changelog-master.yaml
+
+You can also use a relative filesystem path:
+
+spring.liquibase.change-log=filesystem:./src/main/liquibase/db.changelog-master.yaml
+
+Now Liquibase loads the files from the file system directly, not from inside the JAR.
+
+⸻
+
+✔️ Solution 2 — Use LIQUIBASE_SEARCH_PATH with filesystem path
+
+If you prefer to keep using LIQUIBASE_SEARCH_PATH, you must prefix it with filesystem::
+
+Example
+
+LIQUIBASE_SEARCH_PATH=filesystem:/path/to/liquibase/changelog
+
+or, relative to your working directory:
+
+LIQUIBASE_SEARCH_PATH=filesystem:./liquibase
+
+Then in db.changelog-master.yaml, just reference filenames:
+
+databaseChangeLog:
+  - include:
+      file: data/bigfile.csv
+
+
+⸻
+
+✔️ Solution 3 — Keep only small changelog files in JAR, but put large data files outside
+
+You can keep your YAML/XML changelogs inside resources, but load the large SQL/CSV files from the filesystem:
+
+In your changelog:
+
+- loadData:
+    file: filesystem:/data/bigdata.csv
+
+
+⸻
+
+❌ What you should NOT do
+
+Do not leave heavy files under:
+
+src/main/resources/db/changelog/
+
+Because the resources folder is always packaged into the JAR, making it heavy.
+
+⸻
+
+✅ Summary
+
+If you want to avoid a heavy JAR:
+
+Approach	JAR Size	Works in Spring Boot
+Files in src/main/resources	❌ Heavy	✔️
+Files in external folder + filesystem:	✔️ Light	✔️
+Use LIQUIBASE_SEARCH_PATH=filesystem:...	✔️ Light	✔️
+
+
+⸻
+
+If you want, tell me what build system you use (Maven or Gradle) and whether you deploy using Docker / JAR / Spring Boot run, and I can give you the exact recommended folder layout and config.
