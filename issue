@@ -1,99 +1,77 @@
-If your Liquibase changelog files (especially large data CSV/XML/JSON files) are placed under
-src/main/resources, Maven/Gradle will package them inside the JAR, which is why your JAR becomes >10 MB heavier.
+No problem — your Liquibase ZIP does NOT need to be inside your Spring project.
+You can keep Liquibase anywhere on your computer and still run it against your project’s changelog folder.
 
-✅ Goal
-
-Keep Liquibase files outside the JAR, but still make Liquibase load them at runtime.
-
-Below are the correct ways to do it.
+Here is the cleanest setup for Windows.
 
 ⸻
 
-✔️ Solution 1 — Move Liquibase files outside resources and use an absolute/relative filesystem path
+✅ 1. Folder layout (Liquibase and project are separate)
 
-Instead of putting your changelogs under src/main/resources, place them in a directory outside the project’s classpath, for example:
+Example:
 
-/liquibase/changelog/
+C:\Tools\liquibase-4.30.0\     ← Liquibase ZIP extracted here
+C:\Projects\my-spring-app\     ← Your Spring Boot project
 
-Then configure:
+Inside your Spring project, create a Liquibase folder only for the changelogs, not the Liquibase program:
 
-application.properties
+C:\Projects\my-spring-app\liquibase\
+    └─ changelog\
+          ├─ db.changelog-master.yaml
+          ├─ data\ (your big CSV/XML/json files)
 
-spring.liquibase.change-log=filesystem:/liquibase/changelog/db.changelog-master.yaml
-
-You can also use a relative filesystem path:
-
-spring.liquibase.change-log=filesystem:./src/main/liquibase/db.changelog-master.yaml
-
-Now Liquibase loads the files from the file system directly, not from inside the JAR.
+👉 This keeps your JAR light, because nothing is inside src/main/resources.
 
 ⸻
 
-✔️ Solution 2 — Use LIQUIBASE_SEARCH_PATH with filesystem path
+✅ 2. Run Liquibase CLI from anywhere, but point it to your project’s changelog folder
 
-If you prefer to keep using LIQUIBASE_SEARCH_PATH, you must prefix it with filesystem::
+Open PowerShell or CMD, then:
 
-Example
+cd C:\Tools\liquibase-4.30.0\
 
-LIQUIBASE_SEARCH_PATH=filesystem:/path/to/liquibase/changelog
+Then run Liquibase with:
 
-or, relative to your working directory:
-
-LIQUIBASE_SEARCH_PATH=filesystem:./liquibase
-
-Then in db.changelog-master.yaml, just reference filenames:
-
-databaseChangeLog:
-  - include:
-      file: data/bigfile.csv
-
-
-⸻
-
-✔️ Solution 3 — Keep only small changelog files in JAR, but put large data files outside
-
-You can keep your YAML/XML changelogs inside resources, but load the large SQL/CSV files from the filesystem:
-
-In your changelog:
-
-- loadData:
-    file: filesystem:/data/bigdata.csv
-
-
-⸻
-
-❌ What you should NOT do
-
-Do not leave heavy files under:
-
-src/main/resources/db/changelog/
-
-Because the resources folder is always packaged into the JAR, making it heavy.
-
-⸻
-
-✅ Summary
-
-If you want to avoid a heavy JAR:
-
-Approach	JAR Size	Works in Spring Boot
-Files in src/main/resources	❌ Heavy	✔️
-Files in external folder + filesystem:	✔️ Light	✔️
-Use LIQUIBASE_SEARCH_PATH=filesystem:...	✔️ Light	✔️
-
-
-⸻
-
-liquibase.bat : Le terme «liquibase.bat» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script
-ou programme exécutable. Vérifiez l'orthographe du nom, ou si un chemin d'accès existe, vérifiez que le chemin d'accès
-est correct et réessayez.
-Au caractère Ligne:1 : 1
-+ liquibase.bat  ^--search-path=C:\RHABACHI\IdeaProjects\bank-info\liqu ...
-+ ~~~~~~~~~~~~~
-    + CategoryInfo          : ObjectNotFound: (liquibase.bat:String) [], CommandNotFoundException
-    + FullyQualifiedErrorId : CommandNotFoundException
-.\liquibase.bat ^
-  --search-path="C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog" ^
+liquibase.bat ^
+  --search-path=C:\Projects\my-spring-app\liquibase\changelog ^
   --changeLogFile=db.changelog-master.yaml ^
   update
 
+This works even though Liquibase is in C:\Tools and your project is in C:\Projects.
+
+⸻
+
+🔥 3. If you want, you can set LIQUIBASE_SEARCH_PATH permanently
+
+PowerShell
+
+setx LIQUIBASE_SEARCH_PATH "C:\Projects\my-spring-app\liquibase\changelog"
+
+CMD
+
+setx LIQUIBASE_SEARCH_PATH C:\Projects\my-spring-app\liquibase\changelog
+
+Then you can run:
+
+cd C:\Tools\liquibase-4.30.0\
+liquibase.bat update
+
+
+⸻
+
+🧩 Why this works
+	•	Liquibase program = anywhere (not part of the project)
+	•	Changelog files = inside your project, but outside your JAR
+	•	Your JAR stays small
+	•	Liquibase CLI loads the files through --search-path
+
+⸻
+
+✅ If you want, I can generate the exact working command
+
+Tell me the exact paths:
+	1.	Where you extracted Liquibase ZIP
+(ex: C:\Users\you\Downloads\liquibase-4.30.0)
+	2.	Your Spring project path
+(ex: C:\Workspace\my-app)
+
+I will generate the exact command you can copy/paste.
