@@ -1,1 +1,77 @@
-i've get the zip of the liquibase i want to start command line of liquibase inside of my project using the inside my project of 
+No problem — your Liquibase ZIP does NOT need to be inside your Spring project.
+You can keep Liquibase anywhere on your computer and still run it against your project’s changelog folder.
+
+Here is the cleanest setup for Windows.
+
+⸻
+
+✅ 1. Folder layout (Liquibase and project are separate)
+
+Example:
+
+C:\Tools\liquibase-4.30.0\     ← Liquibase ZIP extracted here
+C:\Projects\my-spring-app\     ← Your Spring Boot project
+
+Inside your Spring project, create a Liquibase folder only for the changelogs, not the Liquibase program:
+
+C:\Projects\my-spring-app\liquibase\
+    └─ changelog\
+          ├─ db.changelog-master.yaml
+          ├─ data\ (your big CSV/XML/json files)
+
+👉 This keeps your JAR light, because nothing is inside src/main/resources.
+
+⸻
+
+✅ 2. Run Liquibase CLI from anywhere, but point it to your project’s changelog folder
+
+Open PowerShell or CMD, then:
+
+cd C:\Tools\liquibase-4.30.0\
+
+Then run Liquibase with:
+
+liquibase.bat ^
+  --search-path=C:\Projects\my-spring-app\liquibase\changelog ^
+  --changeLogFile=db.changelog-master.yaml ^
+  update
+
+This works even though Liquibase is in C:\Tools and your project is in C:\Projects.
+
+⸻
+
+🔥 3. If you want, you can set LIQUIBASE_SEARCH_PATH permanently
+
+PowerShell
+
+setx LIQUIBASE_SEARCH_PATH "C:\Projects\my-spring-app\liquibase\changelog"
+
+CMD
+
+setx LIQUIBASE_SEARCH_PATH C:\Projects\my-spring-app\liquibase\changelog
+
+Then you can run:
+
+cd C:\Tools\liquibase-4.30.0\
+liquibase.bat update
+
+
+⸻
+
+🧩 Why this works
+	•	Liquibase program = anywhere (not part of the project)
+	•	Changelog files = inside your project, but outside your JAR
+	•	Your JAR stays small
+	•	Liquibase CLI loads the files through --search-path
+
+⸻
+
+✅ If you want, I can generate the exact working command
+
+Tell me the exact paths:
+	1.	Where you extracted Liquibase ZIP
+(ex: C:\Users\you\Downloads\liquibase-4.30.0)
+	2.	Your Spring project path
+(ex: C:\Workspace\my-app)
+
+I will generate the exact command you can copy/paste.
