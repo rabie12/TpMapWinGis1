@@ -1,85 +1,24 @@
-Ah OK — you mean setx as in Windows environment variables, not Liquibase “sets”.
-So your question is:
+Starting Liquibase at 14:53:23 using Java 17.0.17 (version 4.33.0 #8744 built at 2025-07-08 20:43+0000)
+Liquibase Version: 4.33.0
+Liquibase Open Source 4.33.0 by Liquibase
+ERROR: Exception Details
+ERROR: Exception Primary Class:  ChangeLogParseException
+ERROR: Exception Primary Reason:  changelogMaster.yaml does not exist
+ERROR: Exception Primary Source:  4.33.0
 
-👉 “Is it possible to configure the Liquibase baseline using Windows environment variables with setx?”
+Unexpected error running Liquibase: changelogMaster.yaml does not exist
 
-✔️ Yes — you can configure all Liquibase parameters (including baseline commands) using Windows environment variables set via setx.
-
-Let me show you exactly how.
-
-⸻
-
-✅ 1. Setting Liquibase environment variables using setx
-
-You can set any Liquibase property like this:
-
-setx LIQUIBASE_URL "jdbc:postgresql://localhost:5432/bankinfo"
-setx LIQUIBASE_USERNAME "postgres"
-setx LIQUIBASE_PASSWORD "postgres"
-setx LIQUIBASE_CHANGELOG_FILE "db.changelog-master.yaml"
-setx LIQUIBASE_SEARCH_PATH "C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog"
-
-After that, restart PowerShell or CMD, then simply run:
-
-.\liquibase.bat update
-
-Liquibase automatically reads environment variables prefixed with LIQUIBASE_.
-
-⸻
-
-✅ 2. But what about baseline?
-
-Liquibase has no “baseline” command, but the equivalent is:
-
-✔ changelogSync
-
-Mark all existing changesets as executed.
-
-✔ And yes — you can also run changelogSync using environment variables defined by setx.
-
-Example:
-
-.\liquibase.bat changelogSync
-
-And it uses the env vars you set via setx.
-
-⸻
-
-✅ 3. Example: full baseline setup using setx
-
-Step 1 — Configure Liquibase environment variables
-
-setx LIQUIBASE_URL "jdbc:postgresql://localhost:5432/bankinfo"
-setx LIQUIBASE_USERNAME "postgres"
-setx LIQUIBASE_PASSWORD "postgres"
-setx LIQUIBASE_CHANGELOG_FILE "db.changelog-master.yaml"
-setx LIQUIBASE_SEARCH_PATH "C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog"
-
-Step 2 — Open a new terminal
-
-(Windows requires restart to load new env vars)
-
-Step 3 — Run baseline-equivalent
-
-cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0\
-.\liquibase.bat changelogSync
-
-Step 4 — After baseline, normal updates:
-
-.\liquibase.bat update
+For more information, please use the --log-level flag
 
 
-⸻
+j'ai tjr le mm souci sous powershell sachanant j'ai essayé de configdirectement la valirable setX et j'ai àça lors d'un echo : LIQUIBASE_COMMAND_CHANGELOG_FILE :
 
-🌟 Summary
-
-Goal	Liquibase command	Can use setx?
-Set DB connection	env vars	✔️ Yes
-Set changelog/paths	env vars	✔️ Yes
-Baseline (mark existing changes as executed)	changelogSync	✔️ Yes
-Normal migrations	update	✔️ Yes
+PS C:\Users\RHABACHI\Downloads\liquibase-4.33.0> echo LIQUIBASE_COMMAND_CHANGELOG_FILE
+LIQUIBASE_COMMAND_CHANGELOG_FILE
 
 
-⸻
+PS C:\Users\RHABACHI\Downloads\liquibase-4.33.0> echo LIQUIBASE_SEARCH_PATH
+LIQUIBASE_SEARCH_PATH
 
-If you want, I can generate a ready-to-copy .bat script that sets all env variables and runs Liquibase automatically.
+
+can you check please this my final manual cmd : \liquibase.bat ^ --search-path="C:\RHABACHI\IdeaProjects\bankinfo\liquibase\" ^ --changelog-file=changelogMaster.yaml ^ --url="jdbc:mariadb://localhost:3306/external_bank_data" ^ --username=root ^ --password=root ^ update
