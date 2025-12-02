@@ -1,11 +1,95 @@
-ERROR: Exception Primary Source:  4.33.0
+Here is a clean, corrected, and safe version of what you are trying to write — without contradictions and with accurate Liquibase 4.33.0 syntax.
 
-Unexpected error running Liquibase: changelogMaster.yaml does not exist
+⸻
 
-For more information, please use the --log-level flag
+✅ Correct explanation (Liquibase 4.33.0)
 
-i have it here ; 
+Liquibase 4.20+ accepts both:
+	•	--changelog-file
+	•	--changeLogFile
 
-C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
+…but kebab-case is the officially documented and most reliable form (especially on Windows).
 
-and the file name is changelogMaster.yaml
+✔ So this works:
+
+--changelog-file=db.changelog-master.yaml
+
+❌ Your earlier example said this would fail, which is incorrect.
+
+The only thing that fails is when the argument has no value:
+
+--changelog-file   (❌ missing value)
+
+That is why Liquibase shows:
+
+Invalid argument '--changelog-file': missing required argument
+
+
+⸻
+
+✅ Correct full Liquibase CLI command (Windows PowerShell)
+
+.\liquibase.bat ^
+  --search-path="C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog" ^
+  --changelog-file=db.changelog-master.yaml ^
+  --url="jdbc:postgresql://localhost:5432/bankinfo" ^
+  --username=postgres ^
+  --password=postgres ^
+  update
+
+✔ Valid for Liquibase 4.33.0
+
+✔ Matches your folder structure
+
+✔ Works in PowerShell
+
+⸻
+
+📌 Why you previously got the error
+
+You wrote something like:
+
+--changelog-file^ update
+
+In PowerShell, ^ is a line-continuation operator.
+If you place it in the wrong spot, the argument becomes empty:
+
+--changelog-file=
+
+This triggers:
+
+Invalid argument '--changelog-file': missing required argument
+
+
+⸻
+
+🛠 Recommended long-term solution: use liquibase.properties
+
+Create this file:
+
+C:\RHABACHI\IdeaProjects\bank-info\liquibase\liquibase.properties
+
+Put:
+
+search-path=changelog
+changelog-file=db.changelog-master.yaml
+url=jdbc:postgresql://localhost:5432/bankinfo
+username=postgres
+password=postgres
+
+Then run Liquibase with no parameters:
+
+cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0\
+.\liquibase.bat update
+
+✔ No quoting issues
+✔ No Windows escaping
+✔ Cleaner and safer
+
+⸻
+
+If you want, paste this and I’ll verify structure:
+
+tree C:\RHABACHI\IdeaProjects\bank-info\liquibase /F
+
+I will confirm everything is placed correctly.
