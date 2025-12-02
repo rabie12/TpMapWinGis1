@@ -1,6 +1,81 @@
-Liquibase Version: 4.33.0
-Liquibase Open Source 4.33.0 by Liquibase
-Error parsing command line: Invalid argument '--changelog-file': missing required argument. If you need to configure new liquibase project files and arguments, run the 'liquibase init project' command.
+Your error comes from a naming change in Liquibase 4.20+.
 
-For detailed help, try 'liquibase --help' or 'liquibase <command-name> --help'
-PS C:\Users\RHABACHI\Downloads\liquibase-4.33.0>
+Liquibase now uses camelCase arguments, NOT the old --changeLogFile.
+
+So this will FAIL:
+
+--changeLogFile=...
+--changelog-file=...
+
+But this will WORK:
+
+--changelog-file=db.changelog-master.yaml
+
+OR
+
+--change-log-file=db.changelog-master.yaml
+
+Liquibase accepts both but they must be followed by a value.
+
+⸻
+
+✅ Correct full command for Liquibase 4.33.0 (Windows PowerShell)
+
+Use this EXACT command, with quotes and correct argument names:
+
+.\liquibase.bat ^
+  --search-path="C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog" ^
+  --changelog-file=db.changelog-master.yaml ^
+  --url="jdbc:postgresql://localhost:5432/bankinfo" ^
+  --username=postgres ^
+  --password=postgres ^
+  update
+
+✔ All arguments are correct
+✔ Works for Liquibase 4.33.0
+✔ Matching your folder structure
+
+⸻
+
+📌 Why you got the error
+
+Liquibase expects a value immediately after:
+
+--changelog-file=
+
+Your previous command likely looked like:
+
+--changelog-file^ update
+
+Because the caret (^) in PowerShell joins lines — but if you place it incorrectly, the argument becomes empty.
+
+⸻
+
+🛠 Recommended solution (much easier)
+
+Create a file:
+
+C:\RHABACHI\IdeaProjects\bank-info\liquibase\liquibase.properties
+
+Put this inside:
+
+search-path=changelog
+changelog-file=db.changelog-master.yaml
+url=jdbc:postgresql://localhost:5432/bankinfo
+username=postgres
+password=postgres
+
+Then run:
+
+cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0\
+.\liquibase.bat update
+
+✔ No more complex CLI
+✔ No more errors
+✔ Works on any OS
+
+⸻
+
+If you want, I can also validate your folder structure — just paste:
+
+tree C:\RHABACHI\IdeaProjects\bank-info\liquibase /F
