@@ -1,95 +1,85 @@
-Here is a clean, corrected, and safe version of what you are trying to write — without contradictions and with accurate Liquibase 4.33.0 syntax.
+Ah OK — you mean setx as in Windows environment variables, not Liquibase “sets”.
+So your question is:
+
+👉 “Is it possible to configure the Liquibase baseline using Windows environment variables with setx?”
+
+✔️ Yes — you can configure all Liquibase parameters (including baseline commands) using Windows environment variables set via setx.
+
+Let me show you exactly how.
 
 ⸻
 
-✅ Correct explanation (Liquibase 4.33.0)
+✅ 1. Setting Liquibase environment variables using setx
 
-Liquibase 4.20+ accepts both:
-	•	--changelog-file
-	•	--changeLogFile
+You can set any Liquibase property like this:
 
-…but kebab-case is the officially documented and most reliable form (especially on Windows).
+setx LIQUIBASE_URL "jdbc:postgresql://localhost:5432/bankinfo"
+setx LIQUIBASE_USERNAME "postgres"
+setx LIQUIBASE_PASSWORD "postgres"
+setx LIQUIBASE_CHANGELOG_FILE "db.changelog-master.yaml"
+setx LIQUIBASE_SEARCH_PATH "C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog"
 
-✔ So this works:
+After that, restart PowerShell or CMD, then simply run:
 
---changelog-file=db.changelog-master.yaml
-
-❌ Your earlier example said this would fail, which is incorrect.
-
-The only thing that fails is when the argument has no value:
-
---changelog-file   (❌ missing value)
-
-That is why Liquibase shows:
-
-Invalid argument '--changelog-file': missing required argument
-
-
-⸻
-
-✅ Correct full Liquibase CLI command (Windows PowerShell)
-
-.\liquibase.bat ^
-  --search-path="C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog" ^
-  --changelog-file=db.changelog-master.yaml ^
-  --url="jdbc:postgresql://localhost:5432/bankinfo" ^
-  --username=postgres ^
-  --password=postgres ^
-  update
-
-✔ Valid for Liquibase 4.33.0
-
-✔ Matches your folder structure
-
-✔ Works in PowerShell
-
-⸻
-
-📌 Why you previously got the error
-
-You wrote something like:
-
---changelog-file^ update
-
-In PowerShell, ^ is a line-continuation operator.
-If you place it in the wrong spot, the argument becomes empty:
-
---changelog-file=
-
-This triggers:
-
-Invalid argument '--changelog-file': missing required argument
-
-
-⸻
-
-🛠 Recommended long-term solution: use liquibase.properties
-
-Create this file:
-
-C:\RHABACHI\IdeaProjects\bank-info\liquibase\liquibase.properties
-
-Put:
-
-search-path=changelog
-changelog-file=db.changelog-master.yaml
-url=jdbc:postgresql://localhost:5432/bankinfo
-username=postgres
-password=postgres
-
-Then run Liquibase with no parameters:
-
-cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0\
 .\liquibase.bat update
 
-✔ No quoting issues
-✔ No Windows escaping
-✔ Cleaner and safer
+Liquibase automatically reads environment variables prefixed with LIQUIBASE_.
 
 ⸻
 
-If you want, paste this and I’ll verify structure:
+✅ 2. But what about baseline?
 
-tree C:\RHABACHI\IdeaProjects\bank-info\liquibase /F
+Liquibase has no “baseline” command, but the equivalent is:
 
-I will confirm everything is placed correctly.
+✔ changelogSync
+
+Mark all existing changesets as executed.
+
+✔ And yes — you can also run changelogSync using environment variables defined by setx.
+
+Example:
+
+.\liquibase.bat changelogSync
+
+And it uses the env vars you set via setx.
+
+⸻
+
+✅ 3. Example: full baseline setup using setx
+
+Step 1 — Configure Liquibase environment variables
+
+setx LIQUIBASE_URL "jdbc:postgresql://localhost:5432/bankinfo"
+setx LIQUIBASE_USERNAME "postgres"
+setx LIQUIBASE_PASSWORD "postgres"
+setx LIQUIBASE_CHANGELOG_FILE "db.changelog-master.yaml"
+setx LIQUIBASE_SEARCH_PATH "C:\RHABACHI\IdeaProjects\bank-info\liquibase\changelog"
+
+Step 2 — Open a new terminal
+
+(Windows requires restart to load new env vars)
+
+Step 3 — Run baseline-equivalent
+
+cd C:\Users\RHABACHI\Downloads\liquibase-4.33.0\
+.\liquibase.bat changelogSync
+
+Step 4 — After baseline, normal updates:
+
+.\liquibase.bat update
+
+
+⸻
+
+🌟 Summary
+
+Goal	Liquibase command	Can use setx?
+Set DB connection	env vars	✔️ Yes
+Set changelog/paths	env vars	✔️ Yes
+Baseline (mark existing changes as executed)	changelogSync	✔️ Yes
+Normal migrations	update	✔️ Yes
+
+
+⸻
+
+If you want, I can generate a ready-to-copy .bat script that sets all env variables and runs Liquibase automatically.
