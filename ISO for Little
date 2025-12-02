@@ -1,128 +1,83 @@
-Ok, je comprends exactement ce que tu veux :
+Parfait — tu veux pouvoir lancer Liquibase depuis ton projet sans créer de liquibase.properties, donc tout passer en ligne de commande, mais simplement.
 
-🎯 Objectif
+Voici comment le faire proprement sous Windows PowerShell, avec ton setup :
 
-Depuis ton dossier projet :
+⸻
+
+1️⃣ Structure actuelle
+	•	Liquibase CLI :
+
+C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat
+
+	•	Projet Spring :
 
 C:\Users\RHABACHI\IdeaProjects\bankinfo
 
-Tu veux pouvoir lancer :
+	•	Dossier changelog :
 
-liquibase update
+C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase\changelogMaster.yaml
 
-ou :
-
-.\liquibase.bat update
-
-ET que Liquibase utilise :
-
-✔ ton changelog dans bankinfo\liquibase
-✔ ton liquibase installé dans C:\Users\RHABACHI\Downloads\liquibase-4.33.0
-✔ sans passer 1h à taper des paths
 
 ⸻
 
-🟢 SOLUTION SIMPLE (RECOMMANDÉE)
+2️⃣ Commande PowerShell complète
 
-➤ 1. Ajouter Liquibase au PATH Windows
+Depuis C:\Users\RHABACHI\IdeaProjects\bankinfo :
 
-Exécute ceci dans PowerShell (en admin) :
+C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat `
+  --search-path="C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase" `
+  --changelog-file=changelogMaster.yaml `
+  --url="jdbc:mariadb://localhost:3306/external_bank_data" `
+  --username=root `
+  --password=root `
+  update
 
-setx PATH "%PATH%;C:\Users\RHABACHI\Downloads\liquibase-4.33.0"
+⚠️ Notes PowerShell :
+	•	Le backtick ` est le continuation character.
+	•	Pas de trailing backslash à la fin du path.
 
-Ensuite ferme complètement PowerShell et rouvre-le.
-
-⸻
-
-➤ 2. Créer un liquibase.properties dans ton projet
-
-Dans :
-
-C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
-
-Créer un fichier :
-
-liquibase.properties
-
-Avec :
-
-searchPath=C:/Users/RHABACHI/IdeaProjects/bankinfo/liquibase
-changelogFile=changelogMaster.yaml
-
-url=jdbc:mariadb://localhost:3306/external_bank_data
-username=root
-password=root
-logLevel=info
-
-⚠️ IMPORTANT : camelCase obligatoire
-✔ changelogFile
-✔ searchPath
+Cette commande fonctionne sans properties, et Liquibase saura :
+	•	quel changelog exécuter
+	•	où chercher les fichiers
+	•	quelle base de données utiliser
 
 ⸻
 
-➤ 3. Depuis ton projet, lance :
+3️⃣ Variante simple avec un script .cmd dans le projet
 
-cd C:\Users\RHABACHI\IdeaProjects\bankinfo
-liquibase update
-
-OU :
-
-liquibase.bat update
-
-Liquibase va automatiquement :
-	•	trouver le liquibase.properties
-	•	suivre le changelog
-	•	exécuter les changements
-	•	utiliser ton Liquibase global installé
-
-⸻
-
-🟡 ALTERNATIVE (sans modifier PATH)
-
-Créer un petit script .cmd directement dans ton projet.
-
-➤ 1. Dans ton dossier projet bankinfo
-
-Créer un fichier :
-
-run-liquibase.cmd
-
-Contenu :
+Crée un fichier run-liquibase.cmd dans bankinfo :
 
 @echo off
-C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat update
+C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat --search-path="C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase" --changelog-file=changelogMaster.yaml --url="jdbc:mariadb://localhost:3306/external_bank_data" --username=root --password=root update
 
-Ensuite tu exécutes :
+Ensuite, tu pourras juste lancer :
 
 .\run-liquibase.cmd
 
 
 ⸻
 
-🟣 ALTERNATIVE (symlink propre)
+4️⃣ Baseline déjà exécutée
 
-Créer un lien symbolique dans ton projet :
+Si tu as déjà fait un baseline en prod, sur ta base locale il faut synchroniser pour éviter que Liquibase essaie de recréer les tables existantes :
 
-cmd /c mklink C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase.bat C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat
+C:\Users\RHABACHI\Downloads\liquibase-4.33.0\liquibase.bat `
+  --search-path="C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase" `
+  --changelog-file=changelogMaster.yaml `
+  --url="jdbc:mariadb://localhost:3306/external_bank_data" `
+  --username=root `
+  --password=root `
+  changelog-sync
 
-Puis :
+✅ Cela marque toutes les changesets comme déjà exécutées sans toucher aux tables.
+Après ça, tu peux faire :
 
-cd C:\Users\RHABACHI\IdeaProjects\bankinfo
-.\liquibase.bat update
+...\liquibase.bat update
 
+Pour n’appliquer que les nouveaux changements.
 
 ⸻
 
-🟢 RECOMMANDATION GÉNÉRALE
+Si tu veux, je peux te donner une commande prête à copier/coller qui fonctionne directement depuis ton projet, sans properties, et qui prend en compte le baseline pour ta base locale.
 
-➡️ Toujours mettre le liquibase.properties dans ton projet
-➡️ Ne JAMAIS mettre liquibase dans ton jar
-➡️ Toujours exécuter Liquibase via CLI en local (comme tu fais)
-
-⸻
-
-🟣 Si tu veux, envoie-moi :
-
-tree C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase /F
-
-Je te génère ton liquibase.properties parfait, clean, sans erreurs, avec les bons paths.
+Veux‑tu que je fasse ça ?
