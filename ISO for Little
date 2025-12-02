@@ -1,84 +1,24 @@
-👌 Now the problem is 100% clear:
+.\liquibase.bat update
+####################################################
+##   _     _             _ _                      ##
+##  | |   (_)           (_) |                     ##
+##  | |    _  __ _ _   _ _| |__   __ _ ___  ___   ##
+##  | |   | |/ _` | | | | | '_ \ / _` / __|/ _ \  ##
+##  | |___| | (_| | |_| | | |_) | (_| \__ \  __/  ##
+##  \_____/_|\__, |\__,_|_|_.__/ \__,_|___/\___|  ##
+##              | |                               ##
+##              |_|                               ##
+##                                                ##
+##  Get documentation at docs.liquibase.com       ##
+##  Get certified courses at learn.liquibase.com  ##
+##                                                ##
+####################################################
+Starting Liquibase at 15:52:10 using Java 17.0.17 (version 4.33.0 #8744 built at 2025-07-08 20:43+0000)
+Liquibase Version: 4.33.0
+Liquibase Open Source 4.33.0 by Liquibase
+Error parsing command line: Invalid argument '--changelog-file': missing required argument. If you need to configure new liquibase project files and arguments, run the 'liquibase init project' command.
 
-You already executed the baseline changeset in production, so Liquibase marked it as executed in DATABASECHANGELOG in production, but NOT in your local machine.
-
-So in your local environment, Liquibase is trying to execute baseline.yaml::1-baseline-schema::RHI again — and that changeset creates a table that already exists → causing:
-
-Table 'users' already exists  
-
-This is expected.
-
-⸻
-
-✅ Correct fix: Tell Liquibase that the baseline changeset is already executed
-
-Since baseline has already been applied in production, and your local DB already has the tables, you must mark the changeset as executed WITHOUT running it.
-
-This is done with:
-
-Solution: liquibase changelog-sync
-
-Run:
-
-.\liquibase.bat ^
-  --search-path="C:\RHABACHI\IdeaProjects\bankinfo\liquibase" ^
-  --changelog-file=changelogMaster.yaml ^
-  changelog-sync
-
-✔ Marks ALL pending changesets as executed
-✔ Does not run them
-✔ Fixes the “table already exists” problem
-✔ Makes local environment consistent with prod
-
-⸻
-
-❗ DO NOT MODIFY OR DELETE THE CHANGESET
-
-Do NOT:
-	•	delete the changeset
-	•	comment it out
-	•	change its ID/author
-	•	modify the SQL inside
-
-Because production already has the baseline checksums.
-
-⸻
-
-🔍 Why this happened
-
-You ran baseline earlier on production using:
-
-✔ changelogSync or
-✔ update that executed the baseline
-
-But in local dev, you are starting from zero; so Liquibase attempts to run the baseline schema creation → but tables already exist → conflict.
-
-⸻
-
-🔧 Optional: If you want to sync only one changeset
-
-Instead of syncing them all:
-
-.\liquibase.bat changelog-sync-one ^
-  --changeset-id=1-baseline-schema ^
-  --changeset-author=RHI
+For detailed help, try 'liquibase --help' or 'liquibase <command-name> --help'
 
 
-⸻
-
-🧨 Important safety note
-
-Never delete or edit the baseline changeset after it has been executed in production.
-Always use sync commands.
-
-⸻
-
-🙋 If you want, I can verify exactly which changesets need syncing
-
-Just run:
-
-.\liquibase.bat history
-
-and paste the output.
-
-I’ll tell you exactly what to sync and what not to sync.
+i want to changelofile as var env wih so ican lunch directly update without argument and after that to be able to lunch it directly from my java project in local
