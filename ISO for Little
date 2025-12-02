@@ -1,75 +1,16 @@
-Merci — maintenant je vois EXACTEMENT l’erreur.
-Ce que vous venez de montrer :
+ERROR: Exception Primary Reason:  The file db/changelog/data/bank_info.csv was not found in the configured search path:
+    - C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
+More locations can be added with the 'searchPath' parameter.
+ERROR: Exception Primary Source:  MariaDB 11.7.2-MariaDB-log
+ERROR: Exception Details
+ERROR: Exception Primary Class:  FileNotFoundException
+ERROR: Exception Primary Reason:  The file db/changelog/data/bank_info.csv was not found in the configured search path:
+    - C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
+More locations can be added with the 'searchPath' parameter.
+ERROR: Exception Primary Source:  MariaDB 11.7.2-MariaDB-log
 
-C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase 
+i have an issue with this path because ive changed the structure of the document
 
-changelogMaster
+so i need to update the path on the baseline and  ive already lunch the baseline on production i guess  ishould not update it 
 
-→ Cela veut dire que votre changelog ne se trouve pas dans un dossier “changelog”
-→ Et votre fichier ne s’appelle pas db.changelog-master.yaml
-→ Il s’appelle probablement changelogMaster.yaml (ou similaire)
 
-Donc votre chemin réel est :
-
-C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase\changelogMaster
-
-🔴 Il n’existe AUCUN dossier “changelog”
-🔴 Liquibase ne trouve pas le fichier car vous lui donnez des mauvais chemins et un mauvais nom.
-
-⸻
-
-✅ Correction parfaite basée sur VOTRE structure
-
-✔ Votre dossier Liquibase :
-
-C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
-
-✔ Votre changelog (le fichier YAML) :
-
-C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase\changelogMaster.yaml
-
-Donc liquibase doit utiliser :
-	•	--search-path="C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase"
-	•	--changelog-file=changelogMaster.yaml
-
-⸻
-
-🟢 Commande correcte (PowerShell)
-
-⚠️ Copiez/collez exactement ceci :
-
-.\liquibase.bat ^
-  --search-path="C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase" ^
-  --changelog-file=changelogMaster.yaml ^
-  --url="jdbc:mariadb://localhost:3306/external_bank_data" ^
-  --username=root ^
-  --password=root ^
-  update
-
-✔ Ce chemin correspond EXACTEMENT à ce que vous avez montré
-
-✔ Liquibase va enfin trouver le fichier
-
-✔ Plus d’erreur “does not exist”
-
-⸻
-
-❗ Dernière vérification (très importante)
-
-Tapez ceci dans votre PowerShell :
-
-ls C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
-
-Vous devriez voir dans la liste :
-
-changelogMaster.yaml
-
-Si oui → votre commande fonctionnera immédiatement.
-
-⸻
-
-Si vous voulez, envoyez-moi la sortie de :
-
-ls C:\Users\RHABACHI\IdeaProjects\bankinfo\liquibase
-
-et je vous confirme la commande finale.
