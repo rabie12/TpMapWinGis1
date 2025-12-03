@@ -1,1 +1,1 @@
-\bankinfo\liquibase its here my path
+\bankinfo\liquibase\data i have files here that i dont want ito include on the jar because its heavy is it possible to call them neither theire outside of src
