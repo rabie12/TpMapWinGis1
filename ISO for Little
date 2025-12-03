@@ -1,63 +1,21 @@
-Voici une proposition de ticket clair et structuré pour votre besoin : optimisation de la taille du JAR bank-info via le déplacement du dossier Liquibase hors de src/main/resources.
+***************************
+APPLICATION FAILED TO START
+***************************
 
-⸻
+Description:
 
-🎫 Sujet
+Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
 
-Optimisation de la taille du JAR bank-info : déplacement du dossier Liquibase hors de src/main/resources
+Reason: Failed to determine a suitable driver class
 
-⸻
 
-📝 Description
+Action:
 
-Actuellement, le projet bank-info embarque l’intégralité des fichiers Liquibase (changelogs, scripts SQL, historiques, etc.) dans le JAR final car ils sont placés sous src/main/resources.
-Cela augmente significativement la taille du JAR déployé.
+Consider the following:
+	If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
+	If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
 
-L’objectif de cette tâche est de :
-	•	déplacer le dossier Liquibase vers un répertoire externe non embarqué dans le build (ex. dans /config/liquibase/ ou via un module séparé),
-	•	configurer Spring Boot / Liquibase pour charger ces fichiers depuis un chemin externe ou via une dépendance légère,
-	•	réduire la taille du JAR final sans altérer le fonctionnement des migrations en environnement d’intégration ou de production.
+Disconnected from the target VM, address: '127.0.0.1:56644', transport: 'socket'
 
-⸻
-
-🔍 Analyse d’impact
-
-Impact technique
-	•	Modification du chemin de chargement Liquibase dans application.yml / application.properties.
-	•	Possibilité d’utiliser :
-	•	un chemin externe classpath:/config/liquibase/,
-	•	un module Maven dédié (ex. liquibase-migrations),
-	•	ou un montage de fichier en production.
-	•	Ajustement du packaging Maven (pom.xml) pour exclure les ressources Liquibase du JAR final.
-	•	Vérification du fonctionnement des migrations sur :
-	•	environnement local,
-	•	CI/CD,
-	•	déploiements DEV / UAT / PROD.
-
-Impact fonctionnel
-	•	Aucune modification fonctionnelle attendue.
-	•	Pas d’impact sur l’exécution du service, tant que les fichiers Liquibase sont disponibles dans les environnements.
-
-Impact sur la CI/CD
-	•	Nécessité de vérifier :
-	•	que le pipeline copie ou monte correctement les fichiers Liquibase,
-	•	que les jobs de migration fonctionnent sans le contenu dans le JAR,
-	•	que les images Docker incluent correctement les fichiers si nécessaire.
-
-Risques
-	•	Liquibase peut ne pas trouver les changelogs si la configuration n’est pas mise à jour correctement.
-	•	Risque de divergence entre fichiers Liquibase locaux et ceux déployés si non gérés via un module Maven.
-	•	Ajustements possibles sur Helm chart / Dockerfile.
-
-Critères d’acceptation
-	•	Le JAR bank-info doit être significativement plus léger.
-	•	Les migrations Liquibase doivent s’exécuter correctement dans tous les environnements.
-	•	Le build doit fonctionner sans erreur.
-	•	Le service doit démarrer normalement.
-
-⸻
-
-Si vous voulez, je peux également :
-✔ rédiger la version en anglais,
-✔ produire une version Jira (avec format Task / Story),
-✔ proposer différentes solutions techniques pour le déplacement du dossier Liquibase.
+Process finished with exit code 0
+i cleaned my app.properties from everything i want to know if there is any other way to add the driver other than app.properties
