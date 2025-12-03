@@ -1,14 +1,4 @@
-updateLiquibase:
-  stage: liquibase
-  before_script: []
-  environment: $GITLAB_ENV
-  variables:
-    LIQUIBASE_COMMAND_CHANGELOG_FILE: "db.changelog-master.yaml"
-    LIQUIBASE_SEARCH_PATH: "./src/main/resources/db/changelog/"
-  script:
-    - liquibase update
-  when: manual
-  tags:
-    - "$GITLAB_TAG"
+Unknown property "result" in result type IbanSearchHistoryDTO. Did you mean "iban"? in my mapper
 
-i need to update this on the pîpeline for new path
+
+i have alwayss this issue on my mapper and and i ve already coched Enable annotation processing in Build, Exectuion, Annotation processors part  when i do clean install i have this issue
