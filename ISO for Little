@@ -13,6 +13,4 @@ Make sure a Liquibase changelog is present at the configured path.
 Disconnected from the target VM, address: '127.0.0.1:64860', transport: 'socket'
 
 Process finished with exit code 0
-
-
-it doesnt wotrk because the changelog-master.yaml is outside of src/main project its directly on the same level of src 
+ im talking about this issue
