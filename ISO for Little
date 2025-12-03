@@ -1,21 +1,129 @@
-***************************
-APPLICATION FAILED TO START
-***************************
+Yes — in Spring Boot you can configure your DataSource without using application.properties.
+There are several alternative ways, depending on what you want.
 
-Description:
+Below are the main options:
 
-Failed to configure a DataSource: 'url' attribute is not specified and no embedded datasource could be configured.
+⸻
 
-Reason: Failed to determine a suitable driver class
+✅ 1. Use application.yml instead of application.properties
+
+A simple alternative file format:
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/mydb
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
 
-Action:
+⸻
 
-Consider the following:
-	If you want an embedded database (H2, HSQL or Derby), please put it on the classpath.
-	If you have database settings to be loaded from a particular profile you may need to activate it (no profiles are currently active).
+✅ 2. Use Java configuration (@Configuration + @Bean)
 
-Disconnected from the target VM, address: '127.0.0.1:56644', transport: 'socket'
+You can fully define the DataSource in Java code, without any properties file.
 
-Process finished with exit code 0
-i cleaned my app.properties from everything i want to know if there is any other way to add the driver other than app.properties
+@Configuration
+public class DataSourceConfig {
+
+    @Bean
+    public DataSource dataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        dataSource.setUrl("jdbc:mysql://localhost:3306/mydb");
+        dataSource.setUsername("root");
+        dataSource.setPassword("root");
+        return dataSource;
+    }
+}
+
+➡️ In this case, remove all spring.datasource.* from application.properties.
+
+⸻
+
+✅ 3. Use environment variables (no properties file needed)
+
+Spring Boot automatically maps environment variables to properties.
+
+Example environment variables:
+
+SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/mydb
+SPRING_DATASOURCE_USERNAME=root
+SPRING_DATASOURCE_PASSWORD=root
+SPRING_DATASOURCE_DRIVER-CLASS-NAME=com.mysql.cj.jdbc.Driver
+
+This works in Docker, Kubernetes, or IntelliJ “Run/Debug Configurations”.
+
+⸻
+
+✅ 4. Use command-line arguments
+
+You can launch your app like this:
+
+java -jar app.jar \
+  --spring.datasource.url=jdbc:mysql://localhost:3306/mydb \
+  --spring.datasource.username=root \
+  --spring.datasource.password=root
+
+
+⸻
+
+✅ 5. Use a custom @PropertySource
+
+You can create your own config file:
+
+datasource.properties:
+
+my.url=jdbc:mysql://localhost:3306/mydb
+my.user=root
+my.pass=root
+
+Then load it:
+
+@Configuration
+@PropertySource("classpath:datasource.properties")
+public class DataSourceConfig {
+
+    @Value("${my.url}")
+    private String url;
+
+    @Value("${my.user}")
+    private String user;
+
+    @Value("${my.pass}")
+    private String pass;
+
+    @Bean
+    public DataSource dataSource() {
+        DriverManagerDataSource ds = new DriverManagerDataSource();
+        ds.setUrl(url);
+        ds.setUsername(user);
+        ds.setPassword(pass);
+        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        return ds;
+    }
+}
+
+
+⸻
+
+❗ Important: You must still include the database driver dependency
+
+Example for MySQL (in pom.xml):
+
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-j</artifactId>
+</dependency>
+
+Without this, Spring Boot cannot detect a driver and you get:
+
+Failed to determine a suitable driver class
+
+⸻
+
+If you want, tell me:
+	•	which database you’re using
+	•	and whether you prefer Java config, env vars, or YAML
+
+I can generate the exact working setup.
