@@ -1,114 +1,19 @@
-Got it — this exact error only means one thing:
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-12-03T15:17:35.436+01:00 ERROR 14660 --- [bankInfo] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
 
-Spring Boot cannot find your changelog on the classpath.
+***************************
+APPLICATION FAILED TO START
+***************************
 
-And you said your file is NOT inside src/main/..., it’s in the project root.
+Description:
 
-👉 That location is NEVER added to the classpath, so Spring Boot will never find it, even with the correct path.
+Liquibase failed to start because no changelog could be found at 'classpath:/liquibase/changelog-master.yml'.
 
-Let me show you clearly why and how to fix this specific error.
+Action:
 
-⸻
+Make sure a Liquibase changelog is present at the configured path.
 
-❌ WHY your file cannot be found
+Disconnected from the target VM, address: '127.0.0.1:59143', transport: 'socket'
 
-Spring Boot loads files from classpath, which contains:
-
-src/main/resources/**   → copied into target/classes
-src/main/java/**        → compiled into target/classes
-
-Anything outside these folders is ignored.
-
-So this file is INVISIBLE to Spring Boot:
-
-project-root/
-    changelog-master.yml   ❌ Spring Boot cannot load this
-    src/main/resources/... ✔️ classpath
-
-Even if you set:
-
-spring.liquibase.change-log=classpath:/liquibase/changelog-master.yml
-
-It still fails because the file is not on the classpath.
-
-⸻
-
-✅ HOW TO FIX THE ERROR (only 2 valid ways)
-
-⸻
-
-✅ Fix 1 — Move the file into src/main/resources (recommended)
-
-Place your file here:
-
-src/main/resources/liquibase/changelog-master.yml
-
-Keep your configuration:
-
-spring.liquibase.change-log=classpath:/liquibase/changelog-master.yml
-
-This will 100% fix the error.
-
-⸻
-
-🟡 Fix 2 — Keep the file outside, but tell Maven to copy it to the classpath
-
-If you MUST keep it in the project root:
-
-Add this to your pom.xml:
-
-<build>
-    <resources>
-        <resource>
-            <directory>.</directory>
-            <includes>
-                <include>changelog-master.yml</include>
-            </includes>
-            <targetPath>liquibase</targetPath>
-        </resource>
-        <resource>
-            <directory>src/main/resources</directory>
-        </resource>
-    </resources>
-</build>
-
-This will copy:
-
-project-root/changelog-master.yml   
-→ target/classes/liquibase/changelog-master.yml
-
-Now Spring Boot will find it at:
-
-classpath:/liquibase/changelog-master.yml
-
-And the error will disappear.
-
-⸻
-
-📌 SUMMARY
-
-Your error exists because:
-
-✔ Spring Boot is looking at the classpath
-❌ Your file is not in the classpath
-
-To fix it:
-
-✔ Move file → src/main/resources/liquibase/
-
-OR
-
-✔ Configure Maven to copy it there automatically
-
-⸻
-
-If you want, send me the exact structure of your project (screenshot or text like this):
-
-project-root/
-  changelog-master.yml
-  src/
-    main/
-      resources/
-      java/
-
-I will generate the exact fix.
+Process finished with exit code 0
+i still have the same issue
