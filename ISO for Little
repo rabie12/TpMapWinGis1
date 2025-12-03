@@ -1,38 +1,109 @@
-'liquibase' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'liquibase' defined in class path resource [org/springframework/boot/autoconfigure/liquibase/LiquibaseAutoConfiguration$LiquibaseConfiguration.class]: liquibase.exception.CommandExecutionException: liquibase.exception.ChangeLogParseException: classpath:/db/changelog/db.changelog-master.yaml does not exist
-2025-12-03T14:26:29.774+01:00  INFO 19220 --- [bankInfo] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : AtkHikariPool - Shutdown initiated...
-2025-12-03T14:26:29.780+01:00  INFO 19220 --- [bankInfo] [  restartedMain] com.zaxxer.hikari.HikariDataSource       : AtkHikariPool - Shutdown completed.
-2025-12-03T14:26:29.780+01:00  INFO 19220 --- [bankInfo] [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
-2025-12-03T14:26:29.792+01:00  INFO 19220 --- [bankInfo] [  restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+Your error is not coming from the Maven plugin.
+It’s coming from Spring Boot’s Liquibase auto-configuration, which expects a file at:
 
-Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
-2025-12-03T14:26:29.813+01:00 ERROR 19220 --- [bankInfo] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+classpath:/db/changelog/db.changelog-master.yaml
 
-***************************
-APPLICATION FAILED TO START
-***************************
+But Spring Boot cannot find it → so the app crashes before even reaching your Maven plugin config.
 
-Description:
+⸻
 
-Liquibase failed to start because no changelog could be found at 'classpath:/db/changelog/db.changelog-master.yaml'.
+✅ Why Spring Boot complains
 
-Action:
+Spring Boot automatically looks for:
 
-Make sure a Liquibase changelog is present at the configured path.
+src/main/resources/db/changelog/db.changelog-master.yaml
 
-Disconnected from the target VM, address: '127.0.0.1:51203', transport: 'socket'
+(or .yml, both accepted)
 
-Process finished with exit code 0
+If this file is missing → you get:
+
+ChangeLogParseException: classpath:/db/changelog/db.changelog-master.yaml does not exist
+
+⸻
+
+✅ Your Maven plugin config does not affect Spring Boot runtime
+
+This part:
+
+<changeLogFile>changelog-master.yml</changeLogFile>
+<changeLogDirectory>liquibase</changeLogDirectory>
+
+Only affects liquibase:generateChangeLog, liquibase:update commands in Maven.
+
+It does NOT:
+	•	change Spring Boot’s Liquibase location
+	•	override the default path
+	•	prevent Spring Boot from loading Liquibase at startup
+
+⸻
+
+✔️ Fix the Spring Boot error
+
+You have three possible fixes, choose one:
+
+⸻
+
+Fix 1 — Put the file where Spring Boot expects it (recommended)
+
+Create:
+
+src/main/resources/db/changelog/db.changelog-master.yaml
+
+Or if your filename is .yml, name it:
+
+db.changelog-master.yml
+
+Spring Boot will find it automatically.
+
+⸻
+
+Fix 2 — Change the path in application.properties / application.yml
+
+If you want to use your own file name/location:
+
+application.properties:
+
+spring.liquibase.change-log=classpath:/liquibase/changelog-master.yml
+
+Or YAML:
+
+spring:
+  liquibase:
+    change-log: classpath:/liquibase/changelog-master.yml
+
+Make sure file exists at:
+
+src/main/resources/liquibase/changelog-master.yml
 
 
-			<plugin>
-				<groupId>org.liquibase</groupId>
-				<artifactId>liquibase-maven-plugin</artifactId>
-				<version>4.30.0</version>
-				<configuration>
-					<changeLogFile>changelog-master.yml</changeLogFile>
-					<changeLogDirectory>liquibase</changeLogDirectory>
-					<url>${env.DB_URL}</url>
-					<username>${env.DB_USERNAME}</username>
-					<password>${env.DB_PASSWORD}</password>
-				</configuration>
-			</plugin>
+⸻
+
+Fix 3 — Disable Liquibase (not recommended unless you want to turn it off)
+
+application.properties:
+
+spring.liquibase.enabled=false
+
+
+⸻
+
+⚠️ Important
+
+Your plugin config:
+
+<changeLogFile>changelog-master.yml</changeLogFile>
+
+…means Maven expects this inside the liquibase directory (as you set):
+
+liquibase/changelog-master.yml
+
+But Spring Boot doesn’t care about that Maven directory — it uses the classpath.
+
+⸻
+
+If you want, tell me:
+
+✔️ where your changelog file currently is (full path)
+✔️ whether you want Spring Boot to use the Maven folder or move it
+
+I can give you the exact configuration.
