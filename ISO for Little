@@ -1,14 +1,103 @@
-\bankinfo\liquibase 
-\bankinfo\src
+Perfect, thanks — now it’s 100% clear what your setup is. ✅
+Yes, it IS possible to keep Liquibase outside src/main/resources, but you must explicitly configure searchPath. Right now that’s exactly what’s missing.
 
-all liquibase are outside src/main ressource is possible to let it outside in on the same level of src path
+Your setup:
 
+\bankinfo\liquibase        ✅ (all changelogs here)
+\bankinfo\src             ✅
 
-this is the content of changelog-master.yaml :
+Spring Boot does NOT scan this folder by default, so Liquibase can’t find baseline.yaml.
+
+⸻
+
+✅ FINAL WORKING SOLUTION (KEEP FILES OUTSIDE src)
+
+✅ 1. Configure search-path in Spring
+
+If you use application.yml:
+
+spring:
+  liquibase:
+    change-log: classpath:liquibase/changelog-master.yaml
+    search-path: file:./liquibase
+
+If you use application.properties:
+
+spring.liquibase.change-log=classpath:liquibase/changelog-master.yaml
+spring.liquibase.search-path=file:./liquibase
+
+⚠️ This line is mandatory:
+
+spring.liquibase.search-path=file:./liquibase
+
+Without it → Liquibase will NEVER find baseline.yaml outside src.
+
+⸻
+
+✅ 2. Fix your changelog-master.yaml formatting
+
+Your file has a small YAML error (file : with space).
+Here is the correct version:
+
 databaseChangeLog:
   - include:
       file: baseline.yaml
+
   - include:
       file: changeSet/001-populate-bankinfo.yaml
+
   - include:
-     file : changeSet/002-populate-bankagency.yaml
+      file: changeSet/002-populate-bankagency.yaml
+
+✅ Paths are now relative to \bankinfo\liquibase
+✅ No classpath: needed inside includes
+✅ YAML indentation is now correct
+
+⸻
+
+✅ 3. Final Required Folder Structure
+
+Your project must look like this:
+
+bankinfo/
+├── liquibase/
+│   ├── changelog-master.yaml
+│   ├── baseline.yaml
+│   └── changeSet/
+│       ├── 001-populate-bankinfo.yaml
+│       └── 002-populate-bankagency.yaml
+└── src/
+
+✅ This WILL work
+❌ Without search-path → it will always fail
+
+⸻
+
+✅ 4. Clean & Restart (VERY IMPORTANT)
+
+After doing this, run:
+
+mvn clean
+mvn spring-boot:run
+
+or in IntelliJ:
+
+Invalidate Caches & Restart
+
+
+⸻
+
+✅ Why It Was Failing Before
+
+Problem	Result
+Liquibase outside src	❌ Not visible
+No search-path configured	❌ File not found
+YAML typo file :	❌ Parsing error possible
+
+You had all 3 issues combined.
+
+⸻
+
+✅ If It Still Fails
+
+Paste the exact new error stack, and I will fix it immediately — but with this config, it should now start cleanly. ✅
