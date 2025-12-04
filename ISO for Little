@@ -50,6 +50,17 @@ Caused by: java.nio.file.InvalidPathException: Illegal char <:> at index 74: C:\
 	at liquibase.parser.core.yaml.YamlChangeLogParser.parse(YamlChangeLogParser.java:92) ~[liquibase-core-4.30.0.jar:na]
 	... 46 common frames omitted
 
-Disconnected from the target VM, address: '127.0.0.1:65462', transport: 'socket'
+this is my changelog-master :
+databaseChangeLog:
+  - include:
+      file: classpath:/liquibase/baseline.yaml
+      relativeToChangelogFile: true
 
-Process finished with exit code 0
+  - include:
+      file: classpath:/liquibase/changeSet/001-populate-bankinfo.yaml
+      relativeToChangelogFile: true
+
+  - include:
+      file: classpath:/liquibase/changeSet/002-populate-bankagency.yaml
+      relativeToChangelogFile: true
+
