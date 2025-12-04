@@ -8,4 +8,22 @@ databaseChangeLog:
   - include:
       file: classpath:/liquibase/changeSet/002-populate-bankagency.yaml
 
+
+Caused by: liquibase.exception.LiquibaseException: ERROR: The file 'classpath:/liquibase/changeSet/001-populate-bankinfo.yaml' was not found.
+The file property cannot be configured with a fully qualified path, but must be a relative path on the property,
+and any local or remote base of the path set on the search path.
+	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1085) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.DatabaseChangeLog.handleChildNodeHelper(DatabaseChangeLog.java:523) ~[liquibase-core-4.30.0.jar:na]
+	... 49 common frames omitted
+Caused by: liquibase.exception.ChangeLogParseException: ERROR: The file 'classpath:/liquibase/changeSet/001-populate-bankinfo.yaml' was not found.
+The file property cannot be configured with a fully qualified path, but must be a relative path on the property,
+and any local or remote base of the path set on the search path.
+	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1047) ~[liquibase-core-4.30.0.jar:na]
+	... 50 common frames omitted
+
+Disconnected from the target VM, address: '127.0.0.1:60610', transport: 'socket'
+
+Process finished with exit code 0
+
+
 now i have this it will amke feel crazy this issue 
