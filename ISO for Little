@@ -1,101 +1,25 @@
-Got it — this is an important constraint ✅
-You can absolutely keep your heavy CSV file outside src while still keeping your Liquibase changelogs inside src/main/resources. This is actually a best-practice setup for large data files.
-
-Let’s separate the two concepts:
-
-⸻
-
-✅ ✅ CORRECT & SAFE ARCHITECTURE
-
-✅ Liquibase changelogs → INSIDE classpath
-
-src/main/resources/liquibase/
-├── changelog-master.yaml
-├── baseline.yaml
-└── changeSet/
-    └── 003-load-heavy-csv.yaml
-
-✅ Heavy CSV file → OUTSIDE src
-
-bankinfo/
-├── liquibase-data/
-│   └── big-file.csv   ✅ very large file here
-└── src/
-
-This is 100% supported by Liquibase.
-
-⸻
-
-✅ HOW TO LOAD AN EXTERNAL CSV FILE
-
-Inside your Liquibase changeSet:
-
-databaseChangeLog:
-  - changeSet:
-      id: load-big-csv
-      author: you
-      changes:
-        - loadData:
-            file: ../liquibase-data/big-file.csv
-            tableName: bank_info
-            separator: ;
-            encoding: UTF-8
-
-✅ This uses a filesystem-relative path
-✅ The CSV is NOT inside the JAR
-✅ Works perfectly for very large files
-✅ No Spring config needed
-✅ No search-path needed
-
-Liquibase resolves CSV paths from the working directory of the application (bankinfo/).
-
-⸻
-
-✅ FINAL REQUIRED CONFIG
-
-application.yaml
-
-spring:
   liquibase:
-    change-log: classpath:liquibase/changelog-master.yaml
+    change-log: file:/liquibase/changelog-master.yaml
 
-✅ No search-path
-✅ No external Liquibase folder
-✅ No Spring binding error
-✅ Fully production-safe
 
-⸻
+i habve this issue i ve already add it inside src/main/resources
 
-✅ WHY THIS WORKS (AND YOUR PREVIOUS APPROACH FAILED)
 
-Item	Should be in classpath?	Can be external?
-changelog-master.yaml	✅ YES	❌ NO
-baseline.yaml	✅ YES	❌ NO
-changeset yaml	✅ YES	❌ NO
-Heavy CSV file	❌ NO	✅ YES
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2025-12-04T10:37:45.386+01:00 ERROR 26528 --- [bankInfo] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
 
-Spring Boot requires changelogs in classpath
-Liquibase allows data files anywhere on disk
+***************************
+APPLICATION FAILED TO START
+***************************
 
-⸻
+Description:
 
-✅ IF YOUR CSV PATH STILL FAILS
+Liquibase failed to start because no changelog could be found at 'file:/liquibase/changelog-master.yaml'.
 
-Use an absolute path as a test:
+Action:
 
-file: C:/bankinfo/liquibase-data/big-file.csv
+Make sure a Liquibase changelog is present at the configured path.
 
-If that works → your relative path needs adjustment.
+Disconnected from the target VM, address: '127.0.0.1:64610', transport: 'socket'
 
-⸻
-
-✅ TL;DR (Straight Answer)
-
-❌ You cannot keep Liquibase YAML outside src in Spring Boot
-✅ You can and should keep your heavy CSV outside src
-✅ Use relative filesystem paths in loadData
-✅ This avoids huge JAR files and memory issues
-
-⸻
-
-If you want, paste your actual loadData changeSet and your real folder paths — I’ll correct the exact file: value for you so it works on the first run. ✅
+Process finished with exit code 0
