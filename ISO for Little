@@ -1,38 +1,123 @@
-Caused by: java.lang.RuntimeException: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file file:../../liquibase-data/bank_info.csv was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:408) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSetStatus.<init>(ChangeSetStatus.java:38) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.visitor.StatusVisitor.addStatus(StatusVisitor.java:49) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.visitor.StatusVisitor.visit(StatusVisitor.java:33) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.StatusChangeLogIterator.lambda$run$0(StatusChangeLogIterator.java:53) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:260) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:264) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.StatusChangeLogIterator.run(StatusChangeLogIterator.java:39) ~[liquibase-core-4.30.0.jar:na]
-	... 44 common frames omitted
-Caused by: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file file:../../liquibase-data/bank_info.csv was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:803) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSet.lambda$generateCheckSum$0(ChangeSet.java:395) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:386) ~[liquibase-core-4.30.0.jar:na]
-	... 55 common frames omitted
-Caused by: java.io.FileNotFoundException: The file file:../../liquibase-data/bank_info.csv was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.resource.ResourceAccessor.getExisting(ResourceAccessor.java:222) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:795) ~[liquibase-core-4.30.0.jar:na]
-	... 59 common frames omitted
+Ah — now it’s crystal clear why you’re still hitting the “file not found” issue. ✅
 
-Disconnected from the target VM, address: '127.0.0.1:60227', transport: 'socket'
+The key points:
+	1.	Your CSVs are outside src/main/resources, e.g.:
 
-Process finished with exit code 0
+bankinfo/
+└── liquibase/
+    └── data/
+        ├── bank_info.csv
+        └── bank_agency.csv
+
+	2.	Your Liquibase changelogs are inside src/main/resources/liquibase/
+	3.	You tried file:../../liquibase-data/bank_info.csv, but Spring Boot Liquibase still looks in the classpath by default — file: alone doesn’t always switch to filesystem in Spring Boot context.
+
+⸻
+
+✅ Portable Solution That Works on All Environments
+
+We need Liquibase to load the CSV from an absolute filesystem path or an environment-specific path, not from the classpath.
+
+⸻
+
+1️⃣ Move CSVs somewhere outside the classpath (good), e.g.:
+
+bankinfo/
+├── liquibase-data/
+│   ├── bank_info.csv
+│   └── bank_agency.csv
+└── src/main/resources/liquibase/
+    ├── changelog-master.yaml
+    ├── baseline.yaml
+    └── changeSet/
+        ├── 002-load-bankAgency.yaml
+        └── 003-load-bankinfo.yaml
 
 
-i still have the issue  my csv(s file are under this path : bankinfo\liquibase\data can you propose something for all environement
+⸻
+
+2️⃣ Define an environment variable or Spring property for the CSV folder
+
+application.yaml:
+
+spring:
+  liquibase:
+    change-log: classpath:liquibase/changelog-master.yaml
+    csv-folder: ${LIQUIBASE_CSV_FOLDER:/opt/bankinfo/liquibase-data}
+
+	•	${LIQUIBASE_CSV_FOLDER} → environment variable you can set per environment
+	•	/opt/bankinfo/liquibase-data → default path if env variable is not set
+
+✅ This makes it portable: dev, test, prod.
+
+⸻
+
+3️⃣ Use the property in your changeSets
+
+databaseChangeLog:
+  - changeSet:
+      id: 2-load-bankAgency-data
+      author: RHI
+      changes:
+        - loadData:
+            tableName: bank_agency
+            file: file:${spring.liquibase.csv-folder}/bank_agency.csv
+            separator: ","
+            encoding: UTF-8
+
+  - changeSet:
+      id: 3-load-bankinfo-data
+      author: RHI
+      changes:
+        - loadData:
+            tableName: bank_info
+            file: file:${spring.liquibase.csv-folder}/bank_info.csv
+            separator: ","
+            encoding: UTF-8
+
+	•	file: → forces filesystem load
+	•	${spring.liquibase.csv-folder} → resolves per environment
+	•	No relative paths, fully portable
+
+⸻
+
+4️⃣ Set environment variable per environment
+
+Example (Linux/macOS):
+
+export LIQUIBASE_CSV_FOLDER=/home/dev/bankinfo/liquibase-data
+
+Example (Windows CMD):
+
+set LIQUIBASE_CSV_FOLDER=C:\bankinfo\liquibase-data
+
+✅ This ensures each environment points to the correct CSV folder.
+
+⸻
+
+5️⃣ Folder structure recap
+
+bankinfo/
+├── liquibase-data/               ← CSVs outside resources
+│   ├── bank_info.csv
+│   └── bank_agency.csv
+└── src/main/resources/liquibase/ ← changelogs inside classpath
+    ├── changelog-master.yaml
+    ├── baseline.yaml
+    └── changeSet/
+        ├── 002-load-bankAgency.yaml
+        └── 003-load-bankinfo.yaml
+
+
+⸻
+
+✅ Why this works
+	1.	Liquibase changelogs are classpath resources → Spring Boot finds them
+	2.	CSV files are filesystem resources → file: + property resolves anywhere
+	3.	Fully environment-independent, portable, avoids classpath hacks
+
+⸻
+
+If you want, I can rewrite your changelog-master.yaml and changeSets fully portable with the property approach so you can copy-paste them and they’ll work on any machine.
+
+Do you want me to do that?
