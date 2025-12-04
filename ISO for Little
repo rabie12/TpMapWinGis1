@@ -1,29 +1,8 @@
-databaseChangeLog:
-  - changeSet:
-      id: 3-load-bankinfo-data
-      author: RHI
-      changes:
-        - loadData:
-            tableName: bank_info
-            file: data/bank_info.csv
-            separator: ","
+$env:LIQUBASE_SEARCH_PATH=./liquibase/
+
+faut set la var d'env
 
 
 
-Caused by: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file data/bank_info.csv was not found in the configured search path:
-    - Spring classpath
-			<plugin>
-				<groupId>org.liquibase</groupId>
-				<artifactId>liquibase-maven-plugin</artifactId>
-				<version>4.30.0</version>
-				<configuration>
-					<changeLogFile>changelog-master.yml</changeLogFile>
-					<changeLogDirectory>src/main/resources/liquibase</changeLogDirectory>
-					<url>${env.DB_URL}</url>
-					<username>${env.DB_USERNAME}</username>
-					<password>${env.DB_PASSWORD}</password>
-				</configuration>
-			</plugin>
 
-i ve already have this on my pom i want to reada csv from : src/main/resources/liquibase/data
-
+je veux set le liquibase à ça pour que ça fonctionne et pour éviter d'jouter à chauq efois le /liquibase et faire directement data/ ..
