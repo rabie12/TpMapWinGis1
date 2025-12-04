@@ -1,8 +1,103 @@
+Parfait — oui ✅ tu peux totalement éviter d’écrire liquibase/ partout en configurant correctement la variable d’environnement LIQUIBASE_SEARCH_PATH (ou son équivalent Spring).
+
+Mais il y a une petite erreur dans ton nom de variable 👇
+Tu as écrit :
+
 $env:LIQUBASE_SEARCH_PATH=./liquibase/
+        ^ manque un I
 
-faut set la var d'env
+👉 La bonne variable est :
+
+$env:LIQUIBASE_SEARCH_PATH=./liquibase
+
+(avec LIQUIBASE, pas LIQUBASE)
+
+⸻
+
+✅ ✅ SOLUTION COMPLÈTE (Windows / PowerShell)
+
+1️⃣ Définir correctement la variable d’environnement
+
+Dans PowerShell :
+
+$env:LIQUIBASE_SEARCH_PATH=./liquibase
+
+✅ Ça dit à Liquibase :
+
+“Cherche aussi les fichiers dans le dossier ./liquibase à la racine du projet”
+
+⸻
+
+2️⃣ Ton loadData devient SIMPLE ✅
+
+Maintenant tu peux écrire directement :
+
+- changeSet:
+    id: 3-load-bankinfo-data
+    author: RHI
+    changes:
+      - loadData:
+          tableName: bank_info
+          file: data/bank_info.csv
+          separator: ","
+
+✅ Et Liquibase va automatiquement chercher dans :
+
+./liquibase/data/bank_info.csv
 
 
+⸻
+
+✅ ✅ VERSION SPRING BOOT (sans variable d’environnement)
+
+Si tu préfères ne rien configurer dans PowerShell, alors mets ceci dans application.yml :
+
+spring:
+  liquibase:
+    search-path: file:./liquibase
+
+Ou en application.properties :
+
+spring.liquibase.search-path=file:./liquibase
+
+➡️ Et tu peux aussi garder dans tes YAML :
+
+file: data/bank_info.csv
 
 
-je veux set le liquibase à ça pour que ça fonctionne et pour éviter d'jouter à chauq efois le /liquibase et faire directement data/ ..
+⸻
+
+✅ Résumé ultra clair
+
+Tu veux	Tu fais
+✅ Éviter liquibase/data/...	file: data/bank_info.csv
+✅ Lire depuis ./liquibase	LIQUIBASE_SEARCH_PATH=./liquibase
+✅ En Spring	spring.liquibase.search-path=file:./liquibase
+❌ Erreur à éviter	LIQUBASE_SEARCH_PATH (mal orthographié)
+
+
+⸻
+
+✅ Vérification rapide
+
+Dans ton projet, tu dois avoir :
+
+project-root/
+├── liquibase/
+│   └── data/
+│       └── bank_info.csv   ✅
+├── src/
+└── pom.xml
+
+Et dans ton changeSet :
+
+file: data/bank_info.csv   ✅
+
+
+⸻
+
+Si tu veux, envoie-moi :
+	•	ton application.yml
+	•	ton poc.xml (juste la partie liquibase)
+
+Et je t’assure que ta config finale sera propre, portable et stable ✅
