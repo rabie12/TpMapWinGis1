@@ -1,58 +1,20 @@
-Caused by: liquibase.exception.CommandExecutionException: liquibase.exception.ChangeLogParseException: Error parsing classpath:/liquibase/changelog-master.yaml : The file baseline.yaml was not found in the configured search path:
+aused by: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file ../liquibase/data/bank_info.csv was not found in the configured search path:
     - Spring classpath
 More locations can be added with the 'searchPath' parameter.
-	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:278) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:803) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.lambda$generateCheckSum$0(ChangeSet.java:395) ~[liquibase-core-4.30.0.jar:na]
 	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
 	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.CommandScope.execute(CommandScope.java:219) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.lambda$update$0(Liquibase.java:216) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.runInScope(Liquibase.java:1329) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.update(Liquibase.java:205) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.update(Liquibase.java:188) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.performUpdate(SpringLiquibase.java:310) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.lambda$afterPropertiesSet$0(SpringLiquibase.java:262) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:255) ~[liquibase-core-4.30.0.jar:na]
-	... 22 common frames omitted
-Caused by: liquibase.exception.ChangeLogParseException: Error parsing classpath:/liquibase/changelog-master.yaml : The file baseline.yaml was not found in the configured search path:
+	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:386) ~[liquibase-core-4.30.0.jar:na]
+	... 55 common frames omitted
+Caused by: java.io.FileNotFoundException: The file ../liquibase/data/bank_info.csv was not found in the configured search path:
     - Spring classpath
 More locations can be added with the 'searchPath' parameter.
-	at liquibase.parser.core.yaml.YamlChangeLogParser.parse(YamlChangeLogParser.java:98) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.lambda$getDatabaseChangeLog$0(DatabaseChangelogCommandStep.java:129) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.getDatabaseChangeLog(DatabaseChangelogCommandStep.java:128) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.run(DatabaseChangelogCommandStep.java:87) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:231) ~[liquibase-core-4.30.0.jar:na]
-	... 40 common frames omitted
-Caused by: liquibase.exception.SetupException: The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.changelog.DatabaseChangeLog.handleChildNodeHelper(DatabaseChangeLog.java:534) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.handleChildNode(DatabaseChangeLog.java:485) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.load(DatabaseChangeLog.java:452) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.parser.core.yaml.YamlChangeLogParser.parse(YamlChangeLogParser.java:92) ~[liquibase-core-4.30.0.jar:na]
-	... 46 common frames omitted
-Caused by: liquibase.exception.LiquibaseException: The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1085) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.handleChildNodeHelper(DatabaseChangeLog.java:523) ~[liquibase-core-4.30.0.jar:na]
-	... 49 common frames omitted
-Caused by: liquibase.exception.ChangeLogParseException: The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1047) ~[liquibase-core-4.30.0.jar:na]
-	... 50 common frames omitted
+	at liquibase.resource.ResourceAccessor.getExisting(ResourceAccessor.java:222) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:795) ~[liquibase-core-4.30.0.jar:na]
+	... 59 common frames omitted
 
-Disconnected from the target VM, address: '127.0.0.1:49385', transport: 'socket'
+Disconnected from the target VM, address: '127.0.0.1:56583', transport: 'socket'
 
 Process finished with exit code 0
-i have this after changing to classpath 
+now i have this for the file outside of of my src main resource
