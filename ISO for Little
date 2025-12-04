@@ -1,20 +1,24 @@
-aused by: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file ../liquibase/data/bank_info.csv was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:803) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSet.lambda$generateCheckSum$0(ChangeSet.java:395) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:386) ~[liquibase-core-4.30.0.jar:na]
-	... 55 common frames omitted
-Caused by: java.io.FileNotFoundException: The file ../liquibase/data/bank_info.csv was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.resource.ResourceAccessor.getExisting(ResourceAccessor.java:222) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:795) ~[liquibase-core-4.30.0.jar:na]
-	... 59 common frames omitted
+databaseChangeLog:
+  - changeSet:
+      id: 2-load-bankAgency-data
+      author: RHI
+      changes:
+        - loadData:
+            tableName: bank_agency
+            file: file:/liquibase/data/bank_agency.csv
+            separator: ","
+            encoding: UTF-8
 
-Disconnected from the target VM, address: '127.0.0.1:56583', transport: 'socket'
 
-Process finished with exit code 0
-now i have this for the file outside of of my src main resource
+databaseChangeLog:
+  - changeSet:
+      id: 3-load-bankinfo-data
+      author: RHI
+      changes:
+        - loadData:
+            tableName: bank_info
+            file:  file:/liquibase/data/bank_info.csv
+            separator: ","
+
+
+i just need to adjust to make it work for all environement 
