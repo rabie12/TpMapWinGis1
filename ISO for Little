@@ -1,22 +1,11 @@
-Caused by: java.lang.IllegalArgumentException: Illegal character in opaque part at index 23: resourceaccessor:file:${bankinfo.csv-folder}/bank_agency.csv
-	at java.base/java.net.URI.create(URI.java:932) ~[na:na]
-	at liquibase.resource.ResourceAccessor$NotFoundResource.<init>(ResourceAccessor.java:305) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.resource.ResourceAccessor.get(ResourceAccessor.java:237) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.resource.ResourceAccessor.getExisting(ResourceAccessor.java:220) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:795) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSet.lambda$generateCheckSum$0(ChangeSet.java:395) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:386) ~[liquibase-core-4.30.0.jar:na]
-	... 55 common frames omitted
-Caused by: java.net.URISyntaxException: Illegal character in opaque part at index 23: resourceaccessor:file:${bankinfo.csv-folder}/bank_agency.csv
-	at java.base/java.net.URI$Parser.fail(URI.java:2995) ~[na:na]
-	at java.base/java.net.URI$Parser.checkChars(URI.java:3166) ~[na:na]
-	at java.base/java.net.URI$Parser.parse(URI.java:3202) ~[na:na]
-	at java.base/java.net.URI.<init>(URI.java:645) ~[na:na]
-	at java.base/java.net.URI.create(URI.java:930) ~[na:na]
-	... 63 common frames omitted
+databaseChangeLog:
+  - include:
+      file: classpath:/liquibase/baseline.yaml
 
-Disconnected from the target VM, address: '127.0.0.1:61506', transport: 'socket'
+  - include:
+      file: classpath:/liquibase/changeSet/001-populate-bankinfo.yaml
 
-Process finished with exit code 0
+  - include:
+      file: classpath:/liquibase/changeSet/002-populate-bankagency.yaml
+
+now i have this it will amke feel crazy this issue 
