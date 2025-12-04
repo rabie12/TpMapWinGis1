@@ -1,90 +1,38 @@
-Perfect — now we’re at the stage where your CSV loading works on a specific machine, but you want it portable across all environments (dev, test, prod) ✅
+Caused by: java.lang.RuntimeException: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file file:../../liquibase-data/bank_info.csv was not found in the configured search path:
+    - Spring classpath
+More locations can be added with the 'searchPath' parameter.
+	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:408) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSetStatus.<init>(ChangeSetStatus.java:38) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.visitor.StatusVisitor.addStatus(StatusVisitor.java:49) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.visitor.StatusVisitor.visit(StatusVisitor.java:33) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.StatusChangeLogIterator.lambda$run$0(StatusChangeLogIterator.java:53) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:260) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:264) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.StatusChangeLogIterator.run(StatusChangeLogIterator.java:39) ~[liquibase-core-4.30.0.jar:na]
+	... 44 common frames omitted
+Caused by: liquibase.exception.UnexpectedLiquibaseException: java.io.FileNotFoundException: The file file:../../liquibase-data/bank_info.csv was not found in the configured search path:
+    - Spring classpath
+More locations can be added with the 'searchPath' parameter.
+	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:803) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.lambda$generateCheckSum$0(ChangeSet.java:395) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:386) ~[liquibase-core-4.30.0.jar:na]
+	... 55 common frames omitted
+Caused by: java.io.FileNotFoundException: The file file:../../liquibase-data/bank_info.csv was not found in the configured search path:
+    - Spring classpath
+More locations can be added with the 'searchPath' parameter.
+	at liquibase.resource.ResourceAccessor.getExisting(ResourceAccessor.java:222) ~[liquibase-core-4.30.0.jar:na]
+	at liquibase.change.core.LoadDataChange.generateCheckSum(LoadDataChange.java:795) ~[liquibase-core-4.30.0.jar:na]
+	... 59 common frames omitted
 
-The key is: never hardcode absolute paths. Instead, use relative paths from the working directory, or environment variables, and always prefix with file: to force filesystem access (not classpath).
+Disconnected from the target VM, address: '127.0.0.1:60227', transport: 'socket'
 
-⸻
+Process finished with exit code 0
 
-✅ Recommended Portable Solution
 
-1️⃣ Folder Structure (example)
-
-bankinfo/
-├── liquibase-data/
-│   ├── bank_agency.csv
-│   └── bank_info.csv
-└── src/
-    └── main/
-        └── resources/
-            └── liquibase/
-                ├── changelog-master.yaml
-                └── changeSet/
-                    ├── 002-load-bankAgency.yaml
-                    └── 003-load-bankinfo.yaml
-
-	•	liquibase changelogs → classpath
-	•	liquibase-data CSVs → filesystem
-
-⸻
-
-2️⃣ Use relative paths in your changeSets
-
-In each changeSet:
-
-databaseChangeLog:
-  - changeSet:
-      id: 2-load-bankAgency-data
-      author: RHI
-      changes:
-        - loadData:
-            tableName: bank_agency
-            file: file:../../liquibase-data/bank_agency.csv
-            separator: ","
-            encoding: UTF-8
-
-  - changeSet:
-      id: 3-load-bankinfo-data
-      author: RHI
-      changes:
-        - loadData:
-            tableName: bank_info
-            file: file:../../liquibase-data/bank_info.csv
-            separator: ","
-            encoding: UTF-8
-
-Explanation:
-	•	../../liquibase-data/ → relative to the location of the changelog in src/main/resources/liquibase/changeSet/
-	•	Always prefix with file: → tells Liquibase it’s a filesystem file, not a classpath resource
-	•	Separator and encoding stay the same
-
-✅ Works on any environment as long as the CSV folder is at the same relative location to the changelog folder.
-
-⸻
-
-3️⃣ Optional: Use Spring property for base CSV folder
-
-To make it even more flexible, you can define an environment variable or Spring property, e.g.:
-
-spring:
-  liquibase:
-    csv-folder: /opt/bankinfo/data
-
-Then in your YAML:
-
-file: file:${spring.liquibase.csv-folder}/bank_info.csv
-
-	•	Works on dev, test, prod
-	•	Just change the spring.liquibase.csv-folder per environment
-
-⸻
-
-4️⃣ ✅ Key Takeaways
-	1.	Changelogs → inside src/main/resources → use classpath: in Spring config
-	2.	Data CSVs → outside src → always use file:
-	3.	Use relative paths for portability, or Spring/env properties for environment-specific paths
-	4.	Never rely on /liquibase/data/ absolute paths — they break on different machines
-
-⸻
-
-If you want, I can rewrite your two changeSets fully portable with relative paths so you can copy them as-is into your project and they’ll work on any environment.
-
-Do you want me to do that?
+i still have the issue  my csv(s file are under this path : bankinfo\liquibase\data can you propose something for all environement
