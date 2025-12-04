@@ -1,1 +1,101 @@
-i will have to load a heavy csv file from my liquibase file who is located outside of src file
+Got it — this is an important constraint ✅
+You can absolutely keep your heavy CSV file outside src while still keeping your Liquibase changelogs inside src/main/resources. This is actually a best-practice setup for large data files.
+
+Let’s separate the two concepts:
+
+⸻
+
+✅ ✅ CORRECT & SAFE ARCHITECTURE
+
+✅ Liquibase changelogs → INSIDE classpath
+
+src/main/resources/liquibase/
+├── changelog-master.yaml
+├── baseline.yaml
+└── changeSet/
+    └── 003-load-heavy-csv.yaml
+
+✅ Heavy CSV file → OUTSIDE src
+
+bankinfo/
+├── liquibase-data/
+│   └── big-file.csv   ✅ very large file here
+└── src/
+
+This is 100% supported by Liquibase.
+
+⸻
+
+✅ HOW TO LOAD AN EXTERNAL CSV FILE
+
+Inside your Liquibase changeSet:
+
+databaseChangeLog:
+  - changeSet:
+      id: load-big-csv
+      author: you
+      changes:
+        - loadData:
+            file: ../liquibase-data/big-file.csv
+            tableName: bank_info
+            separator: ;
+            encoding: UTF-8
+
+✅ This uses a filesystem-relative path
+✅ The CSV is NOT inside the JAR
+✅ Works perfectly for very large files
+✅ No Spring config needed
+✅ No search-path needed
+
+Liquibase resolves CSV paths from the working directory of the application (bankinfo/).
+
+⸻
+
+✅ FINAL REQUIRED CONFIG
+
+application.yaml
+
+spring:
+  liquibase:
+    change-log: classpath:liquibase/changelog-master.yaml
+
+✅ No search-path
+✅ No external Liquibase folder
+✅ No Spring binding error
+✅ Fully production-safe
+
+⸻
+
+✅ WHY THIS WORKS (AND YOUR PREVIOUS APPROACH FAILED)
+
+Item	Should be in classpath?	Can be external?
+changelog-master.yaml	✅ YES	❌ NO
+baseline.yaml	✅ YES	❌ NO
+changeset yaml	✅ YES	❌ NO
+Heavy CSV file	❌ NO	✅ YES
+
+Spring Boot requires changelogs in classpath
+Liquibase allows data files anywhere on disk
+
+⸻
+
+✅ IF YOUR CSV PATH STILL FAILS
+
+Use an absolute path as a test:
+
+file: C:/bankinfo/liquibase-data/big-file.csv
+
+If that works → your relative path needs adjustment.
+
+⸻
+
+✅ TL;DR (Straight Answer)
+
+❌ You cannot keep Liquibase YAML outside src in Spring Boot
+✅ You can and should keep your heavy CSV outside src
+✅ Use relative filesystem paths in loadData
+✅ This avoids huge JAR files and memory issues
+
+⸻
+
+If you want, paste your actual loadData changeSet and your real folder paths — I’ll correct the exact file: value for you so it works on the first run. ✅
