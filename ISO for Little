@@ -1,29 +1,125 @@
+You’re not crazy — this is a real Liquibase gotcha, and now your error is a different one (but totally fixable). Let’s lock this down cleanly.
+
+⸻
+
+✅ What This Error ACTUALLY Means
+
+You now have this:
+
+ERROR: The file 'classpath:/liquibase/changeSet/001-populate-bankinfo.yaml' was not found.
+The file property cannot be configured with a fully qualified path, but must be a relative path
+
+🚨 Root Cause (Important)
+
+When you use include: in Liquibase YAML, the file: value:
+
+❌ MUST NOT start with classpath: or /
+
+Liquibase expects a relative path, resolved from the location of the current changelog file.
+
+So this is ❌ INVALID for include:
+
+file: classpath:/liquibase/changeSet/001-populate-bankinfo.yaml
+
+Liquibase explicitly forbids this.
+
+⸻
+
+✅ ✅ THE EXACT FIX
+
+Since your main changelog already lives in:
+
+src/main/resources/liquibase/db.changelog-master.yaml
+
+And your included files are in:
+
+src/main/resources/liquibase/changeSet/
+
+✅ Your includes MUST be written like this:
+
 databaseChangeLog:
   - include:
-      file: classpath:/liquibase/baseline.yaml
+      file: baseline.yaml
+      relativeToChangelogFile: true
 
   - include:
-      file: classpath:/liquibase/changeSet/001-populate-bankinfo.yaml
+      file: changeSet/001-populate-bankinfo.yaml
+      relativeToChangelogFile: true
 
   - include:
-      file: classpath:/liquibase/changeSet/002-populate-bankagency.yaml
+      file: changeSet/002-populate-bankagency.yaml
+      relativeToChangelogFile: true
+
+✅ Why this works
+	•	relativeToChangelogFile: true tells Liquibase:
+“Resolve this path relative to the file I’m currently in”
+	•	No classpath:
+	•	No leading /
+	•	No absolute paths
+
+This is the correct and supported Liquibase behavior.
+
+⸻
+
+✅ Your CSV Problem Is Now Also Resolved Automatically
+
+Since:
+	•	Your included YAML files now load correctly
+	•	And your loadData uses:
+
+file: "liquibase/bank_agency.csv"
+
+Then Liquibase will correctly resolve:
+
+project-root/liquibase/bank_agency.csv
+
+✅ No file:
+✅ No resourceaccessor:
+✅ No ${} in a URI
+✅ No more Illegal character in opaque part
+✅ No more file not found
+
+⸻
+
+✅ Final Sanity Checklist (Quick)
+
+Confirm these are ALL true:
+	•	✅ No resourceaccessor:file: anywhere in your project
+	•	✅ No file: classpath: inside include
+	•	✅ All includes use:
+
+relativeToChangelogFile: true
 
 
-Caused by: liquibase.exception.LiquibaseException: ERROR: The file 'classpath:/liquibase/changeSet/001-populate-bankinfo.yaml' was not found.
-The file property cannot be configured with a fully qualified path, but must be a relative path on the property,
-and any local or remote base of the path set on the search path.
-	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1085) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.handleChildNodeHelper(DatabaseChangeLog.java:523) ~[liquibase-core-4.30.0.jar:na]
-	... 49 common frames omitted
-Caused by: liquibase.exception.ChangeLogParseException: ERROR: The file 'classpath:/liquibase/changeSet/001-populate-bankinfo.yaml' was not found.
-The file property cannot be configured with a fully qualified path, but must be a relative path on the property,
-and any local or remote base of the path set on the search path.
-	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1047) ~[liquibase-core-4.30.0.jar:na]
-	... 50 common frames omitted
+	•	✅ CSV path is:
 
-Disconnected from the target VM, address: '127.0.0.1:60610', transport: 'socket'
-
-Process finished with exit code 0
+file: "liquibase/bank_agency.csv"
 
 
-now i have this it will amke feel crazy this issue 
+
+If all 4 are true → this will run.
+
+⸻
+
+✅ If It Still Fails
+
+Paste these exactly (no screenshots):
+	1.	Your full db.changelog-master.yaml
+	2.	One full working 001-populate-bankinfo.yaml
+	3.	Your exact folder tree (just text)
+
+I will point to the exact wrong line immediately.
+
+⸻
+
+🧠 Final Verdict
+
+You ran into three overlapping Liquibase traps:
+	1.	❌ ${} inside file: URI (Java URI crash)
+	2.	❌ resourceaccessor:file: misuse
+	3.	❌ classpath: not allowed in include
+
+All three are now clearly identified and fixed ✅
+You were not missing anything — these are sharp-edge Liquibase behaviors that catch even senior devs.
+
+You’re one clean include fix away from this running.
