@@ -1,54 +1,84 @@
-"C:\Program Files\Microsoft\jdk-21.0.9.10-hotspot\bin\java.exe" -agentlib:jdwp=transport=dt_socket,address=127.0.0.1:51415,suspend=y,server=n --enable-preview -javaagent:C:\Users\RHABACHI\AppData\Local\JetBrains\IdeaIC2024.3\captureAgent\debugger-agent.jar -Dkotlinx.coroutines.debug.enable.creation.stack.trace=false -Ddebugger.agent.enable.coroutines=true -Dkotlinx.coroutines.debug.enable.flows.stack.trace=true -Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -classpath "C:\Users\RHABACHI\IdeaProjects\bankinfo\target\classes;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-data-jpa\3.4.3\spring-boot-starter-data-jpa-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter\3.4.3\spring-boot-starter-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-logging\3.4.3\spring-boot-starter-logging-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\ch\qos\logback\logback-classic\1.5.16\logback-classic-1.5.16.jar;C:\Users\RHABACHI\.m2\repository\ch\qos\logback\logback-core\1.5.16\logback-core-1.5.16.jar;C:\Users\RHABACHI\.m2\repository\org\apache\logging\log4j\log4j-to-slf4j\2.24.3\log4j-to-slf4j-2.24.3.jar;C:\Users\RHABACHI\.m2\repository\org\apache\logging\log4j\log4j-api\2.24.3\log4j-api-2.24.3.jar;C:\Users\RHABACHI\.m2\repository\org\slf4j\jul-to-slf4j\2.0.16\jul-to-slf4j-2.0.16.jar;C:\Users\RHABACHI\.m2\repository\jakarta\annotation\jakarta.annotation-api\2.1.1\jakarta.annotation-api-2.1.1.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-jdbc\3.4.3\spring-boot-starter-jdbc-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\com\zaxxer\HikariCP\5.1.0\HikariCP-5.1.0.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-jdbc\6.2.3\spring-jdbc-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\hibernate\orm\hibernate-core\6.6.8.Final\hibernate-core-6.6.8.Final.jar;C:\Users\RHABACHI\.m2\repository\jakarta\persistence\jakarta.persistence-api\3.1.0\jakarta.persistence-api-3.1.0.jar;C:\Users\RHABACHI\.m2\repository\jakarta\transaction\jakarta.transaction-api\2.0.1\jakarta.transaction-api-2.0.1.jar;C:\Users\RHABACHI\.m2\repository\org\jboss\logging\jboss-logging\3.6.1.Final\jboss-logging-3.6.1.Final.jar;C:\Users\RHABACHI\.m2\repository\org\hibernate\common\hibernate-commons-annotations\7.0.3.Final\hibernate-commons-annotations-7.0.3.Final.jar;C:\Users\RHABACHI\.m2\repository\io\smallrye\jandex\3.2.0\jandex-3.2.0.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\classmate\1.7.0\classmate-1.7.0.jar;C:\Users\RHABACHI\.m2\repository\org\glassfish\jaxb\jaxb-runtime\4.0.5\jaxb-runtime-4.0.5.jar;C:\Users\RHABACHI\.m2\repository\org\glassfish\jaxb\jaxb-core\4.0.5\jaxb-core-4.0.5.jar;C:\Users\RHABACHI\.m2\repository\org\glassfish\jaxb\txw2\4.0.5\txw2-4.0.5.jar;C:\Users\RHABACHI\.m2\repository\com\sun\istack\istack-commons-runtime\4.1.2\istack-commons-runtime-4.1.2.jar;C:\Users\RHABACHI\.m2\repository\jakarta\inject\jakarta.inject-api\2.0.1\jakarta.inject-api-2.0.1.jar;C:\Users\RHABACHI\.m2\repository\org\antlr\antlr4-runtime\4.13.0\antlr4-runtime-4.13.0.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\data\spring-data-jpa\3.4.3\spring-data-jpa-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\data\spring-data-commons\3.4.3\spring-data-commons-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-orm\6.2.3\spring-orm-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-context\6.2.3\spring-context-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-tx\6.2.3\spring-tx-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-beans\6.2.3\spring-beans-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\slf4j\slf4j-api\2.0.16\slf4j-api-2.0.16.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-aspects\6.2.3\spring-aspects-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\aspectj\aspectjweaver\1.9.22.1\aspectjweaver-1.9.22.1.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-validation\3.4.3\spring-boot-starter-validation-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\apache\tomcat\embed\tomcat-embed-el\10.1.36\tomcat-embed-el-10.1.36.jar;C:\Users\RHABACHI\.m2\repository\org\hibernate\validator\hibernate-validator\8.0.2.Final\hibernate-validator-8.0.2.Final.jar;C:\Users\RHABACHI\.m2\repository\jakarta\validation\jakarta.validation-api\3.0.2\jakarta.validation-api-3.0.2.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-web\3.4.3\spring-boot-starter-web-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-json\3.4.3\spring-boot-starter-json-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.18.2\jackson-databind-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.18.2\jackson-annotations-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.18.2\jackson-core-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jdk8\2.18.2\jackson-datatype-jdk8-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\datatype\jackson-datatype-jsr310\2.18.2\jackson-datatype-jsr310-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\module\jackson-module-parameter-names\2.18.2\jackson-module-parameter-names-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-tomcat\3.4.3\spring-boot-starter-tomcat-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\apache\tomcat\embed\tomcat-embed-core\10.1.36\tomcat-embed-core-10.1.36.jar;C:\Users\RHABACHI\.m2\repository\org\apache\tomcat\embed\tomcat-embed-websocket\10.1.36\tomcat-embed-websocket-10.1.36.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-web\6.2.3\spring-web-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\io\micrometer\micrometer-observation\1.14.4\micrometer-observation-1.14.4.jar;C:\Users\RHABACHI\.m2\repository\io\micrometer\micrometer-commons\1.14.4\micrometer-commons-1.14.4.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-webmvc\6.2.3\spring-webmvc-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-expression\6.2.3\spring-expression-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-webflux\3.4.3\spring-boot-starter-webflux-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-reactor-netty\3.4.3\spring-boot-starter-reactor-netty-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\io\projectreactor\netty\reactor-netty-http\1.2.3\reactor-netty-http-1.2.3.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-codec-http\4.1.118.Final\netty-codec-http-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-common\4.1.118.Final\netty-common-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-buffer\4.1.118.Final\netty-buffer-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-transport\4.1.118.Final\netty-transport-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-codec\4.1.118.Final\netty-codec-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-handler\4.1.118.Final\netty-handler-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-codec-http2\4.1.118.Final\netty-codec-http2-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-resolver-dns\4.1.118.Final\netty-resolver-dns-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-resolver\4.1.118.Final\netty-resolver-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-codec-dns\4.1.118.Final\netty-codec-dns-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-resolver-dns-native-macos\4.1.118.Final\netty-resolver-dns-native-macos-4.1.118.Final-osx-x86_64.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-resolver-dns-classes-macos\4.1.118.Final\netty-resolver-dns-classes-macos-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-transport-native-epoll\4.1.118.Final\netty-transport-native-epoll-4.1.118.Final-linux-x86_64.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-transport-native-unix-common\4.1.118.Final\netty-transport-native-unix-common-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-transport-classes-epoll\4.1.118.Final\netty-transport-classes-epoll-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\projectreactor\netty\reactor-netty-core\1.2.3\reactor-netty-core-1.2.3.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-handler-proxy\4.1.118.Final\netty-handler-proxy-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\io\netty\netty-codec-socks\4.1.118.Final\netty-codec-socks-4.1.118.Final.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-webflux\6.2.3\spring-webflux-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-web-services\3.4.3\spring-boot-starter-web-services-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\com\sun\xml\messaging\saaj\saaj-impl\3.0.4\saaj-impl-3.0.4.jar;C:\Users\RHABACHI\.m2\repository\jakarta\xml\soap\jakarta.xml.soap-api\3.0.2\jakarta.xml.soap-api-3.0.2.jar;C:\Users\RHABACHI\.m2\repository\org\jvnet\staxex\stax-ex\2.1.0\stax-ex-2.1.0.jar;C:\Users\RHABACHI\.m2\repository\jakarta\activation\jakarta.activation-api\2.1.3\jakarta.activation-api-2.1.3.jar;C:\Users\RHABACHI\.m2\repository\org\eclipse\angus\angus-activation\2.0.2\angus-activation-2.0.2.jar;C:\Users\RHABACHI\.m2\repository\jakarta\xml\ws\jakarta.xml.ws-api\4.0.2\jakarta.xml.ws-api-4.0.2.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-oxm\6.2.3\spring-oxm-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\ws\spring-ws-core\4.0.11\spring-ws-core-4.0.11.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\ws\spring-xml\4.0.11\spring-xml-4.0.11.jar;C:\Users\RHABACHI\.m2\repository\org\liquibase\liquibase-core\4.30.0\liquibase-core-4.30.0.jar;C:\Users\RHABACHI\.m2\repository\com\opencsv\opencsv\5.9\opencsv-5.9.jar;C:\Users\RHABACHI\.m2\repository\org\yaml\snakeyaml\2.3\snakeyaml-2.3.jar;C:\Users\RHABACHI\.m2\repository\javax\xml\bind\jaxb-api\2.3.1\jaxb-api-2.3.1.jar;C:\Users\RHABACHI\.m2\repository\org\apache\commons\commons-collections4\4.4\commons-collections4-4.4.jar;C:\Users\RHABACHI\.m2\repository\org\apache\commons\commons-text\1.12.0\commons-text-1.12.0.jar;C:\Users\RHABACHI\.m2\repository\org\apache\commons\commons-lang3\3.17.0\commons-lang3-3.17.0.jar;C:\Users\RHABACHI\.m2\repository\commons-io\commons-io\2.17.0\commons-io-2.17.0.jar;C:\Users\RHABACHI\.m2\repository\com\neovisionaries\nv-i18n\1.29\nv-i18n-1.29.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-starter-security\3.4.3\spring-boot-starter-security-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-aop\6.2.3\spring-aop-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\security\spring-security-config\6.4.3\spring-security-config-6.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\security\spring-security-core\6.4.3\spring-security-core-6.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\security\spring-security-crypto\6.4.3\spring-security-crypto-6.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\security\spring-security-web\6.4.3\spring-security-web-6.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-devtools\3.4.3\spring-boot-devtools-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot\3.4.3\spring-boot-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\boot\spring-boot-autoconfigure\3.4.3\spring-boot-autoconfigure-3.4.3.jar;C:\Users\RHABACHI\.m2\repository\org\mariadb\jdbc\mariadb-java-client\3.4.1\mariadb-java-client-3.4.1.jar;C:\Users\RHABACHI\.m2\repository\com\github\waffle\waffle-jna\3.3.0\waffle-jna-3.3.0.jar;C:\Users\RHABACHI\.m2\repository\net\java\dev\jna\jna\5.13.0\jna-5.13.0.jar;C:\Users\RHABACHI\.m2\repository\net\java\dev\jna\jna-platform\5.13.0\jna-platform-5.13.0.jar;C:\Users\RHABACHI\.m2\repository\org\slf4j\jcl-over-slf4j\2.0.16\jcl-over-slf4j-2.0.16.jar;C:\Users\RHABACHI\.m2\repository\com\github\ben-manes\caffeine\caffeine\3.1.8\caffeine-3.1.8.jar;C:\Users\RHABACHI\.m2\repository\com\google\errorprone\error_prone_annotations\2.21.1\error_prone_annotations-2.21.1.jar;C:\Users\RHABACHI\.m2\repository\org\checkerframework\checker-qual\3.32.0\checker-qual-3.32.0.jar;C:\Users\RHABACHI\.m2\repository\org\projectlombok\lombok\1.18.36\lombok-1.18.36.jar;C:\Users\RHABACHI\.m2\repository\org\mapstruct\mapstruct\1.6.3\mapstruct-1.6.3.jar;C:\Users\RHABACHI\.m2\repository\jakarta\xml\bind\jakarta.xml.bind-api\4.0.2\jakarta.xml.bind-api-4.0.2.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-core\6.2.3\spring-core-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\springframework\spring-jcl\6.2.3\spring-jcl-6.2.3.jar;C:\Users\RHABACHI\.m2\repository\org\iban4j\iban4j\3.2.11-RELEASE\iban4j-3.2.11-RELEASE.jar;C:\Users\RHABACHI\.m2\repository\io\projectreactor\reactor-core\3.7.3\reactor-core-3.7.3.jar;C:\Users\RHABACHI\.m2\repository\org\reactivestreams\reactive-streams\1.0.4\reactive-streams-1.0.4.jar;C:\Users\RHABACHI\.m2\repository\org\springdoc\springdoc-openapi-starter-webmvc-ui\2.8.4\springdoc-openapi-starter-webmvc-ui-2.8.4.jar;C:\Users\RHABACHI\.m2\repository\org\springdoc\springdoc-openapi-starter-webmvc-api\2.8.4\springdoc-openapi-starter-webmvc-api-2.8.4.jar;C:\Users\RHABACHI\.m2\repository\org\springdoc\springdoc-openapi-starter-common\2.8.4\springdoc-openapi-starter-common-2.8.4.jar;C:\Users\RHABACHI\.m2\repository\io\swagger\core\v3\swagger-core-jakarta\2.2.28\swagger-core-jakarta-2.2.28.jar;C:\Users\RHABACHI\.m2\repository\io\swagger\core\v3\swagger-annotations-jakarta\2.2.28\swagger-annotations-jakarta-2.2.28.jar;C:\Users\RHABACHI\.m2\repository\io\swagger\core\v3\swagger-models-jakarta\2.2.28\swagger-models-jakarta-2.2.28.jar;C:\Users\RHABACHI\.m2\repository\com\fasterxml\jackson\dataformat\jackson-dataformat-yaml\2.18.2\jackson-dataformat-yaml-2.18.2.jar;C:\Users\RHABACHI\.m2\repository\org\webjars\swagger-ui\5.18.2\swagger-ui-5.18.2.jar;C:\Users\RHABACHI\.m2\repository\org\webjars\webjars-locator-lite\1.0.1\webjars-locator-lite-1.0.1.jar;C:\Users\RHABACHI\.m2\repository\org\jspecify\jspecify\1.0.0\jspecify-1.0.0.jar;C:\Users\RHABACHI\.m2\repository\org\springdoc\springdoc-openapi-starter-webflux-ui\2.8.4\springdoc-openapi-starter-webflux-ui-2.8.4.jar;C:\Users\RHABACHI\.m2\repository\org\springdoc\springdoc-openapi-starter-webflux-api\2.8.4\springdoc-openapi-starter-webflux-api-2.8.4.jar;C:\Users\RHABACHI\.m2\repository\net\bytebuddy\byte-buddy\1.15.11\byte-buddy-1.15.11.jar;C:\Users\RHABACHI\AppData\Local\JetBrains\IntelliJ IDEA Community Edition 2024.3\lib\idea_rt.jar" eu.olkypay.bankInfo.BankInfoApplication
-Connected to the target VM, address: '127.0.0.1:51415', transport: 'socket'
+Ah! I see exactly what’s happening. The issue isn’t with Liquibase itself — it’s with Spring Boot trying to bind spring.liquibase.csv-folder, which doesn’t exist as a built-in property. That’s why you see:
 
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
+Reason: The elements [spring.liquibase.csv-folder] were left unbound.
 
- :: Spring Boot ::                (v3.4.3)
+Spring Boot’s LiquibaseProperties only supports its standard properties (change-log, contexts, default-schema, etc.) — it does not know about csv-folder. So trying to put it under spring.liquibase in application.yaml triggers a binding failure.
 
-2025-12-04T11:22:35.390+01:00  INFO 18580 --- [bankInfo] [  restartedMain] e.olkypay.bankInfo.BankInfoApplication   : Starting BankInfoApplication using Java 21.0.9 with PID 18580 (C:\Users\RHABACHI\IdeaProjects\bankinfo\target\classes started by RHABACHI in C:\Users\RHABACHI\IdeaProjects\bankinfo)
-2025-12-04T11:22:35.399+01:00  INFO 18580 --- [bankInfo] [  restartedMain] e.olkypay.bankInfo.BankInfoApplication   : No active profile set, falling back to 1 default profile: "default"
-2025-12-04T11:22:35.450+01:00  INFO 18580 --- [bankInfo] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
-2025-12-04T11:22:35.450+01:00  INFO 18580 --- [bankInfo] [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
-2025-12-04T11:22:36.714+01:00  INFO 18580 --- [bankInfo] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2025-12-04T11:22:36.947+01:00  INFO 18580 --- [bankInfo] [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 216 ms. Found 4 JPA repository interfaces.
-2025-12-04T11:22:37.419+01:00  WARN 18580 --- [bankInfo] [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.ws.config.annotation.DelegatingWsConfiguration' of type [org.springframework.ws.config.annotation.DelegatingWsConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [annotationActionEndpointMapping] is declared through a non-static factory method on that class; consider declaring it as static instead.
-2025-12-04T11:22:37.470+01:00  INFO 18580 --- [bankInfo] [  restartedMain] .w.s.a.s.AnnotationActionEndpointMapping : Supporting [WS-Addressing August 2004, WS-Addressing 1.0]
-2025-12-04T11:22:37.898+01:00  INFO 18580 --- [bankInfo] [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
-2025-12-04T11:22:37.918+01:00  INFO 18580 --- [bankInfo] [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
-2025-12-04T11:22:37.918+01:00  INFO 18580 --- [bankInfo] [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.36]
-2025-12-04T11:22:37.980+01:00  INFO 18580 --- [bankInfo] [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
-2025-12-04T11:22:37.980+01:00  INFO 18580 --- [bankInfo] [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2528 ms
-2025-12-04T11:22:38.068+01:00  WARN 18580 --- [bankInfo] [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/autoconfigure/orm/jpa/HibernateJpaConfiguration.class]: Failed to initialize dependency 'liquibase' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'liquibase' defined in class path resource [org/springframework/boot/autoconfigure/liquibase/LiquibaseAutoConfiguration$LiquibaseConfiguration.class]: Unsatisfied dependency expressed through method 'liquibase' parameter 2: Error creating bean with name 'spring.liquibase-org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties': Could not bind properties to 'LiquibaseProperties' : prefix=spring.liquibase, ignoreInvalidFields=false, ignoreUnknownFields=false
-2025-12-04T11:22:38.074+01:00  INFO 18580 --- [bankInfo] [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
-2025-12-04T11:22:38.092+01:00  INFO 18580 --- [bankInfo] [  restartedMain] .s.b.a.l.ConditionEvaluationReportLogger : 
+⸻
 
-Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
-2025-12-04T11:22:38.131+01:00 ERROR 18580 --- [bankInfo] [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+✅ How to fix this and make it environment-specific
+	1.	Define your CSV folder as a custom property, not under spring.liquibase. For example:
 
-***************************
-APPLICATION FAILED TO START
-***************************
+# application.yaml
+bankinfo:
+  csv-folder: ${LIQUIBASE_CSV_FOLDER:./liquibase-data}  # default to ./liquibase-data for local
 
-Description:
+	•	${LIQUIBASE_CSV_FOLDER} → can be overridden per environment
+	•	./liquibase-data → default path for local dev
 
-Binding to target [Bindable@46def4f4 type = org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties, value = 'provided', annotations = array<Annotation>[@org.springframework.boot.context.properties.ConfigurationProperties(ignoreInvalidFields=false, ignoreUnknownFields=false, prefix="spring.liquibase", value="spring.liquibase")], bindMethod = JAVA_BEAN] failed:
+	2.	Use the property in your changelog:
 
-    Property: spring.liquibase.csv-folder
-    Value: "${LIQUIBASE_CSV_FOLDER:/opt/bankinfo/liquibase}"
-    Origin: class path resource [application.yaml] - 23:17
-    Reason: The elements [spring.liquibase.csv-folder] were left unbound.
+databaseChangeLog:
+  - changeSet:
+      id: 2-load-bankAgency-data
+      author: RHI
+      changes:
+        - loadData:
+            tableName: bank_agency
+            file: file:${bankinfo.csv-folder}/bank_agency.csv
+            separator: ","
+            encoding: UTF-8
 
-Action:
+  - changeSet:
+      id: 3-load-bankinfo-data
+      author: RHI
+      changes:
+        - loadData:
+            tableName: bank_info
+            file: file:${bankinfo.csv-folder}/bank_info.csv
+            separator: ","
+            encoding: UTF-8
 
-Update your application's configuration
+Note: file: forces filesystem lookup; ${bankinfo.csv-folder} resolves to your custom property.
 
-Disconnected from the target VM, address: '127.0.0.1:51415', transport: 'socket'
+⸻
 
-Process finished with exit code 0
+	3.	Set the environment variable per environment:
 
-because i dont have /opt/bank-info on local i think on server probably yes i just need to configure it to make it on the diffenrent environement
+Linux/macOS:
+
+export LIQUIBASE_CSV_FOLDER=/opt/bankinfo/liquibase-data
+
+Windows CMD:
+
+set LIQUIBASE_CSV_FOLDER=C:\bankinfo\liquibase-data
+
+	•	On local, you can leave it as default ./liquibase-data
+	•	On server, set the env variable to the correct path
+
+⸻
+
+	4.	Optional: In your local application-dev.yaml:
+
+bankinfo:
+  csv-folder: ./liquibase-data
+
+And on server application-prod.yaml:
+
+bankinfo:
+  csv-folder: /opt/bankinfo/liquibase-data
+
+
+⸻
+
+✅ This approach:
+	•	Works on any environment
+	•	Does not require editing spring.liquibase (avoids binding errors)
+	•	Keeps your CSVs outside src/main/resources
+	•	Is fully portable and overrides automatically per environment
+
+⸻
+
+If you want, I can rewrite your changelog-master.yaml and changeSets fully portable using this approach so that it works both locally and on the server without touching spring.liquibase.
+
+Do you want me to do that?
