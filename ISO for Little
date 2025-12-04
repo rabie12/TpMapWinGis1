@@ -1,3 +1,14 @@
-Voici une version améliorée, plus claire et plus professionnelle de ton message :
+\bankinfo\liquibase 
+\bankinfo\src
 
-Voici un aperçu des données que nous stockons dans la base BankInfo. À voir si certaines d’entre elles pourraient être utiles pour la vérification du bénéficiaire (Verification of Payee).
+all liquibase are outside src/main ressource is possible to let it outside in on the same level of src path
+
+
+this is the content of changelog-master.yaml :
+databaseChangeLog:
+  - include:
+      file: baseline.yaml
+  - include:
+      file: changeSet/001-populate-bankinfo.yaml
+  - include:
+     file : changeSet/002-populate-bankagency.yaml
