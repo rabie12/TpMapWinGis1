@@ -1,18 +1,3 @@
-	... 40 common frames omitted
-Caused by: java.lang.RuntimeException: java.lang.IllegalArgumentException: Illegal character in opaque part at index 23: resourceaccessor:file:${bankinfo.csv-folder}/bank_agency.csv
-	at liquibase.changelog.ChangeSet.generateCheckSum(ChangeSet.java:408) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.ChangeSetStatus.<init>(ChangeSetStatus.java:38) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.visitor.StatusVisitor.addStatus(StatusVisitor.java:49) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.visitor.StatusVisitor.visit(StatusVisitor.java:33) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.StatusChangeLogIterator.lambda$run$0(StatusChangeLogIterator.java:53) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:260) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:264) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.StatusChangeLogIterator.run(StatusChangeLogIterator.java:39) ~[liquibase-core-4.30.0.jar:na]
-	... 44 common frames omitted
 Caused by: java.lang.IllegalArgumentException: Illegal character in opaque part at index 23: resourceaccessor:file:${bankinfo.csv-folder}/bank_agency.csv
 	at java.base/java.net.URI.create(URI.java:932) ~[na:na]
 	at liquibase.resource.ResourceAccessor$NotFoundResource.<init>(ResourceAccessor.java:305) ~[liquibase-core-4.30.0.jar:na]
@@ -32,6 +17,6 @@ Caused by: java.net.URISyntaxException: Illegal character in opaque part at inde
 	at java.base/java.net.URI.create(URI.java:930) ~[na:na]
 	... 63 common frames omitted
 
-Disconnected from the target VM, address: '127.0.0.1:58570', transport: 'socket'
+Disconnected from the target VM, address: '127.0.0.1:61506', transport: 'socket'
 
 Process finished with exit code 0
