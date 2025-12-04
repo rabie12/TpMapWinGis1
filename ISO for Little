@@ -1,57 +1,114 @@
-Caused by: liquibase.exception.LiquibaseException: liquibase.exception.CommandExecutionException: liquibase.exception.ChangeLogParseException: Error parsing file:./liquibase/changelog-master.yaml : The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:272) ~[liquibase-core-4.30.0.jar:na]
-	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1859) ~[spring-beans-6.2.3.jar:6.2.3]
-	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1808) ~[spring-beans-6.2.3.jar:6.2.3]
-	... 20 common frames omitted
-Caused by: liquibase.exception.CommandExecutionException: liquibase.exception.ChangeLogParseException: Error parsing file:./liquibase/changelog-master.yaml : The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:278) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.CommandScope.execute(CommandScope.java:219) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.lambda$update$0(Liquibase.java:216) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.runInScope(Liquibase.java:1329) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.update(Liquibase.java:205) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Liquibase.update(Liquibase.java:188) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.performUpdate(SpringLiquibase.java:310) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.lambda$afterPropertiesSet$0(SpringLiquibase.java:262) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.lambda$child$0(Scope.java:194) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:193) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:172) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.integration.spring.SpringLiquibase.afterPropertiesSet(SpringLiquibase.java:255) ~[liquibase-core-4.30.0.jar:na]
-	... 22 common frames omitted
-Caused by: liquibase.exception.ChangeLogParseException: Error parsing file:./liquibase/changelog-master.yaml : The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.parser.core.yaml.YamlChangeLogParser.parse(YamlChangeLogParser.java:98) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.lambda$getDatabaseChangeLog$0(DatabaseChangelogCommandStep.java:129) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:203) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.Scope.child(Scope.java:179) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.getDatabaseChangeLog(DatabaseChangelogCommandStep.java:128) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.core.helpers.DatabaseChangelogCommandStep.run(DatabaseChangelogCommandStep.java:87) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.command.CommandScope.lambda$execute$6(CommandScope.java:231) ~[liquibase-core-4.30.0.jar:na]
-	... 40 common frames omitted
-Caused by: liquibase.exception.SetupException: The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.changelog.DatabaseChangeLog.handleChildNodeHelper(DatabaseChangeLog.java:534) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.handleChildNode(DatabaseChangeLog.java:485) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.load(DatabaseChangeLog.java:452) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.parser.core.yaml.YamlChangeLogParser.parse(YamlChangeLogParser.java:92) ~[liquibase-core-4.30.0.jar:na]
-	... 46 common frames omitted
-Caused by: liquibase.exception.LiquibaseException: The file baseline.yaml was not found in the configured search path:
-    - Spring classpath
-More locations can be added with the 'searchPath' parameter.
-	at liquibase.changelog.DatabaseChangeLog.include(DatabaseChangeLog.java:1085) ~[liquibase-core-4.30.0.jar:na]
-	at liquibase.changelog.DatabaseChangeLog.handleChildNodeHelper(DatabaseChangeLog.java:523) ~[liquibase-core-4.30.0.jar:na]
-	... 49 common frames omitted
-the baselin.xml are on the same path changelog-master outside of src file
-Caused by: liquibase.exception.ChangeLogParseException: The file baseline.yaml was not found in the configured search path:
+This is a Liquibase classpath vs filesystem path problem. Liquibase (when run via Spring Boot) only looks on the Spring classpath, not arbitrary folders on disk — and your baseline.yaml is outside src, so it is not on the classpath.
+
+That’s exactly what this error is telling you:
+
+The file baseline.yaml was not found in the configured search path:
+– Spring classpath
+
+⸻
+
+✅ What’s Going Wrong
+
+You currently have:
+
+./liquibase/changelog-master.yaml
+./liquibase/baseline.yaml   <-- outside src
+
+And inside changelog-master.yaml you probably have:
+
+databaseChangeLog:
+  - include:
+      file: baseline.yaml
+
+When Spring Boot runs, it only searches:
+
+src/main/resources
+
+Anything outside src/ is invisible at runtime.
+
+⸻
+
+✅ Correct Fix (Best Practice)
+
+1. Move both files into src/main/resources
+
+Your structure should be:
+
+src/main/resources/
+└── liquibase/
+    ├── changelog-master.yaml
+    └── baseline.yaml
+
+
+⸻
+
+2. Reference the file correctly in changelog-master.yaml
+
+Since they are in the same folder:
+
+databaseChangeLog:
+  - include:
+      file: liquibase/baseline.yaml
+
+✅ Always use a classpath-relative path, not a filesystem path
+
+⸻
+
+3. Ensure your Spring config points to the master file correctly
+
+In application.yml or application.properties:
+
+spring:
+  liquibase:
+    change-log: classpath:liquibase/changelog-master.yaml
+
+OR
+
+spring.liquibase.change-log=classpath:liquibase/changelog-master.yaml
+
+
+⸻
+
+⚠️ What Will NOT Work
+
+These will all fail in Spring Boot:
+
+❌ ./liquibase/baseline.yaml
+❌ Absolute disk paths
+❌ Files outside src/main/resources
+❌ classpath: missing on the master changelog
+
+⸻
+
+✅ If You Must Keep the File Outside src (Not Recommended)
+
+You would need to configure:
+
+spring:
+  liquibase:
+    search-path: file:./liquibase
+
+AND use:
+
+- include:
+    file: baseline.yaml
+
+But again — this is fragile and not recommended for real apps.
+
+⸻
+
+✅ Summary
+
+Problem	Fix
+baseline.yaml outside src	Move it into src/main/resources/liquibase
+Liquibase can’t find file	Use classpath: paths
+include: baseline.yaml fails	Change to liquibase/baseline.yaml
+
+
+⸻
+
+If you want, paste your:
+	•	changelog-master.yaml
+	•	Your project folder structure
+
+and I’ll correct the exact paths for you line-by-line.
