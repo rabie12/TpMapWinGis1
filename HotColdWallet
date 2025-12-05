@@ -1,8 +1,77 @@
-2025-12-05T15:40:15.999+01:00  WARN 36728 --- [bankInfo] [  restartedMain] .s.s.UserDetailsServiceAutoConfiguration : 
+That warning is coming from Spring Boot’s default security auto-configuration. It appears because Spring Security is on your classpath but you haven’t defined your own users yet.
 
-Using generated security password: 878e24e7-35d3-4ea7-a5d2-a5e84a922131
+You have three clean options to remove it, depending on what you want.
 
-This generated password is for development use only. Your security configuration must be updated before running your application in production.
+⸻
+
+✅ Option 1: Define Your Own Username & Password (Recommended for Dev)
+
+This keeps security enabled but removes the generated password log.
+
+In application.properties:
+
+spring.security.user.name=admin
+spring.security.user.password=admin123
+
+or in application.yml:
+
+spring:
+  security:
+    user:
+      name: admin
+      password: admin123
+
+✅ This completely removes:
+
+Using generated security password
 
 
-I want to remove tgus from my log
+⸻
+
+✅ Option 2: Disable Security Completely (If You Don’t Need It)
+
+If you don’t use Spring Security at all:
+
+In your main application class:
+
+@SpringBootApplication(exclude = {
+    org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
+})
+public class BankInfoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BankInfoApplication.class, args);
+    }
+}
+
+✅ Removes:
+	•	The warning
+	•	Login page
+	•	All security filters
+
+⚠ Only do this if your app truly doesn’t need security.
+
+⸻
+
+✅ Option 3: Hide Only the Log (Not Recommended, but Possible)
+
+This just silences the message, without fixing the root issue.
+
+logging.level.org.springframework.security=ERROR
+
+⚠ This hides important security logs too — use only if necessary.
+
+⸻
+
+✅ Best Practice Summary
+
+Use Case	Best Option
+Development with login	✅ Option 1
+No security at all	✅ Option 2
+Temporary log silence	⚠ Option 3
+
+
+⸻
+
+If you want, paste your:
+	•	pom.xml or build.gradle
+	•	and I’ll tell you exactly which option fits your project best.
