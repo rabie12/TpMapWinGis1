@@ -1,131 +1,33 @@
-Perfect — this is a very common situation after moving Liquibase outside src ✅
-Liquibase runs fine manually, but Spring Boot fails to start because it’s still expecting Liquibase inside the JAR.
+300ms est-ce qu c'est giga long ?pour une durée de réponse d'un api qui est en basic authent e
 
-Let’s fix this cleanly.
+on utilise un bcrypt encoder :
 
-⸻
+@Configuration
+public class SecurityConfig {
+    @Bean
+    public UserDetailsService userDetailsService(DataSource dataSource) {
+        return new JdbcUserDetailsManager(dataSource);
+    }
 
-✅ ROOT CAUSE (99% PROBABILITY)
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-Your Spring Boot app is still trying to run Liquibase at startup using:
-	•	classpath:/db/changelog/...
-	•	or classpath:/liquibase/...
+et aussi on veut elabore une solution comme ca :
 
-But you moved Liquibase outside the JAR → so Spring cannot find it anymore → app fails.
+plus on peut juste faire comme business registry
 
-✅ Since you now run Liquibase externally, Spring must STOP managing Liquibase.
+et juste avoir une route ouverte pour créer une clé d'api
 
-⸻
+et yolo
 
-✅ STEP 1 — DISABLE SPRING LIQUIBASE (REQUIRED)
+on se fait pas chier avec des credentials par défaut
 
-In your application.yml or application.properties:
+de toute façon l'app reste dans le back
 
-✅ If using application.yml:
+et comme ça l'infra a juste à contacter la route
 
-spring:
-  liquibase:
-    enabled: false
+pour créer une clé d'api tournesol et bitbang
 
-✅ If using application.properties:
-
-spring.liquibase.enabled=false
-
-🚨 This is mandatory if you manage Liquibase externally.
-
-⸻
-
-✅ STEP 2 — REBUILD THE APP AFTER DISABLING LIQUIBASE
-
-After changing the config:
-
-mvn clean package
-
-Then run:
-
-java -jar target/bank-info.jar
-
-✅ In most cases, the app will now start correctly.
-
-⸻
-
-✅ STEP 3 — VERY COMMON SECOND ERROR (CSV STILL REFERENCED)
-
-If your app still fails, it’s often because:
-	•	You previously used loadData with classpath:
-	•	And Spring is still trying to resolve it
-
-❌ Wrong:
-
-file: classpath:data/users.csv
-
-✅ Correct (external):
-
-file: data/users.csv
-relativeToChangelogFile: true
-
-But remember:
-
-👉 These CSV paths are only used by the Liquibase CLI now — NOT by Spring anymore.
-
-⸻
-
-✅ STEP 4 — IF IT STILL DOES NOT START
-
-👉 I NEED THE ERROR MESSAGE
-
-Please copy-paste:
-
-✅ The FULL Spring Boot startup error (the red stack trace)
-
-Especially look for:
-	•	liquibase
-	•	classpath
-	•	changeLog
-	•	BeanCreationException
-	•	FileNotFoundException
-
-⸻
-
-✅ QUICK DIAGNOSIS TABLE
-
-Error Message	Meaning	Fix
-liquibase bean failed	Spring still runs Liquibase	Disable it
-classpath: liquibase not found	You moved Liquibase outside	Use external CLI only
-users.csv not found	Wrong loadData path	Use relativeToChangelogFile
-Driver not found	DB driver misconfig	Add correct dependency
-
-
-⸻
-
-✅ CORRECT WORKFLOW AFTER THE FIX
-
-✅ Locally:
-
-liquibase update
-java -jar target/bank-info.jar
-
-✅ GitLab:
-	•	Click Liquibase job manually
-	•	Then build & deploy
-
-✅ Dev Server:
-
-liquibase update
-./startup.sh
-
-✅ No duplication
-✅ No CSV inside JAR
-✅ No Spring/Liquibase conflict
-✅ Fully production-safe setup
-
-⸻
-
-✅ NEXT STEP (IMPORTANT)
-
-👉 Please paste the exact Spring Boot error message and I will:
-	•	Identify the exact cause in seconds
-	•	Tell you the exact line to change
-	•	Guarantee your app will start correctly
-
-You’re already very close — this is the final step ✅
+et ça roule ?
