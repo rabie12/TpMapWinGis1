@@ -1,103 +1,93 @@
-Parfait — oui ✅ tu peux totalement éviter d’écrire liquibase/ partout en configurant correctement la variable d’environnement LIQUIBASE_SEARCH_PATH (ou son équivalent Spring).
-
-Mais il y a une petite erreur dans ton nom de variable 👇
-Tu as écrit :
-
-$env:LIQUBASE_SEARCH_PATH=./liquibase/
-        ^ manque un I
-
-👉 La bonne variable est :
-
-$env:LIQUIBASE_SEARCH_PATH=./liquibase
-
-(avec LIQUIBASE, pas LIQUBASE)
-
-⸻
-
-✅ ✅ SOLUTION COMPLÈTE (Windows / PowerShell)
-
-1️⃣ Définir correctement la variable d’environnement
-
-Dans PowerShell :
-
-$env:LIQUIBASE_SEARCH_PATH=./liquibase
-
-✅ Ça dit à Liquibase :
-
-“Cherche aussi les fichiers dans le dossier ./liquibase à la racine du projet”
-
-⸻
-
-2️⃣ Ton loadData devient SIMPLE ✅
-
-Maintenant tu peux écrire directement :
-
-- changeSet:
-    id: 3-load-bankinfo-data
-    author: RHI
-    changes:
-      - loadData:
-          tableName: bank_info
-          file: data/bank_info.csv
-          separator: ","
-
-✅ Et Liquibase va automatiquement chercher dans :
-
-./liquibase/data/bank_info.csv
+variables:
+  MAVEN_CLI_OPTS: "-B -s settings.xml"
+  MAVEN_OPTS: "-Dmaven.repo.local=${CI_PROJECT_DIR}/.m2"
+  GIT_DEVELOP_REGEX: "/(feat(ure)?\/.*)|develop/"
+  GIT_UAT: "uat"
+  GIT_MAIN: "main"
+  GITLAB_TAG: "none"
+  GITLAB_ENV: "none"
 
 
-⸻
 
-✅ ✅ VERSION SPRING BOOT (sans variable d’environnement)
-
-Si tu préfères ne rien configurer dans PowerShell, alors mets ceci dans application.yml :
-
-spring:
-  liquibase:
-    search-path: file:./liquibase
-
-Ou en application.properties :
-
-spring.liquibase.search-path=file:./liquibase
-
-➡️ Et tu peux aussi garder dans tes YAML :
-
-file: data/bank_info.csv
+workflow:
+  rules:
+    - if : $CI_COMMIT_BRANCH =~ $GIT_SNAPSHOT_REGEX
+      variables:
+        GITLAB_TAG: "deploy_dev"
+        GITLAB_ENV: "develop"
+    - if : $CI_COMMIT_BRANCH == $GIT_UAT
+      variables:
+        GITLAB_TAG: "deploy_uat"
+        GITLAB_ENV: "uat"
+    - if : $CI_COMMIT_BRANCH == $GIT_MAIN
+      variables:
+        GITLAB_TAG: "deploy_prd"
+        GITLAB_ENV: "prd"
 
 
-⸻
+default:
+  image: maven:3.9.10-amazoncorretto-21-alpine
 
-✅ Résumé ultra clair
+stages:
+  - liquibase
+  - build
+  - publish
 
-Tu veux	Tu fais
-✅ Éviter liquibase/data/...	file: data/bank_info.csv
-✅ Lire depuis ./liquibase	LIQUIBASE_SEARCH_PATH=./liquibase
-✅ En Spring	spring.liquibase.search-path=file:./liquibase
-❌ Erreur à éviter	LIQUBASE_SEARCH_PATH (mal orthographié)
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - ${CI_PROJECT_DIR}/.m2
+
+before_script:
+  - echo "Importing Olky CA trust to jdk cacert store"
+  - echo "$OLKY_CA_BUNDLE_BASE64" | base64 -d > olky.pem
+  - keytool -importcert -alias olky-root -file ./olky.pem -storepass $JAVA_KEYSTORE_PASSWORD -noprompt -keystore $JAVA_HOME/lib/security/cacerts
+  
+updateLiquibase:
+  stage: liquibase
+  before_script: []
+  environment: $GITLAB_ENV
+  variables:
+    JAVA_HOME: "/usr/lib/jvm/jdk-21.0.8-oracle-x64/"
+    LIQUIBASE_COMMAND_CHANGELOG_FILE: "db.changelog-master.yml"
+    LIQUIBASE_SEARCH_PATH: "./src/main/resources/liquibase"
+  script:
+    - liquibase update
+  when: manual
+  tags:
+    - "$GITLAB_TAG"
 
 
-⸻
+build-job:
+  stage: build
+  script:
+    - echo " Build..."
+    - mvn $MAVEN_CLI_OPTS clean package
+  artifacts:
+    paths:
+      - target/business-registry.jar
 
-✅ Vérification rapide
+publish:
+  stage: publish
+  script:
+    - mvn $MAVEN_CLI_OPTS deploy
 
-Dans ton projet, tu dois avoir :
+deploy:
+  needs:
+    - job: build-job
+  stage: publish
+  before_script: [] # No need to import certs for this job
+  environment: $GITLAB_ENV
+  script:
+    - 'sudo /opt/script/gitlab/deploy_java_jar.sh -j ./target/business-registry.jar -d /opt/business-registry/ -u business-registry -s business-registry'
+  tags:
+    - "$GITLAB_TAG"
+this is the pipeline i jsut want to understant the liquibase part and to be able to do this :
 
-project-root/
-├── liquibase/
-│   └── data/
-│       └── bank_info.csv   ✅
-├── src/
-└── pom.xml
+[root@OLK-DEV-Back-01 bank-info]# ls
+bank-info.env  bank-info.jar  java.env  logs  startup.sh
 
-Et dans ton changeSet :
+this is how it look like my file on dev server and they want me to do this : 
+- le dossier liquidbase doit etre sorti de src afin de pas retrouver les fichier .csv dans le jar spring boot.
 
-file: data/bank_info.csv   ✅
-
-
-⸻
-
-Si tu veux, envoie-moi :
-	•	ton application.yml
-	•	ton poc.xml (juste la partie liquibase)
-
-Et je t’assure que ta config finale sera propre, portable et stable ✅
+how should i do to manage this locally and dev server
