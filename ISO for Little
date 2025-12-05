@@ -224,5 +224,184 @@ What I will do for you once you paste them:
 All behave exactly the same
 
 ⸻
+Perfect question — this is exactly the right moment to clarify this ✅
+Here is the clean, correct, production-style way to run Liquibase locally when it is OUTSIDE the JAR.
 
-👉 Go ahead and paste your db.changelog-master.yml first.
+I’ll assume your new structure is:
+
+your-project/
+├── liquibase/
+│   ├── db.changelog-master.yml
+│   ├── changes/
+│   └── data/
+│       └── example.csv
+├── src/
+├── pom.xml
+
+
+⸻
+
+✅ OPTION 1 — Run Liquibase Locally with the CLI (BEST & SIMPLEST)
+
+This is what your GitLab job already does, so it gives you 100% identical behavior.
+
+⸻
+
+✅ 1. Install Liquibase Locally
+
+🔹 On Linux:
+
+sudo dnf install liquibase
+# or
+sudo apt install liquibase
+
+🔹 On Mac:
+
+brew install liquibase
+
+🔹 Verify:
+
+liquibase --version
+
+
+⸻
+
+✅ 2. Create a liquibase.properties File (RECOMMENDED)
+
+Create this file:
+
+your-project/liquibase/liquibase.properties
+
+✅ Example:
+
+url=jdbc:postgresql://localhost:5432/bankinfo
+username=bankuser
+password=bankpass
+driver=org.postgresql.Driver
+
+searchPath=./liquibase
+changeLogFile=db.changelog-master.yml
+
+✅ Now you don’t need to type everything every time.
+
+⸻
+
+✅ 3. Run Liquibase Locally
+
+From your project root:
+
+liquibase update
+
+✅ That’s it.
+✅ It uses:
+	•	./liquibase/db.changelog-master.yml
+	•	./liquibase/data/*.csv
+	•	Your local database
+
+⸻
+
+✅ 4. If You Don’t Want a .properties File (Manual Mode)
+
+You can also run it like this:
+
+liquibase \
+  --url=jdbc:postgresql://localhost:5432/bankinfo \
+  --username=bankuser \
+  --password=bankpass \
+  --search-path=./liquibase \
+  --changeLogFile=db.changelog-master.yml \
+  update
+
+This is exactly what GitLab does behind the scenes.
+
+⸻
+
+✅ OPTION 2 — Run Liquibase with Maven (ALSO WORKS)
+
+Only use this if your project already has the Liquibase Maven plugin.
+
+Run:
+
+mvn liquibase:update \
+  -Dliquibase.searchPath=./liquibase \
+  -Dliquibase.changeLogFile=db.changelog-master.yml
+
+⚠️ Warning:
+If your CSV files are outside src, then:
+	•	loadData MUST use relative paths
+	•	No classpath: usage anymore
+
+⸻
+
+✅ VERY IMPORTANT — How Your CSV Must Be Written Now
+
+Inside your changelog:
+
+❌ OLD (inside JAR):
+
+loadData:
+  file: classpath:liquibase/data/users.csv
+
+✅ NEW (external):
+
+loadData:
+  file: data/users.csv
+  relativeToChangelogFile: true
+
+✅ This guarantees:
+	•	Works locally ✅
+	•	Works on dev server ✅
+	•	Works in GitLab ✅
+	•	CSV never goes inside JAR ✅
+
+⸻
+
+✅ OPTION 3 — Run Liquibase Using Docker (ZERO INSTALL)
+
+If you don’t want to install Liquibase:
+
+docker run --rm \
+  -v $(pwd)/liquibase:/liquibase \
+  liquibase/liquibase \
+  --search-path=/liquibase \
+  --changeLogFile=db.changelog-master.yml \
+  update
+
+
+⸻
+
+✅ How This Matches Your GitLab Pipeline
+
+Your GitLab job:
+
+LIQUIBASE_SEARCH_PATH: "./liquibase"
+LIQUIBASE_COMMAND_CHANGELOG_FILE: "db.changelog-master.yml"
+script:
+  - liquibase update
+
+✅ Your local execution is now IDENTICAL to GitLab
+✅ No more surprises at deployment
+✅ No CSV inside the JAR
+
+⸻
+
+✅ FINAL CHECKLIST FOR LOCAL SETUP
+
+Item	Required
+Liquibase installed OR Docker used	✅
+liquibase/ outside src/	✅
+relativeToChangelogFile: true in CSV	✅
+liquibase update runs without error	✅
+No classpath: in CSV paths	✅
+
+
+⸻
+
+✅ If You Want, Next I Can:
+
+✅ Fix your actual CSV loadData config
+✅ Validate your db.changelog-master.yml
+✅ Ensure your dev server startup won’t accidentally re-run Liquibase
+✅ Align everything with your GitLab job perfectly
+
+👉 Paste your db.changelog-master.yml and one CSV changelog and I’ll correct them for you line by line.first.
