@@ -1,407 +1,131 @@
-Got it — you want to:
-	1.	Understand what the Liquibase job in your pipeline does, and
-	2.	Change your project so that the liquibase folder is OUTSIDE src, so that:
-	•	The .csv files are NOT embedded inside the Spring Boot JAR
-	•	Liquibase can still run locally and on the dev server
+Perfect — this is a very common situation after moving Liquibase outside src ✅
+Liquibase runs fine manually, but Spring Boot fails to start because it’s still expecting Liquibase inside the JAR.
 
-I’ll explain both clearly and give you the exact changes to make.
+Let’s fix this cleanly.
 
 ⸻
 
-✅ 1. What Your Liquibase Pipeline Job Currently Does
+✅ ROOT CAUSE (99% PROBABILITY)
 
-This part of your pipeline:
+Your Spring Boot app is still trying to run Liquibase at startup using:
+	•	classpath:/db/changelog/...
+	•	or classpath:/liquibase/...
 
-updateLiquibase:
-  stage: liquibase
-  before_script: []
-  environment: $GITLAB_ENV
-  variables:
-    JAVA_HOME: "/usr/lib/jvm/jdk-21.0.8-oracle-x64/"
-    LIQUIBASE_COMMAND_CHANGELOG_FILE: "db.changelog-master.yml"
-    LIQUIBASE_SEARCH_PATH: "./src/main/resources/liquibase"
-  script:
-    - liquibase update
-  when: manual
-  tags:
-    - "$GITLAB_TAG"
+But you moved Liquibase outside the JAR → so Spring cannot find it anymore → app fails.
 
-🔎 Meaning:
-
-Line	Meaning
-when: manual	You must click the button manually in GitLab to run Liquibase
-LIQUIBASE_SEARCH_PATH	Liquibase looks for files in: src/main/resources/liquibase
-LIQUIBASE_COMMAND_CHANGELOG_FILE	Main changelog file
-liquibase update	Applies DB migrations
-
-✅ Right now, your CSV files are inside:
-
-src/main/resources/liquibase
-
-So Spring Boot packages them inside the JAR, which is what your team wants to avoid.
+✅ Since you now run Liquibase externally, Spring must STOP managing Liquibase.
 
 ⸻
 
-✅ 2. What Your Team Is Asking You To Do
+✅ STEP 1 — DISABLE SPRING LIQUIBASE (REQUIRED)
 
-“le dossier liquibase doit etre sorti de src afin de pas retrouver les fichiers .csv dans le jar”
+In your application.yml or application.properties:
 
-This means:
-
-✅ Liquibase files must be outside src/
-✅ CSV files must be external files, NOT inside the JAR
-✅ The JAR stays clean
-✅ Liquibase still works in:
-	•	Local
-	•	Dev server
-	•	GitLab pipeline
-
-⸻
-
-✅ 3. New Correct Project Structure (Target)
-
-You should change from this:
-
-src/main/resources/liquibase/
-
-✅ To this:
-
-liquibase/
-  ├── db.changelog-master.yml
-  ├── changes/
-  ├── data/
-  │   └── data.csv
-
-✅ Your project root should look like this:
-
-bank-info/
-├── liquibase/
-│   ├── db.changelog-master.yml
-│   ├── changes/
-│   └── data/
-├── src/
-├── pom.xml
-├── target/
-
-🚨 This guarantees that CSV files are NOT inside the JAR anymore.
-
-⸻
-
-✅ 4. Update Your GitLab Liquibase Job (VERY IMPORTANT)
-
-Change this line in your pipeline:
-
-❌ Current:
-
-LIQUIBASE_SEARCH_PATH: "./src/main/resources/liquibase"
-
-✅ Replace with:
-
-LIQUIBASE_SEARCH_PATH: "./liquibase"
-
-So your job becomes:
-
-updateLiquibase:
-  stage: liquibase
-  before_script: []
-  environment: $GITLAB_ENV
-  variables:
-    JAVA_HOME: "/usr/lib/jvm/jdk-21.0.8-oracle-x64/"
-    LIQUIBASE_COMMAND_CHANGELOG_FILE: "db.changelog-master.yml"
-    LIQUIBASE_SEARCH_PATH: "./liquibase"
-  script:
-    - liquibase update
-  when: manual
-  tags:
-    - "$GITLAB_TAG"
-
-✅ Now GitLab will correctly read your external Liquibase folder.
-
-⸻
-
-✅ 5. How To Manage This on the DEV Server
-
-You showed this on the server:
-
-bank-info.env  
-bank-info.jar  
-java.env  
-logs  
-startup.sh
-
-You must now ADD liquibase next to the JAR:
-
-✅ Final structure on the server:
-
-/opt/bank-info/
-├── bank-info.jar
-├── liquibase/
-│   ├── db.changelog-master.yml
-│   ├── changes/
-│   └── data/
-│       └── data.csv
-├── bank-info.env
-├── java.env
-├── logs
-├── startup.sh
-
-
-⸻
-
-✅ 6. How To Run Liquibase on the DEV Server
-
-From the project root on the server:
-
-liquibase \
-  --search-path=./liquibase \
-  --changeLogFile=db.changelog-master.yml \
-  update
-
-✅ This applies DB changes using external CSV files
-✅ No CSVs inside the JAR
-✅ Matches your new GitLab behavior
-
-⸻
-
-✅ 7. IMPORTANT: Spring Boot Must NOT Reference Liquibase Anymore
-
-If you currently have in application.yml or application.properties:
-
-spring:
-  liquibase:
-    enabled: true
-
-⚠️ This may try to run Liquibase from inside the JAR
-Since Liquibase is now external, you should:
-
-✅ Either disable Spring Liquibase:
+✅ If using application.yml:
 
 spring:
   liquibase:
     enabled: false
 
-✅ And rely ONLY on:
-	•	GitLab job
-	•	Manual server Liquibase runs
+✅ If using application.properties:
+
+spring.liquibase.enabled=false
+
+🚨 This is mandatory if you manage Liquibase externally.
 
 ⸻
 
-✅ 8. Summary (What You Must Do)
+✅ STEP 2 — REBUILD THE APP AFTER DISABLING LIQUIBASE
 
-Task	Status
-Move liquibase/ out of src/	✅ Required
-Update LIQUIBASE_SEARCH_PATH in GitLab	✅ Required
-Copy liquibase/ next to JAR on dev server	✅ Required
-Run Liquibase from external folder	✅ Required
-Disable Spring Boot Liquibase (if enabled)	⚠️ Recommended
+After changing the config:
 
+mvn clean package
 
-⸻
+Then run:
 
-✅ If You Want, I Can Also:
-	•	✅ Review your db.changelog-master.yml
-	•	✅ Check if your CSV loadData paths will still work
-	•	✅ Adapt your startup.sh if Liquibase must auto-run at startup
+java -jar target/bank-info.jar
 
-Perfect — please paste the following files here (you can anonymize sensitive values):
-	1.	✅ liquibase/db.changelog-master.yml
-	2.	✅ One example of a changelog file that uses a CSV (the file inside changes/)
-	3.	✅ (Optional but recommended) your:
-	•	application.yml or application.properties
-	•	startup.sh from the server
+✅ In most cases, the app will now start correctly.
 
 ⸻
 
-What I will do for you once you paste them:
+✅ STEP 3 — VERY COMMON SECOND ERROR (CSV STILL REFERENCED)
 
-✅ Fix all file paths for the new external ./liquibase structure
-✅ Ensure all loadData CSV paths work correctly
-✅ Prevent Liquibase from trying to run inside the JAR
-✅ Make sure:
-	•	GitLab ✅
-	•	Local ✅
-	•	Dev server ✅
-All behave exactly the same
+If your app still fails, it’s often because:
+	•	You previously used loadData with classpath:
+	•	And Spring is still trying to resolve it
 
-⸻
-Perfect question — this is exactly the right moment to clarify this ✅
-Here is the clean, correct, production-style way to run Liquibase locally when it is OUTSIDE the JAR.
+❌ Wrong:
 
-I’ll assume your new structure is:
+file: classpath:data/users.csv
 
-your-project/
-├── liquibase/
-│   ├── db.changelog-master.yml
-│   ├── changes/
-│   └── data/
-│       └── example.csv
-├── src/
-├── pom.xml
+✅ Correct (external):
 
+file: data/users.csv
+relativeToChangelogFile: true
+
+But remember:
+
+👉 These CSV paths are only used by the Liquibase CLI now — NOT by Spring anymore.
 
 ⸻
 
-✅ OPTION 1 — Run Liquibase Locally with the CLI (BEST & SIMPLEST)
+✅ STEP 4 — IF IT STILL DOES NOT START
 
-This is what your GitLab job already does, so it gives you 100% identical behavior.
+👉 I NEED THE ERROR MESSAGE
+
+Please copy-paste:
+
+✅ The FULL Spring Boot startup error (the red stack trace)
+
+Especially look for:
+	•	liquibase
+	•	classpath
+	•	changeLog
+	•	BeanCreationException
+	•	FileNotFoundException
 
 ⸻
 
-✅ 1. Install Liquibase Locally
+✅ QUICK DIAGNOSIS TABLE
 
-🔹 On Linux:
-
-sudo dnf install liquibase
-# or
-sudo apt install liquibase
-
-🔹 On Mac:
-
-brew install liquibase
-
-🔹 Verify:
-
-liquibase --version
+Error Message	Meaning	Fix
+liquibase bean failed	Spring still runs Liquibase	Disable it
+classpath: liquibase not found	You moved Liquibase outside	Use external CLI only
+users.csv not found	Wrong loadData path	Use relativeToChangelogFile
+Driver not found	DB driver misconfig	Add correct dependency
 
 
 ⸻
 
-✅ 2. Create a liquibase.properties File (RECOMMENDED)
+✅ CORRECT WORKFLOW AFTER THE FIX
 
-Create this file:
-
-your-project/liquibase/liquibase.properties
-
-✅ Example:
-
-url=jdbc:postgresql://localhost:5432/bankinfo
-username=bankuser
-password=bankpass
-driver=org.postgresql.Driver
-
-searchPath=./liquibase
-changeLogFile=db.changelog-master.yml
-
-✅ Now you don’t need to type everything every time.
-
-⸻
-
-✅ 3. Run Liquibase Locally
-
-From your project root:
+✅ Locally:
 
 liquibase update
+java -jar target/bank-info.jar
 
-✅ That’s it.
-✅ It uses:
-	•	./liquibase/db.changelog-master.yml
-	•	./liquibase/data/*.csv
-	•	Your local database
+✅ GitLab:
+	•	Click Liquibase job manually
+	•	Then build & deploy
 
-⸻
+✅ Dev Server:
 
-✅ 4. If You Don’t Want a .properties File (Manual Mode)
+liquibase update
+./startup.sh
 
-You can also run it like this:
-
-liquibase \
-  --url=jdbc:postgresql://localhost:5432/bankinfo \
-  --username=bankuser \
-  --password=bankpass \
-  --search-path=./liquibase \
-  --changeLogFile=db.changelog-master.yml \
-  update
-
-This is exactly what GitLab does behind the scenes.
+✅ No duplication
+✅ No CSV inside JAR
+✅ No Spring/Liquibase conflict
+✅ Fully production-safe setup
 
 ⸻
 
-✅ OPTION 2 — Run Liquibase with Maven (ALSO WORKS)
+✅ NEXT STEP (IMPORTANT)
 
-Only use this if your project already has the Liquibase Maven plugin.
+👉 Please paste the exact Spring Boot error message and I will:
+	•	Identify the exact cause in seconds
+	•	Tell you the exact line to change
+	•	Guarantee your app will start correctly
 
-Run:
-
-mvn liquibase:update \
-  -Dliquibase.searchPath=./liquibase \
-  -Dliquibase.changeLogFile=db.changelog-master.yml
-
-⚠️ Warning:
-If your CSV files are outside src, then:
-	•	loadData MUST use relative paths
-	•	No classpath: usage anymore
-
-⸻
-
-✅ VERY IMPORTANT — How Your CSV Must Be Written Now
-
-Inside your changelog:
-
-❌ OLD (inside JAR):
-
-loadData:
-  file: classpath:liquibase/data/users.csv
-
-✅ NEW (external):
-
-loadData:
-  file: data/users.csv
-  relativeToChangelogFile: true
-
-✅ This guarantees:
-	•	Works locally ✅
-	•	Works on dev server ✅
-	•	Works in GitLab ✅
-	•	CSV never goes inside JAR ✅
-
-⸻
-
-✅ OPTION 3 — Run Liquibase Using Docker (ZERO INSTALL)
-
-If you don’t want to install Liquibase:
-
-docker run --rm \
-  -v $(pwd)/liquibase:/liquibase \
-  liquibase/liquibase \
-  --search-path=/liquibase \
-  --changeLogFile=db.changelog-master.yml \
-  update
-
-
-⸻
-
-✅ How This Matches Your GitLab Pipeline
-
-Your GitLab job:
-
-LIQUIBASE_SEARCH_PATH: "./liquibase"
-LIQUIBASE_COMMAND_CHANGELOG_FILE: "db.changelog-master.yml"
-script:
-  - liquibase update
-
-✅ Your local execution is now IDENTICAL to GitLab
-✅ No more surprises at deployment
-✅ No CSV inside the JAR
-
-⸻
-
-✅ FINAL CHECKLIST FOR LOCAL SETUP
-
-Item	Required
-Liquibase installed OR Docker used	✅
-liquibase/ outside src/	✅
-relativeToChangelogFile: true in CSV	✅
-liquibase update runs without error	✅
-No classpath: in CSV paths	✅
-
-
-⸻
-
-✅ If You Want, Next I Can:
-
-✅ Fix your actual CSV loadData config
-✅ Validate your db.changelog-master.yml
-✅ Ensure your dev server startup won’t accidentally re-run Liquibase
-✅ Align everything with your GitLab job perfectly
-
-👉 Paste your db.changelog-master.yml and one CSV changelog and I’ll correct them for you line by line.first.
+You’re already very close — this is the final step ✅
