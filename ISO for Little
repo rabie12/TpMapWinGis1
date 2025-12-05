@@ -1,16 +1,210 @@
-suis dessus j'essaye d'ajouter un filtre custom à la securityFilterChain de spring security
+Oui, très bon cas d’usage — et tu as bien compris le piège classique de Spring Security 👌
+Je te donne la façon propre, standard et safe de faire ça, avec whitelist + accès au repository, sans que ton filtre soit injecté n’importe où.
 
-mais apparemment tu peux pas déclarer un filtre avec un @Bean sinon spring insère ton filtre dans la chaine normale
+⸻
 
-sauf que jveux que le filtre soit bypass pour les url "whitelist"
+✅ Le vrai problème
 
-si on defini pas le filtre en tant que bean et qu'on l'insère direct
+Tu veux :
+
+✅ Un filtre custom
+✅ Qu’il soit bypass sur certaines URLs (whitelist)
+✅ Qu’il ait accès à UserRepository
+✅ Sans que Spring l’insère automatiquement dans la chaîne à cause d’un @Bean
+
+Et tu as raison :
+
+❌ Si tu déclares ton filtre en @Bean, Spring Security peut l’ajouter n’importe où dans la chaîne.
+
+⸻
+
+✅ ✅ LA BONNE SOLUTION (celle qu’il faut utiliser en prod)
+
+👉 Tu NE déclares PAS ton filtre en @Bean
+👉 Tu l’injectes via le constructeur de ton SecurityConfig
+👉 Tu l’ajoutes manuellement dans securityFilterChain
+👉 Tu gères la whitelist DIRECTEMENT dans le filtre
+
+⸻
+
+✅ 1️⃣ Ton filtre (avec accès au repository + whitelist)
+
+@Component
+public class ApiKeyAuthFilter extends OncePerRequestFilter {
+
+    private final UserRepository userRepository;
+
+    private static final List<String> WHITELIST = List.of(
+            "/api/auth/login",
+            "/api/auth/register",
+            "/actuator/health",
+            "/v3/api-docs",
+            "/swagger-ui"
+    );
+
+    public ApiKeyAuthFilter(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return WHITELIST.stream().anyMatch(path::startsWith);
+    }
+
+    @Override
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        String apiKey = request.getHeader("X-API-KEY");
+
+        if (apiKey == null || apiKey.isBlank()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Missing API Key");
+            return;
+        }
+
+        User user = userRepository.findByApiKey(apiKey)
+                .orElse(null);
+
+        if (user == null) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Invalid API Key");
+            return;
+        }
+
+        // ✅ Crée le user dans le contexte Spring Security
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(user, null, List.of());
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        filterChain.doFilter(request, response);
+    }
+}
+
+✅ Ici :
+	•	Le filtre a le repository via constructeur
+	•	La whitelist est gérée PROPREMENT
+	•	Le filtre est totalement bypassé sur les routes autorisées
+	•	Aucune logique dégueulasse dans la config
+
+⸻
+
+✅ 2️⃣ Ta config Spring Security (PAS DE @Bean POUR LE FILTRE)
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    private final ApiKeyAuthFilter apiKeyAuthFilter;
+
+    public SecurityConfig(ApiKeyAuthFilter apiKeyAuthFilter) {
+        this.apiKeyAuthFilter = apiKeyAuthFilter;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**"
+                        ).permitAll()
+                        .anyRequest().authenticated()
+                )
+
+                // ✅ ON L’INSÈRE MANUELLEMENT
+                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .build();
+    }
+}
+
+✅ Le filtre :
+	•	Est dans la bonne position
+	•	Est maîtrisé à 100%
+	•	Est bypassé sur la whitelist DEUX FOIS (security + filtre)
+
+⸻
+
+✅ Pourquoi il ne faut PAS éviter @Component ici
+
+Tu avais peur que :
+
+“Si je mets le filtre en Bean, Spring va l’injecter n’importe où”
+
+👉 Ce n’est vrai que si tu fais :
+
+@Bean
+public ApiKeyAuthFilter apiKeyAuthFilter() { ... }
+
+✅ En revanche, avec :
+
+@Component
+public class ApiKeyAuthFilter extends OncePerRequestFilter
+
+Spring :
+	•	Ne l’insère NULLE PART automatiquement
+	•	Il est juste disponible pour injection
+	•	TOI seul contrôles où il va dans la chaîne
+
+Donc tu es totalement safe ✅
+
+⸻
+
+✅ Alternative propre si tu REFUSES vraiment @Component
+
+Tu peux faire :
+
+@Configuration
+public class FilterConfig {
+
+    @Bean
+    public ApiKeyAuthFilter apiKeyAuthFilter(UserRepository userRepository) {
+        return new ApiKeyAuthFilter(userRepository);
+    }
+}
+
+Et dans SecurityConfig :
+
+.addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+✅ Toujours safe
+❌ Le filtre n’est jamais auto-ajouté
+
+⸻
+
+✅ Récap clair
+
+Problème	Solution
+Accès au repository	✅ Injection via constructeur
+Whitelist	✅ shouldNotFilter()
+Contrôle de l’ordre	✅ addFilterBefore()
+Bypass sécurité	✅ permitAll()
+Filtre non auto-injecté	✅ Pas de @Bean direct
 
 
-comme ça
+⸻
 
-ça peut fonctionner
+✅ Si tu veux, je peux aussi te fournir :
+	•	✅ Une version avec JWT + API Key
+	•	✅ Une version avec cache Redis
+	•	✅ Une version avec Spring AuthorizationManager
+	•	✅ Une version compatible Spring Security 6.2+
 
-mais du coup j'ai besoin du repository pour User pour check la clé api
+⸻
 
-peut tu m'aider à voir comment faire ça
+👉 Si tu veux, envoie-moi :
+	•	Ton filtre actuel
+	•	Ta classe SecurityConfig
+
+Et je te la corrige ligne par ligne pour que ça marche parfaitement. 🔥
